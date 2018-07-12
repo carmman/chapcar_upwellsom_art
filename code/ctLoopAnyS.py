@@ -1,5 +1,6 @@
 # -*- coding: cp1252 -*-
 import sys
+import os
 import time as time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -161,6 +162,9 @@ elif DATAOBS == "raverage_1944_1974" :
 elif DATAOBS == "rcp_2006_2017" :
     obs_filename = os.path.join(obs_data_path,"Donnees_2006-2017","Obs",
                                 "ersstv3b_2006-2017_extrac_LON-315-351_LAT-30-5.nc");
+else :
+    print("*** unknown DATAOBS case <{}> ***",DATAOBS)
+    raise
 #
 import netCDF4
 nc      = netCDF4.Dataset(obs_filename);
@@ -500,6 +504,10 @@ for imodel in np.arange(Nmodels) :
                                 'Data',
                                 instname+'_'+mdlname,
                                 "sst_"+scenar+mdlname+"_raverage_2070-2100.mat")
+    else :
+        print("*** unknown DATAMDL case <{}> ***",DATAMDL)
+        raise
+    
     try :
         sst_mat = scipy.io.loadmat(mdl_filename);
     except :

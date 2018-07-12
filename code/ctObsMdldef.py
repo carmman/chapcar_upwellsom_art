@@ -17,7 +17,7 @@ from   localdef import *;                 # this may be true for others rep
 Tmodels_anyall_OUT = np.array([     # Mettre de coté certains modèles; on peut
         ["Observations",    ""],    # aussi les déplacer dans un repertoire sst_OUT/     
 ]);
-if 0
+if 0 :
     Tmodels_anyall = np.array([
         ["bcc-csm1-1",      ""],    #( 3)
         ["bcc-csm1-1-m",    ""],    #( 4)
@@ -69,6 +69,7 @@ if 0
         #["FIO-ESM",         ""],    #(??)]);
         #["OBS",             ""],    #(??)    # par exemple.
         ]);
+    Tinstitut_anyall = np.repeat('', Tmodels_anyall.shape[0])
 else :
     Tmodels_and_institut_anyall = np.array([
         ['BCC',          'bcc-csm1-1',       ''],   #( 3)
