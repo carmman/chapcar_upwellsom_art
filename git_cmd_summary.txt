@@ -1,0 +1,99 @@
+# Gérer son code avec Git et GitHub
+#
+# mini tutoriel:
+#   http://www.inspyration.org/tutoriels/mini-tutoriel-sur-git
+#
+#--------1---------2---------3---------4---------5---------6--------
+#2345678901234567890123456789012345678901234567890123456789012345678
+
+# ------------------------------------------------------------------
+# Installer git ...
+
+# ------------------------------------------------------------------
+# Configurer Git
+#
+# git config --global VARIABLE  VALEUR
+# 
+# par exemple :
+
+git config --global  user.name  Carlos Mejia
+
+git config --global  user.email  Carlos.Mejia@locean-ipsl.upmc.fr
+
+# pour lister les variables:
+
+git config --global --list
+
+# pour effacer une variable :
+# p.ex, si l'on s'est trompé et mis  'user.emal' à la place de 
+# 'user.email' alors, pour l'effacer:
+
+git config --global --unset user.emal
+
+# ------------------------------------------------------------------
+# ------------------------------------------------------------------
+# Création d'un repository ...
+# ... du répertoire en cours ...
+#
+# mkdir PourCarlos2_pour_Article
+# cd PourCarlos2_pour_Article/
+# unzip ../PourCarlos2.zip
+# mv PourCarlos2 code
+
+git init
+
+# voir status ...
+
+git status
+
+# ------------------------------------------------------------------
+# Gestion des exceptions (il faut d'abord creer le repository):
+#
+# Apres avoir initialisé le répertoire (voir création d'un
+# repository, ci-dessous), éditer le fichier ".git/info/exclude"
+# et ajouter les noms ou expressions régulières des fichiers ou
+# répertoires a ne pas
+# tenir en compte.
+#
+# vi .git/info/exclude
+#
+# Décommenter la ligne avec '*~' et ajouter les autres lignes, l'idee
+# étant de n'inclure dans le repository que les fichiers de code :
+# *~
+# .#*
+# # #######################################
+# # Repertoires a exclure des soumissions:
+# Datas
+# figs
+# maps
+# docs_python
+# trieddoc
+# __pycache__
+# .DS_Store
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# ajouter des fichiers (PREMIER ADD) plus le fichier git_cmd_summary.txt, 
+# fichier de rappel de commandes git executes pour ce cas.
+
+git add code git_cmd_summary.txt
+
+# ------------------------------------------------------------------
+# Commiter les additions ... 
+# il faut toujours ajouter un message identifiant le pourquoi du
+# commit:
+
+# PREMIER COMMIT
+git commit -m "Code de Charles envoye sous le nom PourCarlos2 du 12/06/2018"
+
+
+# fichiers provenant de Windows, je converti les fin de ligne des
+# fichiers texte au monde unix ...
+dos2unix *.py
+dos2unix triedpy/*.py
+dos2unix triedpy/archives/*.py
+dos2unix triedpy/*.txt
+
+# DEUXIEME COMMIT (fichiers texte convertis a unix ...)
+git commit -am "Conversion dos2unix de tout *.py et *.txt"
+
