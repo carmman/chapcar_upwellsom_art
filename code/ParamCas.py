@@ -26,54 +26,118 @@ Tinstit = Tinstitut_anyall;
 Tmodels = Tmodels_anyall;
 #Tmodels= Tmodels[2:12];  # Pour limiter le nombre de modèle en phase de mise au point
 Nmodels = len(Tmodels); # print(Nmodels); sys.exit(0)
+
+# -----------------------------------------------------------------------------
+# Conditions d'execution:
+#    | --------------- CARACTERISTIQUES ----------------- | -- VARIABLES ---- |
+#  - Architecture de la carte SOM ......................... nbl, nbc
+#  - Parametres d'entrainement en deux phases ............. Parm_app
+#  - Zone geographique consideree (toute, reduite, ...) ... SIZE_REDUCTION
+#  - Nombre de classes .................................... nb_class
+#  - Nombre de clusters et de coordonnees pour l'AFC ...... nb_clust, NBCOORDAFC4CAH
+#  - Critere pour evaluation des performances pour l'AFC .. NIJ
+# -----------------------------------------------------------------------------
+# Prendre une zone plus petite (concerne aussi l'entrainement)
+    # 'All' : Pas de réduction d'aucune sorte
+    # 'sel' : On sélectionne, d'entrée de jeu une zone plus petite,
+    #         c'est à dire à la lecture des données. Zone sur laquelle
+    #         tous les traitement seront effectues (codification, CT, Classif ...)
+    #         ('sel' à la place de 'mini' dans les version précédantes);
+    # 'RED' : Seule la classification est faite sur la zone REDuite
+    # rem   : PLM 'sel' et 'RED' ne sont pas compatibles; voir ci-après pour
+    #         la définition de la zone qui sera concernée
+    # AFC
+# -----------------------------------------------------------------------------
+# NIJ = 0 : Pas d'AFC
+#     = 1 : nombre d'elt par classe
+#     = 2 : perf par classe
+#     = 3 : nombre d'elt bien classés par classe
+#           (le seul qui devrait survivre à mon sens)
+# -----------------------------------------------------------------------------
+# NBCOORDAFC4CAH ... les n premières coordonnées de l'afc
+#   # à utiliser pour faire la CAH (limité à nb_class-1).
+#   # AFC.NBCOORDAFC4CAH; par exemple AFC.6
+#
+if 0 : # conditions Code Charles: GRANDE ZONE
+    SIZE_REDUCTION = 'All';
+    # A - Grande zone de l’upwelling (25x36) : Longitude : -44 à -9.5 ; Latitude : 29.5 à 5.5
+    frlat =  29.5;  tolat =  4.5; #(excluded)
+    frlon = -44.5;  tolon = -9.5; #(excluded)   #(§:25x35)
+    #   * Carte topologique et CAH : 30x4 (5, 5, 1, - 16, 1, 0.1) : TE=0.6824 ; QE=0.153757
+    #   Nb_classe = 7
+    nbl            = 30;  nbc =  4;  # Taille de la carte
+    Parm_app       = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
+    #Parm_app       = ( 50, 5., 1.,  160, 1., 0.1); # Température ini, fin, nb_it
+    nb_class       = 7; #6, 7, 8  # Nombre de classes retenu
+    # et CAH for cluster with AFC
+    NIJ            = 2;
+    nb_clust       = 4; # Nombre de cluster
+    #nb_clust       = 6; # Nombre de cluster
+    NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
+    #NBCOORDAFC4CAH = nb_class; # n premières coordonnées de l'afc à
+                    # utiliser pour faire la CAH (limité à nb_class-1).
+elif 1 : # conditions Code Charles: PETITE ZONE
+    SIZE_REDUCTION = 'sel';
+    # B - Sous-zone ciblant l’upwelling (13x12) :    LON: 16W à 28W LAT : 10N à 23N
+    frlat =  22.5;  tolat =   9.5; #(excluded)
+    frlon = -27.5;  tolon = -15.5; #(excluded)   #(§:13x12)
+    #   * Carte topologique et CAH : 17x6 (4, 4, 1, - 16, 1, 0.1) : TE=0.6067 ; QE=0.082044
+    #   Nb_classe = 4
+    nbl            = 17;  nbc =  6;  # Taille de la carte
+    Parm_app       = ( 4, 4., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
+    nb_class       = 4; #6, 7, 8  # Nombre de classes retenu
+    # et CAH for cluster with AFC
+    NIJ            = 2;
+    nb_clust       = 5; # Nombre de cluster
+    NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
+else : # Autres cas, valeurs par defaut
+    #SIZE_REDUCTION = 'All';
+    SIZE_REDUCTION = 'sel'; # selectionne une zone reduite  
+    #SIZE_REDUCTION = 'RED'; # Ne pas utiliser
+    # -------------------------------------------------------------------------
+    # Définition d'une la sous-zone :
+    # Once upon a time
+    #frlat=20.5; tolat=11.5; frlon=-20.5; tolon=-11.5   #(once upon a time)
+    #LON 16W a 28W  (donc -28 a -16) LAT 10N a 23N
+    #frlat=23.5; tolat=10.5; frlon=-28.5; tolon=-15.5;  #(¤:13x13)
+    frlat=22.5; tolat= 9.5; frlon=-27.5; tolon=-15.5;   #(§:13x12)
+    # J'essaye d'équilibrer les classes
+    #frlat=22.5; tolat=10.5; frlon=-24.5; tolon=-15.5   #(a)
+    #frlat=21.5; tolat=10.5; frlon=-23.5; tolon=-15.5   #(b)
+    # -------------------------------------------------------------------------
+    #nbl      = 6;  nbc =  6;  # Taille de la carte
+    #nbl      = 30;  nbc =  4;  # Taille de la carte
+    nbl       = 36;  nbc =  6;  # Taille de la carte
+    #nbl      = 52;  nbc =  8;  # Taille de la carte
+    # -------------------------------------------------------------------------
+    #Parm_app = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
+    Parm_app = ( 50, 5., 1.,  100, 1., 0.1); # Température ini, fin, nb_it
+    #Parm_app = ( 500, 5., 1.,  1000, 1., 0.1); # Température ini, fin, nb_it
+    #Parm_app = ( 2000, 5., 1.,  5000, 1., 0.1); # Température ini, fin, nb_it
+    # -------------------------------------------------------------------------
+    nb_class   = 7; #6, 7, 8  # Nombre de classes retenu
+    # -------------------------------------------------------------------------
+    NIJ        = 2; # cas de
+    # -------------------------------------------------------------------------
+    nb_clust   = 7; # Nombre de cluster
+    NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
+# -----------------------------------------------------------------------------
+
 #______________________________
 # For the Carte Topo (see also ctObsMdl)
-if 1 : # pour 'All' : 25x36 or 'sel' : 13x13 - 13x12
-    nbl      = 30;  nbc =  4;  # Taille de la carte
-    Parm_app = (5, 5., 1.,  16, 1., 0.1);
-elif 0 : # pour 'sel' : 13x13 - 13x12
-    nbl      = 12;  nbc =  8;   # Taille de la carte
-    Parm_app = (3, 3.,1.,  12,1.,1.0);
-    #---
-    #nbl      = 20;  nbc =  5;  # Taille de la carte
-    #Parm_app = (10, 5., 1.,  20, 1., 0.1);
-    #nbl      = 28;  nbc =  4;  # Taille de la carte
-    #Parm_app = (6, 5., 1.,  16, 1., 0.1);
-    #---
-elif 0 : # || pour 'sel' : 13x13 - 13x12
-    nbl      = 17;  nbc =  6;  # Taille de la carte
-    Parm_app = (4, 4., 1.,  16, 1., 0.1);
-#
 epoch1,radini1,radfin1,epoch2,radini2,radfin2 = Parm_app
 #______________________________
 # Complémentation des nan pour les modèles
 MDLCOMPLETION = True; # True=>Cas1
 #______________________________
 # Transcodage des classes 
-TRANSCOCLASSE = 'STD'; # Permet le transcodage des classes de façon à ce
+TRANSCOCLASSE = 'STD'; # Permet le transcodage des classes ...
 #TRANSCOCLASSE = 'GRAD'; # Permet le transcodage des classes de façon à ce
     # que les (indices de) classes correspondent à l'un des critères :
     # 'GAP' 'GAPNM' 'STD' 'MOY' 'MAX' 'MIN' 'GRAD'. Attention ce critère
     # est appliqué sur les référents ...
     # Avec la valeur '' le transcodage n'est pas requis.
 #______________________________
-# Prendre une zone plus petite
-SIZE_REDUCTION = 'All'; # 'sel', 'All';
-    # 'All' : Pas de réduction d'aucune sorte
-    # 'sel' : On sélectionne, d'entrée de jeu une zone plus petite,
-    #         c'est à dire à la lecture des données. Zone sur laquelle
-    #         tous les traitement seront effectues (codification, CT, Classif ...)
-    # 'RED' : Seule la classification est faite sur la zone REDuite
-    # rem   : PLM 'sel' et 'RED' ne sont pas compatibles.
-# Définition d'une la sous-zone :
-# Once upon a time
-#frlat=20.5; tolat=11.5; frlon=-20.5; tolon=-11.5   #(once upon a time)
-#LON 16W a 28W  (donc -28 a -16) LAT 10N a 23N
-#frlat=23.5; tolat=10.5; frlon=-28.5; tolon=-15.5;  #(¤:13x13)
-frlat=22.5; tolat= 9.5; frlon=-27.5; tolon=-15.5;   #(§:13x12)
-# J'essaye d'équilibrer les classes
-#frlat=22.5; tolat=10.5; frlon=-24.5; tolon=-15.5   #(a)
-#frlat=21.5; tolat=10.5; frlon=-23.5; tolon=-15.5   #(b)
 #______________________________
 MCUM = 3; # Moyenne des Models climatologiques CUmulés
           # Pour une vérif avec une Moyenne des Models CUmulés (avant
@@ -173,7 +237,7 @@ if CENTRED :
 # for CAH for classif with CT (see ctObsMdl for more)
 method_cah = 'ward'; # 'average', 'ward', 'complete','weighted'    #KKKKKKK
 dist_cah   = 'euclidean'; #
-nb_class   = 7; # 4, 5, 7; # Nombre de classes retenu #KKKKKKK   ##@@
+#nb_class ... DECLAREE CI-DESSUS  # Nombre de classes retenu #KKKKKKK   ##@@
 ccmap      = cm.jet;       # Accent, Set1, Set1_r, gist_ncar; jet, ... : map de couleur pour les classes
 # pour avoir des couleurs à peu près equivalente pour les plots
 #pcmap     = ccmap(np.arange(1,256,round(256/nb_class)));ko 512ko, 384ko
@@ -187,11 +251,7 @@ pcmap      = ccmap(np.arange(0,320,round(320/nb_class))); #ok?
 TypePerf = ["MeanClassAccuracy","GlobalAccuracy"]; #,"SpearmanCorr","Index2Rand","ContengencyCoef","GlobalAccuracy"];
 #______________________________
 # AFC
-NIJ = 2; # 0 : Pas d'AFC
-         # 1 : nombre d'elt par classe
-         # 2 : perf par classe
-         # 3 : nombre d'elt bien classés par classe
-         # voir aussi avec kperf plus haut
+#NIJ ... DECLAREE CI-DESSUS
 AFCWITHOBS = True; #False True : afc avec ou sans les Obs ?
 #AFCWITHOBS = False; # <<<<<<<<<<<<<<  ##@@
 pa=1; po=2; # Choix du plan factoriel
@@ -200,18 +260,13 @@ pa=1; po=2; # Choix du plan factoriel
 #______________________________
 # et CAH for cluster with AFC
 CAHWITHOBS = True; #True; #False
-nb_clust   = 4; # 5 8, 7, 6, 4, 3, -20   WARD.nbclust; par exemple WARD.5     #<><><><><><><>
+#nb_clust ... DECLAREE CI-DESSUS   # 5 8, 7, 6, 4, 3, -20   WARD.nbclust; par exemple WARD.5 
 #CAHCOORD  = 1; # 0:-> CAH avec les coordonnées du plan de l'afc  #<><><><><><><>
 #              # sinon : CAH avec TOUTES les coordonnées de l'afc
 #CAHCOORD  = np.array([1,2,3,4,5,6]); # [list] des coordonnées de l'afc à
 #CAHCOORD  = np.arange(4); # les n premières coordonnées de l'afc à
               # utiliser pour faire la CAH (limité à nb_class-1).
-NBCOORDAFC4CAH = 5; # nb_class-1 = les n premières coordonnées de l'afc
-#^v^v^v^v^v^v
-#NBCOORDAFC4CAH = nb_class-1; # les n premières coordonnées de l'afc
-#NBCOORDAFC4CAH = 1; # ##@@
-                    # à utiliser pour faire la CAH (limité à nb_class-1).
-                    # AFC.NBCOORDAFC4CAH; par exemple AFC.6
+#NBCOORDAFC4CAH  ... VOIR CI-DESSUS
 #
 #______________________________
 # Points d'arrets
@@ -221,9 +276,9 @@ STOP_BEFORE_AFC      = False;
 STOP_BEFORE_GENERAL  = False;
 #
 # Flag de visualisation
-Visu_ObsStuff  = False;   # Flag de visu des Obs  : 4CT, classif et courbes moy. mens.
+Visu_ObsStuff  = True;   # Flag de visu des Obs  : 4CT, classif et courbes moy. mens.
 Visu_CTStuff   = False;   # Flag de visu de la CT : Umat, Map, Profils (sauf Dendro) 
-Visu_Dendro    = False;   # Flag de visualisation des dendrogrammes
+Visu_Dendro    = True;    # Flag de visualisation des dendrogrammes
 Visu_afcnu_det = False;   # Sylvie
 Visu_Inertie   = True;    # Flag de visualisation de l'Inertie
 #Flag visu classif des modèles des cluster

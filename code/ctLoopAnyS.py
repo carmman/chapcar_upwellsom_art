@@ -251,6 +251,43 @@ if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
                      %(fcodage,DATAMDL));
     if 0 : #SAVEFIG : # sauvegarde de la figure
         plt.savefig("std%sObs"%(fshortcode))
+    if 0 :
+        # test d'affichage avec contours
+        from   matplotlib import cm
+        # Define a class that forces representation of float to look a certain way
+        # This remove trailing zero so '1.0' becomes '1'
+        class nf(float):
+            def __repr__(self):
+                str = '%.2f' % (self.__float__(),)
+                if str[-2:] == '00':
+                    return '%.0f' % self.__float__()
+                elif str[-1] == '0':
+                    return '%.1f' % self.__float__()
+                else:
+                    return '%.2f' % self.__float__()
+        #
+        ND,p      = np.shape(Dobs);
+        X_        = np.empty((Lobs*Cobs,p));  S_        = np.empty((Lobs*Cobs,p));   
+        X_[isnumobs] = Dobs;                  S_[isnumobs] = Dstd_; 
+        X_[isnanobs] = np.nan;                S_[isnanobs] = np.nan;
+        X2_ = X_.T.reshape(p,1,Lobs,Cobs);    S2_ = S_.T.reshape(p,1,Lobs,Cobs);
+        #
+        plt.figure()
+        m=7
+        plt.imshow(X2_[m,0,:],vmin=wvmin,vmax=wvmax,cmap=cm.gist_ncar)
+        CS = plt.contour(S2_[m,0,:],np.arange(0,1,1/20), colors='k')
+
+        # Recast levels to new class
+        CS.levels = [nf(val) for val in CS.levels]
+        # Label levels with specially formatted floats
+        if plt.rcParams["text.usetex"]:
+            #fmt = r'%r \%%'
+            fmt = '%r'
+        else:
+            #fmt = '%r %%'
+            fmt = '%r'
+        plt.clabel(CS, CS.levels, inline=True, fmt=fmt, fontsize=10)
+    #
     del Dstd_, pipo_
 #
 #######################################################################
@@ -816,7 +853,7 @@ for imodel in np.arange(Nmodels) :
         if pgqm_ >= MaxPerfglob_Qm :
             MaxPerfglob_Qm = pgqm_; # Utilisé pour savoir les quels premiers modèles
             IMaxPerfglob_Qm = imodel+1;   # prendre dans la stratégie du "meilleur cumul moyen"
-            print("New best cumul perf for %dmodels : %d%c"%(imodel+1,pgqm_,'%'))
+            print("New best cumul perf for %d models : %d%c"%(imodel+1,pgqm_,'%'))
      #
     if MCUM>0 and OK109 : # Variance sur les Models Cumulés Moyens (not 'RED' compatible)
                           # Perf par classe en colorbar)
