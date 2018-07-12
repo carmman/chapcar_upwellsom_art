@@ -22,6 +22,7 @@ or DATAMDL=="rcp_2070_2100" :      # on précise le scénario
 #
 # Tableau des modèles (cf dans ctObsMdldef.py; avant il était différent
 # selon DATARUN, maintenant, ca ne devrait plus etre le cas).
+Tinstit = Tinstitut_anyall;
 Tmodels = Tmodels_anyall;
 #Tmodels= Tmodels[2:12];  # Pour limiter le nombre de modèle en phase de mise au point
 Nmodels = len(Tmodels); # print(Nmodels); sys.exit(0)

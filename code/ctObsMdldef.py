@@ -17,7 +17,8 @@ from   localdef import *;                 # this may be true for others rep
 Tmodels_anyall_OUT = np.array([     # Mettre de coté certains modèles; on peut
         ["Observations",    ""],    # aussi les déplacer dans un repertoire sst_OUT/     
 ]);
-Tmodels_anyall = np.array([
+if 0
+    Tmodels_anyall = np.array([
         ["bcc-csm1-1",      ""],    #( 3)
         ["bcc-csm1-1-m",    ""],    #( 4)
         #["BNU-ESM",         ""],        # non fourni
@@ -66,8 +67,62 @@ Tmodels_anyall = np.array([
         ["CESM1-FASTCHEM",  ""],    #(11)
         ["CESM1-WACCM",     ""],    #(12)
         #["FIO-ESM",         ""],    #(??)]);
-#       ["OBS",             ""],    #(??)    # par exemple.
-]);
+        #["OBS",             ""],    #(??)    # par exemple.
+        ]);
+else :
+    Tmodels_and_institut_anyall = np.array([
+        ['BCC',          'bcc-csm1-1',       ''],   #( 3)
+        ['BCC',          'bcc-csm1-1-m',     ''],   #( 4)
+        #['BNU',          'BNU-ESM',          ''],   # non fourni
+        ['CCCma',        'CanCM4',           ''],
+        ['CCCma',        'CanESM2',          ''],
+        ['CMCC',         'CMCC-CESM',        ''],
+        ['CMCC',         'CMCC-CM',          ''],
+        ['CMCC',         'CMCC-CMS',         ''],
+        ['CNRM-CERFACS', 'CNRM-CM5',         ''],
+        ['CNRM-CERFACS', 'CNRM-CM5-2',       ''],
+        ['CSIRO-BOM',    'ACCESS1-0',        ''],
+        ['CSIRO-BOM',    'ACCESS1-3',        ''],
+        ['CSIRO-QCCCE',  'CSIRO-Mk3-6-0',    ''],
+        ['INM',          'inmcm4',           ''],
+        ['IPSL',         'IPSL-CM5A-LR',     ''],
+        ['IPSL',         'IPSL-CM5A-MR',     ''],
+        ['IPSL',         'IPSL-CM5B-LR',     ''],
+        ['LASG-CESS',    'FGOALS-g2',        ''],
+        ['LASG-IAP',     'FGOALS-s2',        ''],   # AAMMfin=200412 (360, 25, 36) -> manque une année 2005
+        ['MIROC',        'MIROC-ESM',        ''],
+        ['MIROC',        'MIROC-ESM-CHEM',   ''],
+        ['MIROC',        'MIROC5',           ''],
+        ['MOHC',         'HadCM3',           ''],
+        ['MOHC',         'HadGEM2-CC',       ''],
+        ['MOHC',         'HadGEM2-ES',       ''],
+        ['MPI-M',        'MPI-ESM-LR',       ''],
+        ['MPI-M',        'MPI-ESM-MR',       ''],
+        ['MPI-M',        'MPI-ESM-P',        ''],
+        ['MRI',          'MRI-CGCM3',        ''],
+        ['MRI',          'MRI-ESM1',         ''],
+        ['NASA-GISS',    'GISS-E2-H',        ''],
+        ['NASA-GISS',    'GISS-E2-H-CC',     ''],
+        ['NASA-GISS',    'GISS-E2-R',        ''],
+        ['NASA-GISS',    'GISS-E2-R-CC',     ''],
+        ['NCAR',         'CCSM4',            ''],
+        ['NCC',          'NorESM1-M',        ''],
+        ['NCC',          'NorESM1-ME',       ''],
+        ['NIMR-KMA',     'HadGEM2-AO',       ''],
+        ['NOAA-GFDL',    'GFDL-CM2p1',       ''],
+        ['NOAA-GFDL',    'GFDL-CM3',         ''],
+        ['NOAA-GFDL',    'GFDL-ESM2G',       ''],
+        ['NOAA-GFDL',    'GFDL-ESM2M',       ''],
+        ['NSF-DOE-NCAR', 'CESM1-BGC',        ''],
+        ['NSF-DOE-NCAR', 'CESM1-CAM5',       ''],
+        ['NSF-DOE-NCAR', 'CESM1-CAM5-1-FV2', ''],
+        ['NSF-DOE-NCAR', 'CESM1-FASTCHEM',   ''],
+        ['NSF-DOE-NCAR', 'CESM1-WACCM',      ''],
+        #['FIO',          'FIO-ESM',          ''],    # pas de donnees 'tos', en 'historical', uniquement 'so', mais a des donnees en scenarios ...
+        #['',             'OBS',              ''],    #(??)    # par exemple.
+    ]);
+    Tinstitut_anyall = Tmodels_and_institut_anyall[:,0]
+    Tmodels_anyall = Tmodels_and_institut_anyall[:,(1,2)]
 #----------------------------------------------------------------------
 def pentes(X) : # Courbes des pentes (b1) par pîxel
     N,L,C = np.shape(X);

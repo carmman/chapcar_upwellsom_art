@@ -120,19 +120,22 @@ def Dgeoclassif(sMap,Data,L,C,isnum,MajorPerf,visu=True) :
         plt.axis('off');
         #grid(); # for easier check
     return Perfglob_
-#----------------------------------------------------------------------
+
+#%% ----------------------------------------------------------------------
 # Des truc qui pourront servir
 tpgm0 = time();
 plt.ion()
 varnames = np.array(["JAN","FEV","MAR","AVR","MAI","JUI",
                     "JUI","AOU","SEP","OCT","NOV","DEC"]);
+obs_data_path = '../Datas'
 #######################################################################
 #
 # PARAMETRAGE (#1) DU CAS
 from ParamCas import *
 #
 #======================================================================
-#
+
+#%%
 #######################################################################
 # ACQUISITION DES DONNEES D'OBSERVATION (et application des codifications)
 #======================================================================
@@ -140,20 +143,24 @@ from ParamCas import *
 # Lecture des Obs____________________________________
 if 0 : # Ca c'était avant
     #lat: 29.5 à 5.5 ; lon: -44.5 à -9.5
-    sst_obs  = np.load("Datas/sst_obs_1854a2005_Y60X315.npy");
+    sst_obs  = np.load(os.path.join(obs_data_path,"sst_obs_1854a2005_Y60X315.npy"));
     # Selection___________________________________________
     Nobs,Lobs,Cobs = np.shape(sst_obs);
     if Nda > 0 : # Ne prendre que les Nda dernières années (rem ATTENTION, toutes les ne commencent
         sst_obs = sst_obs[Nobs-(Nda*12):Nobs,]; #  pas à l'année 1850 ou 1854 ni au mois 01 !!!!!!!
 #
 if DATAOBS == "raverage_1975_2005" :  
-    obs_filename = "./Datas/raverage_1975-2005/ersstv3b_1975-2005_extract_LON-315-351_LAT-30-5.nc";
+    obs_filename = os.path.join(obs_data_path,"Donnees_1975-2005","Obs",
+                                "ersstv3b_1975-2005_extract_LON-315-351_LAT-30-5.nc");
 elif DATAOBS == "raverage_1930_1960" :  
-    obs_filename = "./Datas/raverage_1930-1960/ersstv3b_1930-1960_extract_LON-315-351_LAT-30-5.nc";   
+    obs_filename = os.path.join(obs_data_path,"Donnees_1930-1960","Obs",
+                                "ersstv3b_1930-1960_extract_LON-315-351_LAT-30-5.nc");   
 elif DATAOBS == "raverage_1944_1974" :
-    obs_filename = "./Datas/raverage_1944-1974/ersstv3b_1944-1974_extract_LON-315-351_LAT-30-5.nc";  
+    obs_filename = os.path.join(obs_data_path,"Donnees_1944-1974","Obs",
+                                "ersstv3b_1944-1974_extract_LON-315-351_LAT-30-5.nc");  
 elif DATAOBS == "rcp_2006_2017" :
-    obs_filename = "./Datas/rcp_2006-2017/ersst.v3b._2006-2017_extrac-zone_LON-315-351_LAT-30-5.nc";
+    obs_filename = os.path.join(obs_data_path,"Donnees_2006-2017","Obs",
+                                "ersstv3b_2006-2017_extrac_LON-315-351_LAT-30-5.nc");
 #
 import netCDF4
 nc      = netCDF4.Dataset(obs_filename);
@@ -196,7 +203,7 @@ X_       = sst_obs[0].reshape(Lobs*Cobs);
 isnanobs = np.where(np.isnan(X_))[0];
 isnumobs = np.where(~np.isnan(X_))[0];
 del X_;
-#
+#%%
 #_________________________
 # Codification des Obs 4CT 
 sst_obs, Dobs, NDobs = datacodification4CT(sst_obs);
@@ -373,6 +380,7 @@ if Visu_CTStuff : # Visu des profils des référents de la carte
 #
 if STOP_BEFORE_MDLSTUFF :
     plt.show(); sys.exit(0)
+#%%
 #######################################################################
 #                        MODELS STUFFS START HERE
 #======================================================================
@@ -451,6 +459,7 @@ Sfiltre = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
 #<<<<<<<<
 #
 for imodel in np.arange(Nmodels) :
+    instname = Tinstit[imodel]; #print("-> ", mdlname)
     mdlname = Tmodels[imodel,0]; #print("-> ", mdlname)
     anstart = Tmodels[imodel,1]; # (utile pour rmean seulement)
     #
@@ -462,15 +471,35 @@ for imodel in np.arange(Nmodels) :
     #______________________________________________________
     # Lecture des données (fichiers.mat générés par Carlos)
     if  DATAMDL=="raverage_1975_2005" : 
-        mdl_filename = "./Datas/raverage_1975-2005/sst_"+mdlname+"_raverage_1975-2005.mat"
+        mdl_filename = os.path.join(obs_data_path,"Donnees_1975-2005",
+                                "all_data_historical_raverage_1975-2005",
+                                'Data',
+                                instname+'_'+mdlname,
+                                "sst_"+mdlname+"_raverage_1975-2005.mat")
     elif DATAMDL=="raverage_1930_1960" : 
-        mdl_filename = "./Datas/raverage_1930-1960/sst_"+mdlname+"_raverage_1930-1960.mat"
+        mdl_filename = os.path.join(obs_data_path,"Donnees_1930-1960",
+                                "all_data_historical_raverage_1930-1960",
+                                'Data',
+                                instname+'_'+mdlname,
+                                "sst_"+mdlname+"_raverage_1930-1960.mat")
     elif DATAMDL=="raverage_1944_1974" : 
-        mdl_filename = "./Datas/raverage_1944-1974/sst_"+mdlname+"_raverage_1944-1974.mat"
+        mdl_filename = os.path.join(obs_data_path,"Donnees_1944-1974",
+                                "all_data_historical_raverage_1944-1974",
+                                'Data',
+                                instname+'_'+mdlname,
+                                "sst_"+mdlname+"_raverage_1944-1974.mat")
     elif DATAMDL == "rcp_2006_2017":
-        mdl_filename = "./Datas/rcp_2006-2017/%s/sst_"%scenar+mdlname+"_raverage_2006-2017.mat"
+        mdl_filename = os.path.join(obs_data_path,"Donnees_2006-2017",
+                                "all_data_"+scenar+"_raverage_2006-2017",
+                                'Data',
+                                instname+'_'+mdlname,
+                                "sst_"+scenar+mdlname+"_raverage_2006-2017.mat")
     elif DATAMDL == "rcp_2070_2100":
-        mdl_filename = "./Datas/rcp_2070-2100/%s/sst_"%scenar+mdlname+"_raverage_2070-2100.mat"
+        mdl_filename = os.path.join(obs_data_path,"Donnees_2070-2100",
+                                "all_data_"+scenar+"_raverage_2070-2100",
+                                'Data',
+                                instname+'_'+mdlname,
+                                "sst_"+scenar+mdlname+"_raverage_2070-2100.mat")
     try :
         sst_mat = scipy.io.loadmat(mdl_filename);
     except :

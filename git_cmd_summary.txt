@@ -89,6 +89,7 @@ git commit -m "Code de Charles envoye sous le nom PourCarlos2 du 12/06/2018"
 
 # fichiers provenant de Windows, je converti les fin de ligne des
 # fichiers texte au monde unix ...
+cd code/
 dos2unix *.py
 dos2unix triedpy/*.py
 dos2unix triedpy/archives/*.py
@@ -96,4 +97,3 @@ dos2unix triedpy/*.txt
 
 # DEUXIEME COMMIT (fichiers texte convertis a unix ...)
 git commit -am "Conversion dos2unix de tout *.py et *.txt"
-
