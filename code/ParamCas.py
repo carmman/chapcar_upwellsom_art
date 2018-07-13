@@ -58,7 +58,7 @@ Nmodels = len(Tmodels); # print(Nmodels); sys.exit(0)
 #   # à utiliser pour faire la CAH (limité à nb_class-1).
 #   # AFC.NBCOORDAFC4CAH; par exemple AFC.6
 #
-if 0 : # conditions Code Charles: GRANDE ZONE
+if 1 : # conditions Code Charles: GRANDE ZONE
     SIZE_REDUCTION = 'All';
     # A - Grande zone de l’upwelling (25x36) : Longitude : -44 à -9.5 ; Latitude : 29.5 à 5.5
     frlat =  29.5;  tolat =  4.5; #(excluded)
@@ -73,7 +73,8 @@ if 0 : # conditions Code Charles: GRANDE ZONE
     NIJ            = 2;
     nb_clust       = 4; # Nombre de cluster
     #nb_clust       = 6; # Nombre de cluster
-    NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
+    NBCOORDAFC4CAH = nb_class - 1 - 1; # n premières coordonnées de l'afc à
+    #NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
     #NBCOORDAFC4CAH = nb_class; # n premières coordonnées de l'afc à
                     # utiliser pour faire la CAH (limité à nb_class-1).
 elif 1 : # conditions Code Charles: PETITE ZONE
@@ -162,7 +163,7 @@ MCUM = 3; # Moyenne des Models climatologiques CUmulés
 OK101 = True; # Pour produire les Ecarts types d'un modèle moyen par
               # pixel et par mois (eventuellement controlé par Sopt...)
 ecvmin = 0.10; ecvmax = 0.70; # si ecvmin<0 on utilise les min et max
-ecvmin= -1.0                 # des valeurs à afficher
+ecvmin= -1.0                 # des valeurs à afficher: si negatif prend les limites de chaque figure
 #<<<
 OK105=True;
 OK104=OK106=OK108=True;
@@ -221,17 +222,17 @@ if climato=="GRAD" :
 if INDSC :
     fcodage=fcodage+"INDSC(";       fshortcode=fshortcode+"Indsc"
 if TRENDLESS :
-    fcodage=fcodage+"TRENDLESS(";   fshortcode=fshortcode+"Tless"
+    fcodage=fcodage+"TRENDLESS";   fshortcode=fshortcode+"Tless"
 if WITHANO :
-    fcodage=fcodage+"ANOMALIE(";    fshortcode=fshortcode+"Ano"
+    fcodage=fcodage+"ANOMALY";    fshortcode=fshortcode+"Ano"
 #if CENTREE : fcodage=fcodage+"CENTREE(";
 #-> Climatologie (Moyenne mensuelle par pixel)
 if UISST :
-    fcodage=fcodage+"UI(";          fshortcode=fshortcode+"Ui"
+    fcodage=fcodage+"UI";          fshortcode=fshortcode+"Ui"
 if NORMMAX :
-    fcodage=fcodage+"NORMMAX(";     fshortcode=fshortcode+"Nmax"
+    fcodage=fcodage+"NORMMAX";     fshortcode=fshortcode+"Nmax"
 if CENTRED :
-    fcodage=fcodage+"CENTRED(";     fshortcode=fshortcode+"Ctred"
+    fcodage=fcodage+"CENTRED";     fshortcode=fshortcode+"Ctred"
 #print(fcodage); sys.exit(0);
 #______________________________
 # for CAH for classif with CT (see ctObsMdl for more)
@@ -277,7 +278,7 @@ STOP_BEFORE_GENERAL  = False;
 #
 # Flag de visualisation
 Visu_ObsStuff  = True;   # Flag de visu des Obs  : 4CT, classif et courbes moy. mens.
-Visu_CTStuff   = False;   # Flag de visu de la CT : Umat, Map, Profils (sauf Dendro) 
+Visu_CTStuff   = True;   # Flag de visu de la CT : Umat, Map, Profils (sauf Dendro) 
 Visu_Dendro    = True;    # Flag de visualisation des dendrogrammes
 Visu_afcnu_det = False;   # Sylvie
 Visu_Inertie   = True;    # Flag de visualisation de l'Inertie

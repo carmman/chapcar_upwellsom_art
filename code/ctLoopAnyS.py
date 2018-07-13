@@ -5,6 +5,7 @@ import time as time
 import numpy as np
 import matplotlib.pyplot as plt
 from   matplotlib import cm
+from   mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from   scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 import scipy.io
 from   scipy.stats import spearmanr, chi2_contingency
@@ -126,8 +127,12 @@ def Dgeoclassif(sMap,Data,L,C,isnum,MajorPerf,visu=True) :
 # Des truc qui pourront servir
 tpgm0 = time();
 plt.ion()
-varnames = np.array(["JAN","FEV","MAR","AVR","MAI","JUI",
-                    "JUI","AOU","SEP","OCT","NOV","DEC"]);
+if 0: # French
+    varnames = np.array(["JAN","FEV","MAR","AVR","MAI","JUI",
+                        "JUI","AOU","SEP","OCT","NOV","DEC"]);
+else: # Anglais
+    varnames = np.array(["JAN","FEV","MAR","AVR","MAI","JUI",
+                        "JUI","AOU","SEP","OCT","NOV","DEC"]);
 obs_data_path = '../Datas'
 #######################################################################
 #
@@ -224,36 +229,41 @@ if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
     # telles qu'elles vont etre utilisées par la Carte Topologique
     minDobs = np.min(Dobs);   maxDobs=np.max(Dobs);
     moyDobs = np.mean(Dobs);  stdDobs=np.std(Dobs);
-    if climato != "GRAD" :
-        aff2D(Dobs,Lobs,Cobs,isnumobs,isnanobs,wvmin=wvmin,wvmax=wvmax,
-              figsize=(12,9),varnames=varnames); #...
-    else :
-        aff2D(Dobs,Lobs,Cobs,isnumobs,isnanobs,wvmin=0.0,wvmax=0.042,
-              figsize=(12,9),varnames=varnames); #...
-    plt.suptitle("%sSST%d-%d). Obs for CT\nmin=%f, max=%f, moy=%f, std=%f"
-                 %(fcodage,andeb,anfin,minDobs,maxDobs,moyDobs,stdDobs));
-    if 0 : #SAVEFIG : # sauvegarde de la figure
-        plt.savefig("%sObs4CT"%(fshortcode))
-    #X_ = np.mean(Dobs, axis=1); X_ = X_.reshape(743,1); #rem = 0.0 when anomalies
-    #plt.show(); sys.exit(0);
-    #
-    # ECARTS TYPES par mois et par pixel
-    # Ici sst_obs correspond aux anomalies (si c'est uniquement ca qu'on
-    # a demandé) et plus généralement aux données avant climatologie
+#    if climato != "GRAD" :
+#        aff2D(Dobs,Lobs,Cobs,isnumobs,isnanobs,wvmin=wvmin,wvmax=wvmax,
+#              figsize=(12,9),varnames=varnames); #...
+#    else :
+#        aff2D(Dobs,Lobs,Cobs,isnumobs,isnanobs,wvmin=0.0,wvmax=0.042,
+#              figsize=(12,9),varnames=varnames); #...
+#    plt.suptitle("%sSST%d-%d). Obs for CT\nmin=%f, max=%f, moy=%f, std=%f"
+#                 %(fcodage,andeb,anfin,minDobs,maxDobs,moyDobs,stdDobs));
+#    if 0 : #SAVEFIG : # sauvegarde de la figure
+#        plt.savefig("%sObs4CT"%(fshortcode))
+#    #X_ = np.mean(Dobs, axis=1); X_ = X_.reshape(743,1); #rem = 0.0 when anomalies
+#    #plt.show(); sys.exit(0);
+#    #
+#    # ECARTS TYPES par mois et par pixel
+#    # Ici sst_obs correspond aux anomalies (si c'est uniquement ca qu'on
+#    # a demandé) et plus généralement aux données avant climatologie
     Dstd_, pipo_, pipo_  = Dpixmoymens(sst_obs, stat='std');
-    if ecvmin >= 0 : 
-        aff2D(Dstd_,Lobs,Cobs,isnumobs,isnanobs, figsize=(12,9),varnames=varnames,
-              wvmin=ecvmin,wvmax=ecvmax);
+#    if ecvmin >= 0 : 
+#        aff2D(Dstd_,Lobs,Cobs,isnumobs,isnanobs, figsize=(12,9),varnames=varnames,
+#              wvmin=ecvmin,wvmax=ecvmax);
+#    else :
+#        aff2D(Dstd_,Lobs,Cobs,isnumobs,isnanobs, figsize=(12,9),varnames=varnames,
+#              wvmin=np.nanmin(Dstd_),wvmax=np.nanmax(Dstd_));
+#    plt.suptitle("%sSST(%s)). Obs Before Climatologie\nEcarts Types par mois et par pixel" \
+#                     %(fcodage,DATAMDL));
+#    if 0 : #SAVEFIG : # sauvegarde de la figure
+#        plt.savefig("std%sObs"%(fshortcode))
+    if SIZE_REDUCTION == 'All' :
+        lolast = 4
     else :
-        aff2D(Dstd_,Lobs,Cobs,isnumobs,isnanobs, figsize=(12,9),varnames=varnames,
-              wvmin=np.nanmin(Dstd_),wvmax=np.nanmax(Dstd_));
-    plt.suptitle("%sSST(%s)). Obs Before Climatologie\nEcarts Types par mois et par pixel" \
-                     %(fcodage,DATAMDL));
-    if 0 : #SAVEFIG : # sauvegarde de la figure
-        plt.savefig("std%sObs"%(fshortcode))
-    if 0 :
+        lolast = 2
+    if 1 :
         # test d'affichage avec contours
         from   matplotlib import cm
+        import matplotlib.colorbar as cb
         # Define a class that forces representation of float to look a certain way
         # This remove trailing zero so '1.0' becomes '1'
         class nf(float):
@@ -272,21 +282,82 @@ if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
         X_[isnanobs] = np.nan;                S_[isnanobs] = np.nan;
         X2_ = X_.T.reshape(p,1,Lobs,Cobs);    S2_ = S_.T.reshape(p,1,Lobs,Cobs);
         #
-        plt.figure()
-        m=7
-        plt.imshow(X2_[m,0,:],vmin=wvmin,vmax=wvmax,cmap=cm.gist_ncar)
-        CS = plt.contour(S2_[m,0,:],np.arange(0,1,1/20), colors='k')
-
-        # Recast levels to new class
-        CS.levels = [nf(val) for val in CS.levels]
-        # Label levels with specially formatted floats
-        if plt.rcParams["text.usetex"]:
-            #fmt = r'%r \%%'
-            fmt = '%r'
-        else:
-            #fmt = '%r %%'
-            fmt = '%r'
-        plt.clabel(CS, CS.levels, inline=True, fmt=fmt, fontsize=10)
+        if SIZE_REDUCTION == 'All' :
+            figsize = (10.5,5.5)
+        elif SIZE_REDUCTION == 'sel' :
+            figsize=(10,8)
+        facecolor='w'
+        fig = plt.figure(figsize=figsize,facecolor='w')
+        fignum = fig.number # numero de figure en cours ...
+        wspace=0.02; hspace=0.12; top=0.92; bottom=0.06; left=0.02; right=0.98;
+        M, P, Q = np.shape(X2_[0]);
+        n = 12
+        nbsubl = 3; nbsubc=4; # lignes x colonnes
+        interp=None
+        sztext=11
+        Labels=varnames
+        cmap=cm.gist_ncar
+        fig, axes = plt.subplots(nrows=nbsubl, ncols=nbsubc, num=fignum,
+                            sharex=True, sharey=True, figsize=figsize,facecolor=facecolor)
+        fig.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
+        ifig = 0
+        for ax in axes.flat:
+            if ifig < n : 
+                img  = X2_[ifig];               
+                std  = S2_[ifig];               
+                if M == 1 :
+                    img  = img.reshape(P,Q)
+                    std  = std.reshape(P,Q)
+                elif M != 3 :
+                    print("showimgdata: Invalid data dimensions image : must be : 1xPxQ or 3xPxQ")
+                    sys.exit(0);
+                else : #=> = 3
+                    img  = img.transpose(1,2,0);
+                ims = ax.imshow(img, interpolation=interp, cmap=cmap, vmin=wvmin,vmax=wvmax);           
+                plt.axis("image"); #plt.axis("off");
+                if Labels is not None :
+                    ax.set_title(Labels[ifig],fontsize=sztext,y=0.98);
+                    
+                CS = ax.contour(std,np.arange(0,1,1/20), colors='k')
+                # Recast levels to new class
+                CS.levels = [nf(val) for val in CS.levels]
+                # Label levels with specially formatted floats
+                if plt.rcParams["text.usetex"]:
+                    #fmt = r'%r \%%'
+                    fmt = '%r'
+                else:
+                    #fmt = '%r %%'
+                    fmt = '%r'
+                ax.clabel(CS, CS.levels, inline=True, fmt=fmt, fontsize=10)
+                print(ifig,np.mod(ifig,nbsubc),(ifig // nbsubc) )
+                if np.mod(ifig,nbsubc) == 0 and (ifig // nbsubc) == (nbsubl - 1):
+                    ax.set_xticks(np.arange(0.5,Cobs,lolast))
+                    ax.set_xticklabels(np.round(lon[np.arange(0,Cobs,lolast)]).astype(int))
+                    ax.set_yticks(np.arange(-0.5,Lobs,lolast))
+                    ax.set_yticklabels(np.round(lat[np.arange(0,Lobs,lolast)]).astype(int))
+                else :
+                    ax.set_xticks([])
+                    ax.set_yticks([])
+            else:
+                ax.axis('off')
+            ifig += 1;
+        #ax_divider = make_axes_locatable(axes)
+        #cax = ax_divider.append_axes("right", size="6%", pad="3%")
+        #hcb = plt.colorbar(ims,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
+        #hcb.set_ticklabels(coches);
+        #hcb.ax.tick_params(labelsize=14);
+        #hcb.ax.set_ylabel('classe',size=14)
+        cbar_ax,kw = cb.make_axes([ax for ax in axes.flat],orientation="horizontal",
+                                 fraction=0.04,pad=0.04,aspect=30)
+        fig.colorbar(ims, cax=cbar_ax, **kw);
+        cbar_ax.set_xlabel("SST Anomaly [°C]")
+        #
+        plt.suptitle("SST Obs %s and STD (%d-%d)\nmin=%f, max=%f, mean=%f, std=%f"
+                 %(fcodage,andeb,anfin,minDobs,maxDobs,moyDobs,stdDobs),y=0.995);
+        #plt.suptitle("%sSST(%s)). Obs Before Climatologie\nEcarts Types par mois et par pixel" \
+        #                 %(fcodage,DATAMDL),y=0.995);
+        if SAVEFIG : # sauvegarde de la figure
+            plt.savefig("%sObs+STD"%(fshortcode))
     #
     del Dstd_, pipo_
 #
@@ -1314,7 +1385,7 @@ else :
 #**********************************************************************
 plt.show();
 #___________
-print("WITHANO,UISST,climato,NIJ :\n", WITHANO, UISST,climato,NIJ)
+print("\nWITHANO,UISST,climato,NIJ :\n", WITHANO, UISST,climato,NIJ)
 import os
 print("whole time code %s: %f" %(os.path.basename(sys.argv[0]), time()-tpgm0));
 #
