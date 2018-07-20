@@ -208,7 +208,7 @@ class SOM(object):
     
     #Main loop of training
     #def train(self, trainlen=None, verbose='on'):
-    def train(self, etape1=[5,5,2],etape2=[5,2,0.1], verbose='on'):
+    def train(self, etape1=[5,5,2],etape2=[5,2,0.1], verbose='on', retqerrflg=False):
         ''' etape1    etape2
         1.   [X]        [X]     : DEUX etapes dont on choisi les parametres
         2.   [X]         0      : UNE seule etape (la 1ere) dont on choisit les parametres
@@ -275,6 +275,8 @@ class SOM(object):
                 print()
                 print("Total time elapsed: %f seconds" %ts)
                 print("final quantization error: %f" %err) 
+            if retqerrflg :
+                return (err)
     
     #to project a data set to a trained SOM and find the index of bmu 
     #It is based on nearest neighborhood search module of scikitlearn, but it is not that fast.
@@ -459,7 +461,7 @@ class SOM(object):
             Umatrix[i]  = scipy.spatial.distance_matrix(codebook_i,neighbor_codebooks).mean()
         return Umatrix.reshape(self.mapsize)
 
-    def view_U_matrix(self,distance2=1,row_normalized='No',show_data='Yes',contooor='Yes',blob = 'No',save='No',save_dir = ''):
+    def view_U_matrix(self,distance2=1,row_normalized='No',show_data='Yes',contooor='Yes',blob = 'No',save='No',save_dir = '',fignum = None):
         import scipy
         from pylab import meshgrid,cm,imshow,contour,clabel,colorbar,axis,title,show
         umat  = self.U_matrix(distance=distance2,row_normalized=row_normalized) 
@@ -469,9 +471,13 @@ class SOM(object):
         coord = self.ind_to_xy(proj)
         #freq = plt.hist2d(coord[:,1], coord[:,0], bins=(msz[1],msz[0]),alpha=1.0,cmap=cm.jet)[0]
         #plt.close()
-         
-        #fig, ax = plt.figure()
-        fig, ax = plt.subplots(1, 1)
+        if fignum is not None :
+            fig = plt.figure(fignum)
+        else:
+            fig = plt.figure()
+            fignum = fig.number
+        #
+        fig, ax = plt.subplots(1, 1, num=fignum)
         im = imshow(umat,cmap=cm.RdYlBu_r,alpha=1) # drawing the function
         # adding the Contour lines with labels`
         # imshow(freq[0].T,cmap=cm.jet_r,alpha=1)

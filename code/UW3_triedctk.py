@@ -154,8 +154,11 @@ def gatheril (indices, labels) :
     return Uind, Ulab
 
          
-def showmap(sm, sztext=11, coltext='k',colbar=True, cmap=cm.jet, interp=None,caxmin=None,
-            caxmax=None,axis=None, comp=[], nodes=None, Labels=None, dh=0, dv=0) :
+def showmap(sm, sztext=11, coltext='k',colbar=True, cbsztext=8,cmap=cm.jet, interp=None, caxmin=None,
+            caxmax=None,axis=None, comp=[], nodes=None, Labels=None, dh=0, dv=0,
+            noaxes=True,noticks=True,nolabels=True,
+            xticks=None,yticks=None,
+            figsize=(12,16),fignum=None, y=0.98) :
     ''' showmap(sm, sztext, colbar, cmap, interp, caxmin,caxmax)
     | Visualisations des variables (componants) de la carte. Il s'agit d'un
     | équivalent moins sophistiqué de som_show (sans la U-Matrix)
@@ -184,7 +187,11 @@ def showmap(sm, sztext=11, coltext='k',colbar=True, cmap=cm.jet, interp=None,cax
         comp = np.asarray(comp)
         comp = comp - 1;
         
-    fig = plt.figure();  
+    if fignum is not None :
+        fig = plt.figure(fignum);
+    else:
+        fig = plt.figure(figsize=figsize);
+    
     nbsubc = np.ceil(np.sqrt(nvar));
     nbsubl = np.ceil(nvar/nbsubc);
     isub=0;
@@ -197,26 +204,28 @@ def showmap(sm, sztext=11, coltext='k',colbar=True, cmap=cm.jet, interp=None,cax
     
     for i in comp :
         isub+=1;
-        plt.subplot(nbsubl,nbsubc,isub);
+        ax=plt.subplot(nbsubl,nbsubc,isub);
         Ref2D = sm.codebook[:,i].reshape(nbl,nbc);
         
-        if caxmin==None :
+        if caxmin is None :
             vmin = np.min(Ref2D);
         else :
             vmin = caxmin;
-        if caxmax==None :
+        if caxmax is None :
             vmax = np.max(Ref2D);       
         else :
             vmax = caxmax;
 
         plt.imshow(Ref2D,interpolation=interp, cmap=cmap, vmin=vmin, vmax=vmax);
-         
+        
         if sm.varname is None or sm.varname is [] :
-            plt.title("Variable %d" %(isub), fontsize=sztext);
+            plt.title("Variable %d" %(isub), fontsize=sztext, y=y);
         else :
-            plt.title("%s" %(sm.varname[i]), fontsize=sztext);
+            plt.title("%s" %(sm.varname[i]), fontsize=sztext, y=y);
         if colbar==True :
-            plt.colorbar();
+            cbar =plt.colorbar();
+            ticklabs = cbar.ax.get_yticklabels()
+            cbar.ax.set_yticklabels(ticklabs, fontsize=cbsztext)
 
         if nodes is not None :
             for n in np.arange(len(Unodes)) :
@@ -229,6 +238,19 @@ def showmap(sm, sztext=11, coltext='k',colbar=True, cmap=cm.jet, interp=None,cax
         
         if axis is not None :
             plt.axis(axis)
+        #
+        if noaxes :
+            plt.axis('off')
+        elif noticks :
+            plt.xticks([]); plt.yticks([])
+        elif nolabels :
+            if xticks is None :
+                xticks = plt.xticks()
+            if yticks is None :
+                yticks = plt.yticks();
+            plt.xticks(xticks);
+            plt.yticks(yticks);
+            ax.tick_params(labelbottom=False,labelleft=False)
             
     plt.suptitle("Map's components");
     fig.patch.set_facecolor('white');
@@ -518,7 +540,9 @@ def showbarcell (sm,norm='brute',a=0,b=1,scale=0,cmap=cm.rainbow,sztext=11) :
 
 
 def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
-                Clevel=None, Gscale=0.25, showcellid=None, ColorClass=None) :
+                Clevel=None, Gscale=0.25, showcellid=None, ColorClass=None,
+                sztext=11, axsztext=8, markrsz=6, marker='*',pltcolor='r',ticklabels=None,
+                figsize=(12,16),fignum=None, y=0.98,verbose=False) :
     ''' showprofils (sm, visu, Data, bmus ,scale, Clevel, Gscale)
     | Pour chaque neurone, on représente, dans un subplot, le référent et/ou des
     | données qu'ils a captées sous forme de courbe.
@@ -535,6 +559,8 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
     |          les résultats sont imprévisibles sinon. Par défaut on associera les
     |          référents aux données d'apprentissage de la carte dans la structure
     |          sm.
+    | sztext   : Taille du texte des titres (fontsize), 11 par défaut.
+    | axsztext : Taille du texte des axes(fontsize), 8 par défaut.
     | scale  : Echelle pour les axes des subplots
     |          1 : échelle indépendante ajustée (axis('tight'))  
     |          2 : échelle commune pour tous les subplots comprise entre le min et
@@ -590,7 +616,11 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
        print("showprofils : bad visu value -> turn to 1 (referents only)");
        visu=1;
    
-    fig = plt.figure();
+    if fignum is not None :
+        fig = plt.figure(fignum);
+    else:
+        fig = plt.figure(figsize=figsize);
+
     if visu==2 or visu==3 : # Les données
         inode =  0;
         for l in np.arange(nbl) :     # en supposant les référents
@@ -598,12 +628,12 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
                 ax = plt.subplot(nbl,nbc,inode+1);
                 idx = np.where(bmus==inode);
                 if np.size(idx) > 0 :
-                    plt.plot(Data[idx[0],:].T,'-b');
+                    plt.plot(Data[idx[0],:].T,'-b',linewidth=2);
                 #
                 inode +=1;
                 # To have Neurone indice number (if required)
                 if showcellid :
-                    plt.title("Cell N° %d" %(inode),fontsize=10); 
+                    plt.title("Cell N° %d" %(inode),fontsize=sztext); 
 
     if visu==1 or visu==3 : # Les référents   
         inode =  0;
@@ -612,7 +642,8 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
                 ax = plt.subplot(nbl,nbc,inode+1);
                 axx = plt.gca();
                 #
-                plt.plot(sm.codebook[inode,:],'*-r');
+                plt.plot(sm.codebook[inode,:],'-',color=pltcolor,linewidth=0.5);
+                plt.plot(sm.codebook[inode,:],marker=marker,markersize=markrsz,color=pltcolor);
                 if scale==1 :
                     plt.axis("tight");
                 elif scale==2 :
@@ -623,7 +654,34 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
                         ax.set_axis_bgcolor(ColorClass[Clevel[inode]])
                     else :
                         ax.set_facecolor(ColorClass[Clevel[inode]])       
-                #
+                # axe values only in borders of subplots
+                ax.tick_params(labelsize=axsztext)
+                if l < (nbl - 1) :
+                    ax.tick_params(labelbottom=False)
+                elif ticklabels is not None :
+                    xticks = plt.xticks()[0];
+                    if verbose:
+                        print(xticks)
+                        print(ticklabels)
+                    localtcks = []
+                    locallbls = []
+                    for ii in np.arange(len(ticklabels)) :
+                        if verbose:
+                            print(ii,np.where(xticks == float(ii))[0])
+                        if len(np.where(xticks == float(ii))[0]) > 0 :
+                            if ii < len(ticklabels) :
+                                localtcks.append(ii)
+                                locallbls.append(ticklabels[ii])
+                            else:
+                                localtcks.append(ii)
+                                locallbls.append('')
+                        else:
+                            localtcks.append(ii)
+                            locallbls.append('')
+                    ax.set_xticks(localtcks)
+                    ax.set_xticklabels(locallbls,rotation=60)
+                if c > 0:
+                    ax.tick_params(labelleft=False)
                 inode +=1;
 
     fig.patch.set_facecolor('white');

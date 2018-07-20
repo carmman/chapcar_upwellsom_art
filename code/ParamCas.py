@@ -1,5 +1,23 @@
 from   ctObsMdldef import *
 #######################################################################
+# FLAGS DE COMPORTEMENT
+#======================================================================
+SAVEFIG    = True;
+#SAVEFIG    = False;
+# -----------------------------------------------------------------------------
+SAVEPDF    = True;
+#SAVEPDF    = False;
+# -----------------------------------------------------------------------------
+SAVEMAP    = True;
+#SAVEMAP    = False;
+# -----------------------------------------------------------------------------
+#REWRITEMAP = True;
+REWRITEMAP = False;
+# -----------------------------------------------------------------------------
+RELOADMAP = True;
+#RELOADMAP = False;
+# -----------------------------------------------------------------------------
+#######################################################################
 # PARAMETRAGE (#1) DU CAS
 #======================================================================
 # Choix du jeu de données
@@ -58,11 +76,13 @@ Nmodels = len(Tmodels); # print(Nmodels); sys.exit(0)
 #   # à utiliser pour faire la CAH (limité à nb_class-1).
 #   # AFC.NBCOORDAFC4CAH; par exemple AFC.6
 #
-if 1 : # conditions Code Charles: GRANDE ZONE
+if 0 : # conditions Code Charles: GRANDE ZONE
     SIZE_REDUCTION = 'All';
-    # A - Grande zone de l’upwelling (25x36) : Longitude : -44 à -9.5 ; Latitude : 29.5 à 5.5
+    # A - Grande zone de l’upwelling (25x36) :
+    #    Longitude : 45W à 9W (-44.5 à -9.5)
+    #    Latitude :  30N à 5N ( 29.5 à  5.5)
     frlat =  29.5;  tolat =  4.5; #(excluded)
-    frlon = -44.5;  tolon = -9.5; #(excluded)   #(§:25x35)
+    frlon = -44.5;  tolon = -8.5; #(excluded)   #(§:25x35)
     #   * Carte topologique et CAH : 30x4 (5, 5, 1, - 16, 1, 0.1) : TE=0.6824 ; QE=0.153757
     #   Nb_classe = 7
     nbl            = 30;  nbc =  4;  # Taille de la carte
@@ -79,7 +99,9 @@ if 1 : # conditions Code Charles: GRANDE ZONE
                     # utiliser pour faire la CAH (limité à nb_class-1).
 elif 1 : # conditions Code Charles: PETITE ZONE
     SIZE_REDUCTION = 'sel';
-    # B - Sous-zone ciblant l’upwelling (13x12) :    LON: 16W à 28W LAT : 10N à 23N
+    # B - Sous-zone ciblant l’upwelling (13x12) :
+    #    LON:  28W à 16W (-27.5 to -16.5)
+    #    LAT : 23N à 10N ( 22.5 to  10.5)
     frlat =  22.5;  tolat =   9.5; #(excluded)
     frlon = -27.5;  tolon = -15.5; #(excluded)   #(§:13x12)
     #   * Carte topologique et CAH : 17x6 (4, 4, 1, - 16, 1, 0.1) : TE=0.6067 ; QE=0.082044
@@ -175,8 +197,26 @@ else :
 #
 # Other stuff
 FONDTRANS = "Obs"; # "Obs", "Mdl"
-SAVEFIG   = False; # True; False;
-fprefixe  = 'Z_'
+# -----------------------------------------------------------------------------
+FIGSDIR    = 'figs'
+FIGEXT     = '.png'
+FIGDPI     = 144  # le defaut semble etre 100 dpi (uniquement pour format bitmap)
+#VFIGEXT    = '.eps'
+VFIGEXT    = '.pdf'
+# -----------------------------------------------------------------------------
+MAPSDIR    = 'maps'
+# -----------------------------------------------------------------------------
+mapfileext = ".pkl" # exten,sion du fichier des MAP
+# -----------------------------------------------------------------------------
+if SIZE_REDUCTION == 'All' :
+    fprefixe  = 'Zall_'
+elif SIZE_REDUCTION == 'sel' :
+    fprefixe  = 'Zsel_'
+elif SIZE_REDUCTION == 'RED' :
+    fprefixe  = 'Zred_'
+else :
+    print(" *** unknown SIZE_REDUCTION <{}> ***".format(SIZE_REDUCTION))
+    raise
 #______________________________
 #if DATARUN=="rmean" : caduc ; # Les moyennes des runs des modèles que j'avais calculées
 #    Nda  =30; #!!! Prendre que les Nda dernières années (All Mdls Compatibles)
@@ -218,9 +258,9 @@ NORMMAX   = False;  # Dobs =  Dobs / Max(Dobs)
 CENTRED   = False ;
 fcodage=""; fshortcode="";
 if climato=="GRAD" :
-    fcodage=fcodage+"GRAD(";        fshortcode=fshortcode+"Grad"
+    fcodage=fcodage+"GRAD";        fshortcode=fshortcode+"Grad"
 if INDSC :
-    fcodage=fcodage+"INDSC(";       fshortcode=fshortcode+"Indsc"
+    fcodage=fcodage+"INDSC";       fshortcode=fshortcode+"Indsc"
 if TRENDLESS :
     fcodage=fcodage+"TRENDLESS";   fshortcode=fshortcode+"Tless"
 if WITHANO :
@@ -239,11 +279,23 @@ if CENTRED :
 method_cah = 'ward'; # 'average', 'ward', 'complete','weighted'    #KKKKKKK
 dist_cah   = 'euclidean'; #
 #nb_class ... DECLAREE CI-DESSUS  # Nombre de classes retenu #KKKKKKK   ##@@
-ccmap      = cm.jet;       # Accent, Set1, Set1_r, gist_ncar; jet, ... : map de couleur pour les classes
+# -------------------------
+# map de couleur pour les classes
+ccmap      = cm.jet;       # Accent, Set1, Set1_r, gist_ncar; jet, ...
 # pour avoir des couleurs à peu près equivalente pour les plots
 #pcmap     = ccmap(np.arange(1,256,round(256/nb_class)));ko 512ko, 384ko
 pcmap      = ccmap(np.arange(0,320,round(320/nb_class))); #ok?
-#
+# -------------------------
+# map de couleur par defaut
+dcmap      = cm.gist_ncar; 
+# -------------------------
+# map de couleur pour donnes negative/positives
+#eqcmap = cm.coolwarm
+eqcmap = cm.bwr
+#eqcmap = cm.seismic
+#eqcmap = cm.RdGy
+#eqcmap = cm.RdBu
+#eqcmap = cm.RdYlBu
 #______________________________
 # Calcul de la performance globale
 #kperf = 1; # 1     : # Les bien classés / effectif total sans distinction de classe
@@ -280,7 +332,7 @@ STOP_BEFORE_GENERAL  = False;
 Visu_ObsStuff  = True;   # Flag de visu des Obs  : 4CT, classif et courbes moy. mens.
 Visu_CTStuff   = True;   # Flag de visu de la CT : Umat, Map, Profils (sauf Dendro) 
 Visu_Dendro    = True;    # Flag de visualisation des dendrogrammes
-Visu_afcnu_det = False;   # Sylvie
+Visu_afcnu_det = True;   # Sylvie
 Visu_Inertie   = True;    # Flag de visualisation de l'Inertie
 #Flag visu classif des modèles des cluster
 AFC_Visu_Classif_Mdl_Clust  = []; # liste des cluster a afficher (à partir de 1)
@@ -289,4 +341,7 @@ AFC_Visu_Classif_Mdl_Clust  = []; # liste des cluster a afficher (à partir de 1
 AFC_Visu_Clust_Mdl_Moy_4CT  = []; # liste des cluster a afficher (à partir de 1)
 #AFC_Visu_Clust_Mdl_Moy_4CT = [1,2,3,4,5,6,7];
 #
+#######################################################################
+TM_label_base = "TM{}x{}_Ep1-{}_Ep2-{}".format(nbl, nbc, epoch1, epoch2)
+case_label_base="Case_{}{}_NIJ{:d}".format(fprefixe,TM_label_base,NIJ)
 #######################################################################

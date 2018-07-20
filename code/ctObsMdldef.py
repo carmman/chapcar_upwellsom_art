@@ -224,18 +224,33 @@ def Dpixmoymens(data,visu=None, climato=None, douze=12, stat=None) :
     Data = Data.reshape(int(len(Iisn)/douze),douze);
     return Data, Iisn, Inan
 
-def aff2D(XD,L,C,isnum,isnan,varnames=None,wvmin=None,wvmax=None,fignum=None,figsize=(9,9),
+def aff2D(XD,L,C,isnum,isnan,varnames=None,wvmin=None,wvmax=None,fignum=None,figsize=(9,9),cmap=None,
           cbpos='vertical', wspace=0.01, hspace=0.01, top=0.93, bottom=0.10,
-          left=0.05, right=0.98,x=0.5,y=0.96,noaxes=True,noticks=True,nolabels=True,cblabel=None) :
+          left=0.05, right=0.98,x=0.5,y=0.96,noaxes=True,noticks=True,nolabels=True,cblabel=None,
+          vcontour=None, ncontour=None, ccontour=None, lblcontourok=False, lolast=None, lonlat=None,
+          ) :
+    ''' vcontour doit avoir les memes dimensions que XD 
+    '''
     ND,p      = np.shape(XD);
     X_        = np.empty((L*C,p));   
     X_[isnum] = XD   
     X_[isnan] = np.nan
+    if vcontour is not None :
+        C_ = np.empty((L*C,p)); # normally vcontour has same dim as XD
+        C_[isnum] = vcontour;
+        C_[isnan] = np.nan;
+        VC = C_.T.reshape(p,1,L,C)
+    else :
+        VC = None
+    if cmap is None :
+        cmap = dcmap
     showimgdata(X_.T.reshape(p,1,L,C),n=p,fr=0,Labels=varnames,interp='none',
-                cmap=cm.gist_ncar,fignum=fignum,figsize=figsize,cbpos=cbpos,cblabel=cblabel,
+                cmap=cmap,fignum=fignum,figsize=figsize,cbpos=cbpos,cblabel=cblabel,
                 wspace=wspace, hspace=hspace, top=top, bottom=bottom,
                 left=left, right=right,x=x,y=y,noaxes=noaxes,noticks=noticks,nolabels=nolabels,
-                vmin=wvmin,vmax=wvmax);
+                vmin=wvmin,vmax=wvmax,
+                vcontour=VC, ncontour=ncontour, ccontour=ccontour, lblcontourok=lblcontourok,
+                lolast=lolast,lonlat=lonlat);
 
 def refbmusD(sm, bmus, Lig, Col, Iisn, Inan) :
     Ndata = len(bmus);
@@ -530,19 +545,42 @@ def perfbyclass (classe_Dobs,classe_Dmdl,nb_class) :
         Tperf.append(perfc)
     return classe_DD, Tperf
 #
-def red_classgeo(X,isnum,classe_D,frl,tol,frc,toc) :
+def red_classgeo(X,isnum,classe_D,frl=None,tol=None,frc=None,toc=None,ix=None,iy=None) :
+    ''' Appel:            
+            X_, XC_, oC_, isnum_red = red_classgeo(X,isnum,classe_D,frl,tol,frc,toc);
+            
+        ou frl,tol,frc,toc sont les indices limite des x (lon) pour frc et toc
+           et des y (lat) pour frl et tol
+             
+        ou bien,
+            X_, XC_, oC_, isnum_red = red_classgeo(X,isnum,classe_D,ix=ilon,ix=lat);
+            
+        ou ix et iy ce sont les listes d'indices en x (lon) et en y (lat) a preserver.
+            
+        Attention, il faut soit utiliser les 4 variables : frl,tol,frc,toc
+        ou bien les deux autres, ix et iy, on les nommant: ix=ilon,ix=lat
+
+    '''
     # Doit retourner les classes sur une zone réduite en faisant
     # attention aux nans
     N,L,C = np.shape(X);  
     XC_   = np.ones(L*C)*np.nan;
     XC_[isnum] = classe_D;
     XC_   = XC_.reshape(L,C)
-    XC_   = XC_[frl:tol,frc:toc];
+    if ix is not None and iy is not None :
+        # SOIT on utilise IX et IY pour determiner la selection de donnees
+        XC_   = XC_[iy,:];
+        XC_   = XC_[:,ix];
+        X_     = X[:,iy,:];
+        X_     = X_[:,:,ix];
+    else :
+        # SOIT on utilise frl, tol, frc et toc
+        XC_   = XC_[frl:tol,frc:toc];
+        X_     = X[:,frl:tol,frc:toc];
     l,c   = np.shape(XC_); 
     oC_   = XC_.reshape(l*c)
     isnum_red   = np.where(~np.isnan(oC_))[0]
     oC_   = oC_[isnum_red]
-    X_     = X[:,frl:tol,frc:toc];
     return X_, XC_, oC_, isnum_red;
 #
 #======================================================================

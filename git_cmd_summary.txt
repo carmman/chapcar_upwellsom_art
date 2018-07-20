@@ -31,8 +31,8 @@ git config --global --list
 git config --global --unset user.emal
 
 # ------------------------------------------------------------------
-# ------------------------------------------------------------------
 # Création d'un repository ...
+# ------------------------------------------------------------------
 # ... du répertoire en cours ...
 #
 # mkdir PourCarlos2_pour_Article
@@ -49,11 +49,10 @@ git status
 # ------------------------------------------------------------------
 # Gestion des exceptions (il faut d'abord creer le repository):
 #
-# Apres avoir initialisé le répertoire (voir création d'un
-# repository, ci-dessous), éditer le fichier ".git/info/exclude"
-# et ajouter les noms ou expressions régulières des fichiers ou
-# répertoires a ne pas
-# tenir en compte.
+# Apres avoir initialisé git dans le répertoire (voir création d'un
+# repository, ci-dessous), éditer le fichier ".git/info/exclude" et
+# ajouter les noms ou expressions régulières des fichiers ou
+# répertoires a ne pas tenir en compte.
 #
 # vi .git/info/exclude
 #
@@ -64,6 +63,7 @@ git status
 # # #######################################
 # # Repertoires a exclure des soumissions:
 # Datas
+# Docs
 # figs
 # maps
 # docs_python

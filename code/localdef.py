@@ -5,6 +5,7 @@ from   time  import time
 import numpy as     np
 import matplotlib.pyplot as plt
 from   matplotlib import cm
+from   mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 #
 def errors3(Yref,Yest,errtype=["rms"]) : # pris de upwell2/localdef.py
     ''' [Terr] = .errors(Yref,Yest,errtype)
@@ -113,9 +114,26 @@ def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
                 vmin=None, vmax=None, facecolor='w', vnorm=None, sztext=11,
                 figsize=(12,16), wspace=0.1, hspace=0.3, top=0.93, bottom=0.01,
                 left=0.05, right=0.90,x=0.5,y=0.96,noaxes=True,noticks=True,nolabels=True,
-                cbpos='horizontal', cblabel=None, fignum=None) :
+                cbpos='horizontal', cblabel=None, 
+                vcontour=None, ncontour=None, ccontour=None, lblcontourok=False,
+                lolast=None, lonlat=None,
+                fignum=None) :
     import matplotlib.colorbar as cb
     from matplotlib.colors import LogNorm
+    #
+    if lblcontourok :
+        # Define a class that forces representation of float to look a certain way
+        # This remove trailing zero so '1.0' becomes '1'
+        class nf(float):
+            def __repr__(self):
+                str = '%.2f' % (self.__float__(),)
+                if str[-2:] == '00':
+                    return '%.0f' % self.__float__()
+                elif str[-1] == '0':
+                    return '%.1f' % self.__float__()
+                else:
+                    return '%.2f' % self.__float__()
+    #
     nbsubl, nbsubc = nsublc(n,nsubl)
     #if nsubl > 0 :
     #    nbsubl = nsubl;
@@ -153,19 +171,58 @@ def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
     ifig = 0;
     for ax in axes.flat:
         if ifig < n : 
-            img  = X[ifig+fr];               
+            img  = X[ifig+fr];
+            if vcontour is not None :
+                std = vcontour[ifig+fr]
             if M == 1 :
                 img  = img.reshape(P,Q)
+                if vcontour is not None :
+                    std = std.reshape(P,Q)
             elif M != 3 :
                 print("showimgdata: Invalid data dimensions image : must be : 1xPxQ or 3xPxQ")
                 sys.exit(0);
             else : #=> = 3
                 img  = img.transpose(1,2,0);
+                if vcontour is not None :
+                    std = std.transpose(1,2,0);
             if vnorm=="LogNorm" :
                 #ValueError: Data has no positive values, and therefore can not be log-scaled.
                 ims = ax.imshow(img, norm=LogNorm(vmin=vmin, vmax=vmax), interpolation=interp, cmap=cmap);
             else : 
                 ims = ax.imshow(img, interpolation=interp, cmap=cmap, vmin=vmin, vmax=vmax);           
+            if vcontour is not None :
+                if ncontour is not None :
+                    std_steps = ncontour
+                else :
+                    std_steps = np.arange(0,1,1/20)
+                if ccontour is None :
+                    ccontour = 'k'
+                CS = ax.contour(std,std_steps, colors=ccontour)
+                if lblcontourok :
+                    if lolast is None :
+                        lolast = 1
+                    if lonlat is not None :
+                        lon,lat = lonlat
+                    # Recast levels to new class
+                    CS.levels = [nf(val) for val in CS.levels]
+                    # Label levels with specially formatted floats
+                    if plt.rcParams["text.usetex"]:
+                        #fmt = r'%r \%%'
+                        fmt = '%r'
+                    else:
+                        #fmt = '%r %%'
+                        fmt = '%r'
+                    ax.clabel(CS, CS.levels, inline=True, fmt=fmt, fontsize=8)
+                    print(ifig,np.mod(ifig,nbsubc),(ifig // nbsubc) )
+                    #if np.mod(ifig,nbsubc) == 0 and (ifig // nbsubc) == (nbsubl - 1):
+                    #    if lonlat is not None :
+                    #        ax.set_xticks(np.arange(0.5,Q,lolast))
+                    #        ax.set_xticklabels(np.round(lon[np.arange(0,Q,lolast)]).astype(int),size=8)
+                    #        ax.set_yticks(np.arange(-0.5,P,lolast))
+                    #        ax.set_yticklabels(np.round(lat[np.arange(0,P,lolast)]).astype(int),size=8)
+                    #else :
+                    #    ax.set_xticks([])
+                    #    ax.set_yticks([])
             #plt.axis("tight"); #plt.axis("off");
             if Labels is not None :
                 ax.set_title(Labels[ifig+fr],fontsize=sztext,x=x,y=y);
@@ -173,10 +230,15 @@ def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
             ax.axis("image"); #ax.axis("off");
         if noaxes :
             ax.axis('off')
-        elif noticks :
+        if noticks :
             ax.set_xticks([]); ax.set_yticks([])
-        elif nolabels :
+        if nolabels :
             ax.set_xticklabels([]); ax.set_yticklabels([])
+        else :
+            ax.set_xticks(np.arange(0.5,Q,lolast))
+            ax.set_xticklabels(np.round(lon[np.arange(0,Q,lolast)]).astype(int),size=8)
+            ax.set_yticks(np.arange(-0.5,P,lolast))
+            ax.set_yticklabels(np.round(lat[np.arange(0,P,lolast)]).astype(int),size=8)
     if cbpos == 'horizontal':
         cbar_ax,kw = cb.make_axes([ax for ax in axes.flat],orientation="horizontal",
                                  fraction=0.04,pad=0.02,aspect=40)
