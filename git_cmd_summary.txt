@@ -97,3 +97,23 @@ dos2unix triedpy/*.txt
 
 # DEUXIEME COMMIT (fichiers texte convertis a unix ...)
 git commit -am "Conversion dos2unix de tout *.py et *.txt"
+
+
+# ------------------------------------------------------------------
+# Pour se positionner dans une branche, c-a-d: revenir sur une version
+# alternative ou precedente du code.
+#
+# Faire d'abord git log pour connaitre les multiples commits, ou etats
+# intermediaires où revenir ...
+#
+# Puis, ici, si l'on veut revenir par exemple a l'etat initial, apres
+# l'adaptation de la version de Charles aux chemins de données locaux
+# faire :
+
+git checkout 54ac88636a6647f1618f0e697bf877fa71c2db92
+
+
+# Revenir au dernier commit de la branche principale:
+
+git checkout master
+
