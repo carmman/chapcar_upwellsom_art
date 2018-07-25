@@ -76,7 +76,7 @@ Nmodels = len(Tmodels); # print(Nmodels); sys.exit(0)
 #   # à utiliser pour faire la CAH (limité à nb_class-1).
 #   # AFC.NBCOORDAFC4CAH; par exemple AFC.6
 #
-if 0 : # conditions Code Charles: GRANDE ZONE
+if 1 : # conditions Code Charles: GRANDE ZONE
     SIZE_REDUCTION = 'All';
     # A - Grande zone de l’upwelling (25x36) :
     #    Longitude : 45W à 9W (-44.5 à -9.5)
@@ -194,6 +194,7 @@ if SIZE_REDUCTION == 'RED' :
 else :
     OK107=OK109=False;
 #OK104=OK105=OK106=OK107=OK108=OK109=True;
+OK101=OK104=OK105=OK106=OK107=OK109=False;
 #
 # Other stuff
 FONDTRANS = "Obs"; # "Obs", "Mdl"
@@ -291,11 +292,14 @@ dcmap      = cm.gist_ncar;
 # -------------------------
 # map de couleur pour donnes negative/positives
 #eqcmap = cm.coolwarm
-eqcmap = cm.bwr
+#eqcmap = cm.bwr
 #eqcmap = cm.seismic
 #eqcmap = cm.RdGy
 #eqcmap = cm.RdBu
-#eqcmap = cm.RdYlBu
+eqcmap = cm.RdYlBu
+#eqcmap = cm.RdYlGn
+#eqcmap = cm.Spectral
+#eqcmap = cm.BrBG
 #______________________________
 # Calcul de la performance globale
 #kperf = 1; # 1     : # Les bien classés / effectif total sans distinction de classe
@@ -329,11 +333,15 @@ STOP_BEFORE_AFC      = False;
 STOP_BEFORE_GENERAL  = False;
 #
 # Flag de visualisation
-Visu_ObsStuff  = True;   # Flag de visu des Obs  : 4CT, classif et courbes moy. mens.
-Visu_CTStuff   = True;   # Flag de visu de la CT : Umat, Map, Profils (sauf Dendro) 
-Visu_Dendro    = True;    # Flag de visualisation des dendrogrammes
-Visu_afcnu_det = True;   # Sylvie
-Visu_Inertie   = True;    # Flag de visualisation de l'Inertie
+Show_ObsSTD     = False;    # Flag de visu des la STD des Obs (si Visu_ObsStuff est True)
+
+Visu_UpwellArt  = True;    # Flag de visu des figures pour article avec Juliette et Adama
+Visu_ObsStuff   = False;   # Flag de visu des Obs  : 4CT, classif et courbes moy. mens.
+Visu_CTStuff    = False;   # Flag de visu de la CT : Umat, Map, Profils (sauf Dendro) 
+Visu_Dendro     = False;   # Flag de visualisation des dendrogrammes
+Visu_preACFperf = False;    # performances avant l'AFC: MeanClassAccuracy, GlobalAccuracy, ...
+Visu_afcnu_det  = True;    # Sylvie
+Visu_Inertie    = True;    # Flag de visualisation de l'Inertie
 #Flag visu classif des modèles des cluster
 AFC_Visu_Classif_Mdl_Clust  = []; # liste des cluster a afficher (à partir de 1)
 #AFC_Visu_Classif_Mdl_Clust = [1,2,3,4,5,6,7]; 

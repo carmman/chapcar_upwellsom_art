@@ -224,10 +224,15 @@ def Dpixmoymens(data,visu=None, climato=None, douze=12, stat=None) :
     Data = Data.reshape(int(len(Iisn)/douze),douze);
     return Data, Iisn, Inan
 
-def aff2D(XD,L,C,isnum,isnan,varnames=None,wvmin=None,wvmax=None,fignum=None,figsize=(9,9),cmap=cm.jet(),
-          cbpos='vertical', wspace=0.01, hspace=0.01, top=0.93, bottom=0.10,
-          left=0.05, right=0.98,x=0.5,y=0.96,noaxes=True,noticks=True,nolabels=True,cblabel=None,
-          vcontour=None, ncontour=None, ccontour=None, lblcontourok=False, lolast=None, lonlat=None,
+def aff2D(XD, L, C, isnum, isnan,
+          varnames=None, wvmin=None, wvmax=None,
+          noaxes=True, noticks=True, nolabels=True,
+          cbpos='vertical', cblabel=None,
+          vcontour=None, ncontour=None, ccontour=None, lblcontourok=False,
+          lolast=None, lonlat=None,
+          wspace=0.01, hspace=0.01, top=0.93, bottom=0.10,left=0.05, right=0.98, x=0.5, y=0.96,
+          cmap=cm.jet,
+          figsize=(9,9), fignum=None,
           ) :
     ''' vcontour doit avoir les memes dimensions que XD 
     '''

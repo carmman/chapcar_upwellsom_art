@@ -82,21 +82,34 @@ def rms(Xref, Xest) :
     Xest = np.reshape(Xest,(LenXref,1)) 
     return np.sqrt(np.sum((Xref-Xest)**2) / np.prod(np.shape(Xref)));
 #----------------------------------------------------------------------
-def nsublc(n,nsubl=0) :
-    if nsubl > 0 :
-        nbsubl = nsubl;
-        nbsubc = np.ceil(1.0*n/nbsubl);
-    elif nsubl < 0 :
-        nbsubc = -nsubl;
-        nbsubl = np.ceil(1.0*n/nbsubc);
-    else :
+def nsublc(n,nsubl=None,nsubc=None) :
+    ''' NSUBLC
+    retourne le couple nblignes, nbcolonnes
+    '''
+    if nsubl is None and nsubc is None :
         nbsubc = np.ceil(np.sqrt(n));
         nbsubl = np.ceil(1.0*n/nbsubc);   
-            
+    elif nsubl is not None and nsubc is not None :
+        nbsubl = nsubl;
+        nbsubc = nsubc;
+    elif nsubl is not None :
+        if nsubl > 0 :   # if POSITIVE, normal case
+            nbsubl = nsubl;
+            nbsubc = np.ceil(1.0*n/nbsubl);
+        elif nsubl < 0 : # if NEGATIVE, for backward compatibilty
+            nbsubc = -nsubl;
+            nbsubl = np.ceil(1.0*n/nbsubc);
+        else :           # if ZERO, for backward compatibilty
+            nbsubc = np.ceil(np.sqrt(n));
+            nbsubl = np.ceil(1.0*n/nbsubc);   
+    elif nsubc is not None :
+        nbsubc = nsubc;
+        nbsubl = np.ceil(1.0*n/nbsubc);
+    #
     nbsubl=int(nbsubl); #nbsubl.astype(int)
     nbsubc=int(nbsubc); #nbsubc.astype(int)
-    if nbsubl==1 and nbsubc==1 :
-        nbsubc = 2; # Je force à au moins 2 subplots sinon ca plante si y'en a qu'1
+    #if nbsubl==1 and nbsubc==1 :
+    #    nbsubc = 2; # Je force à au moins 2 subplots sinon ca plante si y'en a qu'1
     return nbsubl, nbsubc
 #----------------------------------------------------------------------
 def val2val (X, valfr=0.0,valto=np.nan) :
@@ -112,12 +125,12 @@ def val2val (X, valfr=0.0,valto=np.nan) :
 #----------------------------------------------------------------------
 def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
                 vmin=None, vmax=None, facecolor='w', vnorm=None, sztext=11,
-                figsize=(12,16), wspace=0.1, hspace=0.3, top=0.93, bottom=0.01,
-                left=0.05, right=0.90,x=0.5,y=0.96,noaxes=True,noticks=True,nolabels=True,
                 cbpos='horizontal', cblabel=None, 
                 vcontour=None, ncontour=None, ccontour=None, lblcontourok=False,
+                noaxes=True, noticks=True, nolabels=True,
                 lolast=None, lonlat=None,
-                fignum=None) :
+                wspace=0.1, hspace=0.3, top=0.93, bottom=0.01, left=0.05, right=0.90, x=0.5, y=0.96,
+                figsize=(12,16), fignum=None) :
     import matplotlib.colorbar as cb
     from matplotlib.colors import LogNorm
     #
@@ -169,6 +182,8 @@ def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
                         sharex=True, sharey=True, figsize=figsize,facecolor=facecolor)
     fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
     ifig = 0;
+    if lonlat is not None :
+        lon,lat = lonlat
     for ax in axes.flat:
         if ifig < n : 
             img  = X[ifig+fr];
@@ -201,8 +216,6 @@ def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
                 if lblcontourok :
                     if lolast is None :
                         lolast = 1
-                    if lonlat is not None :
-                        lon,lat = lonlat
                     # Recast levels to new class
                     CS.levels = [nf(val) for val in CS.levels]
                     # Label levels with specially formatted floats
