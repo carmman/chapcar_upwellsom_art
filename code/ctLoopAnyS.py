@@ -31,9 +31,25 @@ from   localdef    import *
 from   ctObsMdldef import *
 #
 #%=====================================================================
-def afcnuage (CP,cpa,cpb,Xcol,K,xoomK=500,linewidths=1,indname=None,
-              cmap=cm.jet,holdon=False) :
+def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
+              cmap=cm.jet,holdon=False,ax=None,gridok=False,
+              drawaxes=False,axescolors=None,axlinewidth=1,
+              drawtriangref=False,axtight=False,aximage=False,axdecal=False,
+              rotlabels=None,randrotlabels=None,randseed=0,
+              horizalign='left',vertalign='center',
+              lblcolor=None,lblbgcolor=None,lblfontsize=8,lblprefix=None,
+              marker='o',obsmarker='o',
+              markersize=None,obsmarkersize=None,
+              edgecolor=None,
+              edgeobscolor='k',obscolor='k',edgeclasscolor='k',faceclasscolor='m',
+              article_style=False) :
 # pompé de WORKZONE ... TPA05
+    if ax is None :
+        fig = plt.figure(figsize=(16,12));
+        ax = plt.subplot(111)
+    else :
+        fig = plt.gcf() # figure en cours ...
+        ax = ax
     if holdon == False :
         # j'ai un pb obs \ pas obs qui apparaissent dans la même couleur que le dernier cluster
         # quand bien même il ne participe pas à la clusterisation
@@ -44,78 +60,211 @@ def afcnuage (CP,cpa,cpb,Xcol,K,xoomK=500,linewidths=1,indname=None,
             CPobs = CP[lenXcol:lenCP,:];
             CP    = CP[0:lenXcol,:];
             # K et indname suivent CP
-            if np.ndim(K) == 1 :
-                K = K.reshape(len(K),1)
-            Kobs  = K[lenXcol:lenCP,:];
-            K     = K[0:lenXcol,:];
+            if K is not None :
+                if np.ndim(K) == 1 :
+                    K = K.reshape(len(K),1)
+                Kobs  = K[lenXcol:lenCP,:];
+                K     = K[0:lenXcol,:];
+            else :
+                K = 1; Kobs = 1;
             obsname = indname[lenXcol:lenCP];
             indname = indname[0:lenXcol];
+        #print("indname:{}".format(indname))
+        #print("obsname:{}".format(obsname))
         #
-        plt.figure();
         my_norm = plt.Normalize()
         my_normed_data = my_norm(Xcol)
         ec_colors = cmap(my_normed_data) # a Nx4 array of rgba value
+        if edgecolor is None :
+            edge_ec_colors = ec_colors
+        else:
+            edge_ec_colors = edgecolor
         #? if np.ndim(K) > 1 : # On distingue triangle à droite ou vers le haut selon l'axe
-        n,p = np.shape(K);
-        if p > 1 : # On distingue triangle à droite ou vers le haut selon l'axe 
-            plt.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpa-1]*xoomK,
-                            marker='>',edgecolors=ec_colors,facecolor='none',linewidths=linewidths)
-            plt.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpb-1]*xoomK,
-                            marker='^',edgecolors=ec_colors,facecolor='none',linewidths=linewidths)
-            if lenCP > lenXcol : # cas des surnumeraire, en principe les obs
-                plt.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs[:,cpa-1]*xoomK,
-                                marker='>',edgecolors='k',facecolor='none',linewidths=linewidths)
-                plt.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs[:,cpb-1]*xoomK,
-                                marker='^',edgecolors='k',facecolor='none',linewidths=linewidths)            
+        if K is not None and len(np.shape(K)) > 1:
+            n,p = np.shape(K);
         else :
-            plt.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K*xoomK,
-                            marker='s',edgecolors=ec_colors,facecolor='none',linewidths=linewidths);
-            if lenCP > lenXcol : # ? cas des surnumeraire, en principe les obs
-                plt.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs*xoomK,
-                            marker='s',edgecolors='k',facecolor='none',linewidths=linewidths);
-                
-    else : #(c'est pour les colonnes)
-        plt.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpa-1]*xoomK,
-                        marker='o',facecolor='m')
-        plt.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpb-1]*xoomK,
-                        marker='o',facecolor='c',alpha=0.5)
+            n,p = (1,1)
+        #
+        if article_style :
+            if markersize is None :
+                if p > 1 :
+                    msize = K[:,cpa-1]*xoomK
+                else :
+                    msize = K*xoomK
+            else:
+                msize = markersize
+            if obsmarkersize is None :
+                if p > 1 :
+                    omsize = Kobs[:,cpa-1]*xoomK
+                else :
+                    omsize = Kobs*xoomK
+            else:
+                omsize = obsmarkersize
+            ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=msize,marker=marker,
+                            edgecolors=edge_ec_colors,facecolor=ec_colors,linewidths=linewidths)
+            if lenCP > lenXcol : # cas des surnumeraire, en principe les obs
+                ax.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=omsize,marker=obsmarker,
+                                edgecolors=edgeobscolor,facecolor=obscolor,linewidths=linewidths)
+        else : # NO article style
+            if p > 1 : # On distingue triangle à droite ou vers le haut selon l'axe
+                ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpa-1]*xoomK,
+                                marker='>',edgecolors=ec_colors,facecolor='none',linewidths=linewidths)
+                ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpb-1]*xoomK,
+                                marker='^',edgecolors=ec_colors,facecolor='none',linewidths=linewidths)
+                if lenCP > lenXcol : # cas des surnumeraire, en principe les obs
+                    ax.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs[:,cpa-1]*xoomK,
+                                    marker='>',edgecolors=obscolor,facecolor='none',linewidths=linewidths)
+                    ax.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs[:,cpb-1]*xoomK,
+                                    marker='^',edgecolors=obscolor,facecolor='none',linewidths=linewidths)            
+            else :
+                ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K*xoomK,
+                                marker='s',edgecolors=ec_colors,facecolor='none',linewidths=linewidths);
+                if lenCP > lenXcol : # ? cas des surnumeraire, en principe les obs
+                    ax.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs*xoomK,
+                                marker='s',edgecolors=obscolor,facecolor='none',linewidths=linewidths);
+                    
+    else : #(c'est pour lescolonnes -les classes)
+        if article_style :
+            if markersize is None :
+                if p > 1 :
+                    msize = K[:,cpa-1]*xoomK
+                else :
+                    msize = K*xoomK
+            else:
+                msize = markersize
+            ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=msize,marker='s',
+                       edgecolors=edgeclasscolor,facecolor=faceclasscolor)
+        else :
+            ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpa-1]*xoomK,
+                            marker='o',facecolor='m')
+            ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpb-1]*xoomK,
+                            marker='o',facecolor='c',alpha=0.5)
     #plt.axis('tight')
-    plt.xlabel('axe %d'%cpa); plt.ylabel('axe %d'%cpb)
+    ax.set_xlabel('axe %d'%cpa); ax.set_ylabel('axe %d'%cpb)
     
     if 0 : # je me rapelle plus tres bien à quoi ca sert; do we need a colorbar here ? may be
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=np.min(Xcol), vmax=np.max(Xcol)))
         sm.set_array([])
         #if holdon == False :
-        #    plt.colorbar(sm);
+        #    ax.colorbar(sm);
 
+    ## Labelisation des points, if not empty
+    #if indname is not None :
+    #    N,p = np.shape(CP);
+    #    for i in np.arange(N) :
+    #        plt.text(CP[i,cpa-1],CP[i,cpb-1],indname[i])
+    #if holdon == False and lenCP > lenXcol :
+    #    N,p = np.shape(CPobs);
+    #    for i in np.arange(N) :
+    #        plt.text(CPobs[i,cpa-1],CPobs[i,cpb-1],obsname[i])
+            
+    if rotlabels is None :
+        rotlabels = 0
+    if lblcolor == None :
+        lblcolor = 'k'
+    if randrotlabels is None :
+        randrotlabels = 0
+    else:
+        np.random.seed(randseed)
     # Labelisation des points, if not empty
     if indname is not None :
         N,p = np.shape(CP);
         for i in np.arange(N) :
-            plt.text(CP[i,cpa-1],CP[i,cpb-1],indname[i])
+            if lblprefix is None :
+                currentlbl = indname[i]
+            else :
+                currentlbl = lblprefix+indname[i]
+            #print("indname[{}]: {}".format(i,indname[i]))
+            if randrotlabels != 0 :
+                localrotlabels = rotlabels + randrotlabels*np.random.normal()
+            else :
+                localrotlabels = rotlabels
+            if lblbgcolor is None :
+                ax.text(CP[i,cpa-1],CP[i,cpb-1],currentlbl,color=lblcolor,
+                        fontsize=lblfontsize,
+                        horizontalalignment=horizalign,
+                        verticalalignment=vertalign,
+                        rotation=localrotlabels,rotation_mode="anchor")
+            else :
+                ax.text(CP[i,cpa-1],CP[i,cpb-1],currentlbl,color=lblcolor,backgroundcolor=lblbgcolor,
+                        fontsize=lblfontsize,
+                        horizontalalignment=horizalign,
+                        verticalalignment=vertalign,
+                        rotation=localrotlabels,rotation_mode="anchor")
     if holdon == False and lenCP > lenXcol :
         N,p = np.shape(CPobs);
         for i in np.arange(N) :
-            plt.text(CPobs[i,cpa-1],CPobs[i,cpb-1],obsname[i])
-            
-    # Tracer les axes
-    xlim = plt.xlim(); plt.xlim(xlim);
-    plt.plot(xlim, np.zeros(2));
-    ylim = plt.ylim(); plt.ylim(ylim);
-    plt.plot(np.zeros(2),ylim);
+            if lblprefix is None :
+                currentlbl = obsname[i]
+            else :
+                currentlbl = lblprefix+obsname[i]
+            #print("obsname[{}]: {}".format(i,obsname[i]))
+            if randrotlabels != 0 :
+                localrotlabels = rotlabels + randrotlabels*np.random.normal()
+            else :
+                localrotlabels = rotlabels
+            if lblbgcolor is None :
+                ax.text(CPobs[i,cpa-1],CPobs[i,cpb-1],currentlbl,color=lblcolor,
+                        fontsize=lblfontsize,
+                        horizontalalignment=horizalign,
+                        verticalalignment=vertalign,
+                        rotation=localrotlabels,rotation_mode="anchor")
+            else :
+                ax.text(CPobs[i,cpa-1],CPobs[i,cpb-1],currentlbl,color=lblcolor,backgroundcolor=lblbgcolor,
+                        fontsize=lblfontsize,
+                        horizontalalignment=horizalign,
+                        verticalalignment=vertalign,
+                        rotation=localrotlabels,rotation_mode="anchor")
+    #
+    if axtight :
+        ax.axis('tight')
+    if aximage :
+        ax.axis('image')
+    if gridok :
+        ax.grid(axis='both')
+    #
+    # decalage force des axes en hauteur et a droite (pour permettre l'affichage des nom depasant)
+    if axdecal is not False :
+        if axdecal is True :
+            decalfactorx = 5; decalfactory = 5; # nombre de centiemes
+        elif np.isscalar(axdecal):
+                        decalfactorx = axdecal; decalfactory = axdecal
+        else:
+                        decalfactorx = axdecal[0]; decalfactory = axdecal[1]
+        lax=ax.axis()
+        dlaxx = (lax[1]-lax[0])/100; dlaxy = (lax[3]-lax[2])/100; 
+        ax.axis([lax[0],lax[1] + (decalfactorx * dlaxx),lax[2],lax[3]+ (decalfactory * dlaxy)])
+    
+    # recupere les limites des axes ...
+    xlim = ax.set_xlim();
+    ylim = ax.set_ylim();
+
+    if drawaxes :
+        # Tracer les axes
+        if axescolors is None :
+            plt.plot(xlim, np.zeros(2));
+            plt.plot(np.zeros(2),ylim);
+        else :
+            xaxcolor,yaxcolor = axescolors
+            plt.plot(xlim, np.zeros(2),color=xaxcolor,linewidth=axlinewidth);
+            plt.plot(np.zeros(2),ylim,color=yaxcolor,linewidth=axlinewidth);
 
     # Plot en noir des triangles de référence en bas à gauche
-    if holdon == False :
+    if drawtriangref :
         dx = xlim[1] - xlim[0];
         dy = ylim[1] - ylim[0];
         px = xlim[0] + dx/(xoomK) + dx/20; # à ajuster +|- en ...
         py = ylim[0] + dy/(xoomK) + dy/20; # ... fonction de xoomK
-        plt.scatter(px,py,marker='>',edgecolors='k', s=xoomK,     facecolor='none');
-        plt.scatter(px,py,marker='>',edgecolors='k', s=xoomK*0.5, facecolor='none');
-        plt.scatter(px,py,marker='>',edgecolors='k', s=xoomK*0.1, facecolor='none');
+        ax.scatter(px,py,marker='>',edgecolors='k', s=xoomK,     facecolor='none');
+        ax.scatter(px,py,marker='>',edgecolors='k', s=xoomK*0.5, facecolor='none');
+        ax.scatter(px,py,marker='>',edgecolors='k', s=xoomK*0.1, facecolor='none');
+    # remet les axes aux limites mesures precedemment
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+#
 #----------------------------------------------------------------------
-def Dgeoclassif(sMap,Data,L,C,isnum,MajorPerf,visu=True,labelsize=8,cblabel=None,
-                cblabelsize=10,old=False,ax=None) :
+def Dgeoclassif(sMap,Data,L,C,isnum,MajorPerf,visu=True,cbticklabelsize=8,cblabel=None,
+                cblabelsize=10,old=False,ax=None,nticks=1,tickfontsize=10) :
     bmus_   = ctk.mbmus (sMap,Data); 
     classe_ = class_ref[bmus_].reshape(len(bmus_));   
     X_Mgeo_ = dto2d(classe_,L,C,isnum); # Classification géographique
@@ -131,19 +280,28 @@ def Dgeoclassif(sMap,Data,L,C,isnum,MajorPerf,visu=True,labelsize=8,cblabel=None
         Tperf_ = np.round([iperf*100 for iperf in Tperf_]).astype(int); #print(Tperf_)   
         # colorbar
         if not old :
+            #cbar_ax,kw = cb.make_axes(ax,orientation="vertical",fraction=0.04,pad=0.03,aspect=20)
+            #fig.colorbar(ims, cax=cbar_ax, ticks=ticks,boundaries=bounds,values=bounds, **kw);
             ax_divider = make_axes_locatable(ax)
-            cax = ax_divider.append_axes("right", size="6%", pad="2%")
+            cax = ax_divider.append_axes("right", size="4%", pad="3%")
             hcb = plt.colorbar(ims,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
         else :
             hcb = plt.colorbar(ims,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(Tperf_);
-        hcb.ax.tick_params(labelsize=labelsize);
+        hcb.ax.tick_params(labelsize=cbticklabelsize);
         if cblabel is not None :
             hcb.set_label(cblabel,size=cblabelsize)
             #cbar_ax.set_ylabel(cblabel,size=14)
         plt.sca(ax) # remet les "current axes" comme axes par defaut
         #plt.axis('off');
-        plt.xticks([]); plt.yticks([])
+        if lon is None or lat is None :
+            plt.xticks([]); plt.yticks([])
+        else :
+            if 0:
+                plt.xticks(np.arange(0,C,nticks), lon[np.arange(0,C,nticks)], fontsize=tickfontsize)
+                plt.yticks(np.arange(0,L,nticks), lat[np.arange(0,L,nticks)], fontsize=tickfontsize)
+            else :
+                set_lonlat_ticks(lon,lat,step=nticks,fontsize=tickfontsize,verbose=False,lengthen=True)
         #grid(); # for easier check
     return Perfglob_
 #----------------------------------------------------------------------
@@ -807,10 +965,12 @@ if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
     # Classification
     if SIZE_REDUCTION == 'All' :
         figsize = (9,6)
-        wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.04; right=0.96;
+        wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.06; right=0.925;
+        nticks = 5; # 4
     elif SIZE_REDUCTION == 'sel' :
         figsize=(9,9)
-        wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.04; right=0.96;
+        wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.05; right=0.96;
+        nticks = 2; # 4
     fig = plt.figure(figsize=figsize)
     fignum = fig.number # numero de figure en cours ...
     fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
@@ -820,7 +980,6 @@ if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
         origin = 'upper'
     fig, ax = plt.subplots(nrows=1, ncols=1, num=fignum,facecolor='w')
     ims = ax.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class,origin=origin);
-    nticks = 2; # 4
     if 0:
         plt.xticks(np.arange(0,Cobs,nticks), lon[np.arange(0,Cobs,nticks)], rotation=45, fontsize=10)
         plt.yticks(np.arange(0,Lobs,nticks), lat[np.arange(0,Lobs,nticks)], fontsize=10)
@@ -834,9 +993,14 @@ if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
     plt.title("Observations ({:d}-{:d}), {} Class Geographical Representation".format(andeb,anfin,nb_class),fontsize=16); 
     #grid(); # for easier check
     # Colorbar
-    cbar_ax,kw = cb.make_axes(ax,orientation="vertical",fraction=0.04,pad=0.03,aspect=20)
-    fig.colorbar(ims, cax=cbar_ax, **kw);
-    cbar_ax.set_ylabel('Class',size=14)
+    #cbar_ax,kw = cb.make_axes(ax,orientation="vertical",fraction=0.04,pad=0.03,aspect=20)
+    #fig.colorbar(ims, cax=cbar_ax, ticks=ticks,boundaries=bounds,values=bounds, **kw);
+    ax_divider = make_axes_locatable(ax)
+    cax = ax_divider.append_axes("right", size="4%", pad="3%")
+    hcb = plt.colorbar(ims,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
+    cax.set_yticklabels(coches);
+    cax.tick_params(labelsize=12)
+    cax.set_ylabel('Class',size=14)
 
     #hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
     #hcb.set_ticklabels(coches);
@@ -851,9 +1015,9 @@ if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
         do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
 #
-if Visu_ObsStuff : # Visualisation de truc liés au Obs
+if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
     # Courbes des Moyennes Mensuelles par Classe
-    fig = plt.figure(figsize=(10,6));
+    fig = plt.figure(figsize=(12,6));
     fignum = fig.number # numero de figure en cours ...
     TmoymensclassObs = moymensclass(sst_obs,isnumobs,classe_Dobs,nb_class)
     #plt.plot(TmoymensclassObs); plt.axis('tight');
@@ -862,12 +1026,19 @@ if Visu_ObsStuff : # Visualisation de truc liés au Obs
     plt.grid(axis='y')
     plt.axis('tight');
     plt.xticks(np.arange(12),varnames)
-    plt.ylabel('Mean SST Anomaly', fontsize=12);
+    plt.ylabel('Mean SST Anomaly [°C]', fontsize=12);
     plt.xlabel('Month', fontsize=12);
     legax=plt.legend(np.arange(nb_class)+1,loc=2,fontsize=10);
     legax.set_title('Class')
     plt.title("Observations, Monthly Mean by Class (method: %s)"%(method_cah),fontsize=16); #,fontweigth='bold');
     #plt.show(); sys.exit(0)
+    if SAVEFIG : # sauvegarde de la figure
+        if Visu_UpwellArt :
+            figfile = "FigArt_"
+        else :
+            figfile = "Fig_"
+        figfile += "MeanByClass_{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
+        do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
 #
 if Visu_CTStuff : # Visu des profils des référents de la carte
     if SIZE_REDUCTION == 'All' :
@@ -930,6 +1101,8 @@ Nmdlok           = 0;  # Pour si y'a cumul ainsi connaitre l'indice de modèle va
 Tperfglob4Sort   = [];
 Tclasse_DMdl     = [];
 Tmdlname         = []; # Table des modèles
+Tmdlnamewnb      = []; # Table des modèles avec numero
+Tmdlonlynb       = []; # Table des modèles avec seulement le numero
 Tmoymensclass    = [];
 #
 def red_climato(Dmdl,L,C,isnum,isnum_red,frl=None,tol=None,frc=None,toc=None,ix=None,iy=None) :
@@ -992,9 +1165,10 @@ Sfiltre = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
 #<<<<<<<<
 #
 for imodel in np.arange(Nmodels) :
-    instname = Tinstit[imodel]; #print("-> ", mdlname)
-    mdlname = Tmodels[imodel,0]; #print("-> ", mdlname)
-    anstart = Tmodels[imodel,1]; # (utile pour rmean seulement)
+    nomdl    = Tnmodel[imodel];   # numero de modele
+    instname = Tinstit[imodel];   # institution du modele
+    mdlname  = Tmodels[imodel,0]; # nom du modele
+    anstart  = Tmodels[imodel,1]; # (utile pour rmean seulement)
     #
     # >>> Filtre (selection)de modèles en entrée ; Mettre 0 dans le if pour ne pas filtrer
     if 0 and mdlname not in Sfiltre :
@@ -1122,7 +1296,11 @@ for imodel in np.arange(Nmodels) :
             Tsst_ = Tsst_ + sst_;
     #________________________________________________________
     TDmdl4CT.append(Dmdl);  # stockage des modèles climatologiques 4CT pour AFC-CAH ...
-    Tmdlname.append(Tmodels[imodel,0])
+    #
+    Tmdlname.append(mdlname)
+    Tmdlnamewnb.append("{:s}-{:s}".format(nomdl,mdlname))
+    Tmdlonlynb.append("{:s}".format(nomdl))
+    #
     #calcul de la perf glob du modèle et stockage pour tri
     bmusM       = ctk.mbmus (sMapO, Data=Dmdl);
     classe_DMdl = class_ref[bmusM].reshape(NDmdl);
@@ -1135,12 +1313,21 @@ for imodel in np.arange(Nmodels) :
 #
 # Fin de la PREMIERE boucle sur les modèles
 #
+if mdlnamewnumber_ok :
+    Tmdlname10X = Tmdlnamewnb;
+else :
+    Tmdlname10X = Tmdlname;
 #____________________________
 if OK101 :
+    if mdlnamewnumber_ok :
+        Tmdlname10X = Tmdlnamewnb;
+    else :
+        Tmdlname10X = Tmdlname;
+    #
     if len(Tmdlname) > 6 :            # Sous forme de liste, la liste des noms de modèles
-        Tnames_ = Tmdlname;           # n'est pas coupé dans l'affichage du titre de la figure
+        Tnames_ = Tmdlname10X;           # n'est pas coupé dans l'affichage du titre de la figure
     else :                            # par contre il l'est sous forme d'array; selon le cas, ou 
-        Tnames_ = np.array(Tmdlname); # le nombre de modèles, il faut adapter comme on peut
+        Tnames_ = np.array(Tmdlname10X); # le nombre de modèles, il faut adapter comme on peut
     #
     # Moyenne des modèles en entrée, moyennées
     # (Il devrait suffire de refaire la même chose pour Sall-cum)
@@ -1167,7 +1354,7 @@ if OK101 :
     plt.suptitle("Mdl_MOY%s\n%sSST(%s)). \nEcarts Types par mois et par pixel (Before Climatologie)" \
                      %(Tnames_,fcodage,DATAMDL));
     #
-    del Smoy_, Tsst_, Dstd_, Tnames_, pipo_
+    del Smoy_, Tsst_, Dstd_, Tnames_, pipo_, Tmdlname10X
     #plt.show(); sys.exit(0)
 #_____________________________________________________________________
 ######################################################################
@@ -1185,15 +1372,27 @@ else : # no sort
     IS_ = np.arange(Nmodels)
 Tperfglob4Sort = np.array(Tperfglob4Sort)
 Tperfglob4Sort = Tperfglob4Sort[IS_];
-
+# Not sorted model lists
+NSTmdlname    = np.copy(Tmdlname)
+NSTmdlnamewnb = np.copy(Tmdlnamewnb)
+NSTmdlonlynb  = np.copy(Tmdlonlynb)
+print(" {:5s} {:s}".format('No.','Model name'))
+print(" {:->5s} {:->15s}".format('',''))
+for imodel in np.arange(Nmodels) :
+    print(" {:5s} {:s}".format(NSTmdlonlynb[imodel],NSTmdlname[imodel]))
+#
 X1_ = np.copy(TDmdl4CT)
 X2_ = np.copy(Tmdlname)
-X3_ = np.copy(Tclasse_DMdl)
+X3_ = np.copy(Tmdlnamewnb)
+X4_ = np.copy(Tmdlonlynb)
+X5_ = np.copy(Tclasse_DMdl)
 for i in np.arange(Nmodels) : # TDmdl4CT = TDmdl4CT[I_];
     TDmdl4CT[i]     = X1_[IS_[i]]
     Tmdlname[i]     = X2_[IS_[i]]  
-    Tclasse_DMdl[i] = X3_[IS_[i]]
-del X1_, X2_, X3_;
+    Tmdlnamewnb[i]  = X3_[IS_[i]]  
+    Tmdlonlynb[i]   = X4_[IS_[i]]
+    Tclasse_DMdl[i] = X5_[IS_[i]]
+del X1_, X2_, X3_, X4_, X5_;
 if OK106 :
     X1_ = np.copy(Tmoymensclass);
     for i in np.arange(Nmodels) :
@@ -1202,54 +1401,75 @@ if OK106 :
     Tmoymensclass    = np.array(Tmoymensclass);
     min_moymensclass = np.nanmin(Tmoymensclass); ##!!??
     max_moymensclass = np.nanmax(Tmoymensclass); ##!!??
+    delta_moymensclass = max_moymensclass - min_moymensclass;
+    min_moymensclass -= delta_moymensclass/30; # diminue legerement le MIN pour que la figure ne toucha pas le bord
+    max_moymensclass += delta_moymensclass/30; # aumente legerement le MAX pour que la figure ne toucha pas le bord
+    if same_minmax_ok and min_moymensclass < 0:
+        max_moymensclass = max(-1.0*min_moymensclass,max_moymensclass)
+        min_moymensclass = -1.0*max_moymensclass
 #*****************************************
 MaxPerfglob_Qm  = 0.0; # Utilisé pour savoir les quels premiers modèles
 IMaxPerfglob_Qm = 0;   # prendre dans la stratégie du "meilleur cumul moyen"
 #*****************************************
-# l'Init des figures à produire doit pouvoir etre placé ici (sauf la 106)
+# l'Init des figures à produire doit pouvoir etre placé ici (sauf la 106) -----
+if SIZE_REDUCTION == 'All' :
+    figsize10X=(18,11);
+    wspace10X=0.01; hspace10X=0.15; top10X=0.94; bottom10X=0.05; left10X=0.01; right10X=0.99;
+elif SIZE_REDUCTION == 'sel' :
+    figsize10X=(18,12);
+    wspace10X=0.01; hspace10X=0.14; top10X=0.94; bottom10X=0.04; left10X=0.01; right10X=0.99;
+ysstitre10X = ysstitre
+suptitlefs10X = 16
+ysuptitre10X = 0.99
+facecolor10X='w'
+# -----------------------------------------------------------------------------
 if OK104 : # Classification avec, "en transparance", les mals classés
            # par rapport aux obs
-    plt.figure(104,figsize=(18,9),facecolor='w')
-    plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
-    suptitle104="%sSST(%s)). %s Classification of Completed Models (vs Obs)" \
-                 %(fcodage,DATAMDL,method_cah);
+    plt.figure(104,figsize=figsize10X,facecolor=facecolor10X)
+    plt.subplots_adjust(wspace=wspace10X,hspace=hspace10X,top=top10X,bottom=bottom10X,left=left10X,right=right10X)
+    suptitle104="%sSST(%s)). %s Classification of Completed Models (vs Obs) (%d models)" \
+                 %(fcodage,DATAMDL,method_cah,Nmodels);
 if OK105 : #Classification
-    plt.figure(105,figsize=(18,9))
-    plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
-    suptitle105="%sSST(%s)). %s Classification of Completed Models (vs Obs)" \
-                 %(fcodage,DATAMDL,method_cah);
+    plt.figure(105,figsize=figsize10X,facecolor=facecolor10X)
+    plt.subplots_adjust(wspace=wspace10X,hspace=hspace10X,top=top10X,bottom=bottom10X,left=left10X,right=right10X)
+    suptitle105="%sSST(%s)). %s Classification of Completed Models (vs Obs) (%d models)" \
+                 %(fcodage,DATAMDL,method_cah,Nmodels);
 if OK106 : # Courbes des moyennes mensuelles par classe
-    plt.figure(106,figsize=(18,9),facecolor='w'); # Moyennes mensuelles par classe
-    plt.subplots_adjust(wspace=0.2, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
+    plt.figure(106,figsize=figsize10X,facecolor=facecolor10X); # Moyennes mensuelles par classe
+    plt.subplots_adjust(wspace=wspace10X+0.015,hspace=hspace10X,top=top10X,bottom=bottom10X+0.00,left=left10X+0.02,right=right10X-0.025)
     if 0 : #MICHEL
-        suptitle106="MoyMensClass(%sSST(%s)).) %s Classification of Completed Models (vs Obs)" \
-                     %(fcodage,DATAMDL,method_cah);
+        suptitle106="MoyMensClass(%sSST(%s)).) %s Classification of Completed Models (vs Obs) (%d models)" \
+                     %(fcodage,DATAMDL,method_cah,Nmodels);
     else : # pas MICHEL
-        suptitle106="MOY - MoyMensClass(%sSST(%s)).) %s Classification of Completed Models (vs Obs)" \
-                     %(fcodage,DATAMDL,method_cah);
+        suptitle106="MOY - MoyMensClass(%sSST(%s)).) %s Classification of Completed Models (vs Obs) (%d models)" \
+                     %(fcodage,DATAMDL,method_cah,Nmodels);
 if OK107 : # Variance (not 'RED' compatible)
-    suptitle107="VARiance(%sSST(%s)).) Variance (by pixel) on Completed Models" \
-                 %(fcodage,DATAMDL);
+    plt.figure(107,figsize=figsize10X,facecolor=facecolor10X); # Moyennes mensuelles par classe
+    #plt.subplots_adjust(wspace=wspace10X,hspace=hspace10X,top=top10X,bottom=bottom10X-0.12,left=left10X,right=right10X)
+    suptitle107="VARiance(%sSST(%s)).) Variance (by pixel) on Completed Models (%d models)" \
+                 %(fcodage,DATAMDL,Nmodels);
     Dmdl_TVar  = np.ones((Nmodels,NDobs))*np.nan; # Tableau des Variance par pixel sur climatologie
                    # J'utiliserais ainsi showimgdata pour avoir une colorbar commune
 if MCUM > 0 :
     # Moyenne CUMulative
     if OK108 : # Classification en Model Cumulé Moyen
-        plt.figure(108,figsize=(18,9),facecolor='w'); # Moyennes mensuelles par classe
-        plt.subplots_adjust(wspace=0.2, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
-        suptitle108="MCUM - %sSST(%s)). %s Classification of Completed Models (vs Obs)" \
-                     %(fcodage,DATAMDL,method_cah);
+        plt.figure(108,figsize=figsize10X,facecolor=facecolor10X); # Moyennes mensuelles par classe
+        plt.subplots_adjust(wspace=wspace10X,hspace=hspace10X,top=top10X,bottom=bottom10X,left=left10X,right=right10X)
+        suptitle108="MCUM - %sSST(%s)). %s Classification of Completed Models (vs Obs) (%d models)" \
+                     %(fcodage,DATAMDL,method_cah,Nmodels);
     #
     DMdl_Q  = np.zeros((NDmdl,12));  # f(modèle climatologique Cumulé) #+
     DMdl_Qm = np.zeros((NDmdl,12));  # f(modèle climatologique Cumulé moyen) #+
     #
     # Variance CUMulative
     if OK109 : # Variance sur les Models Cumulés Moyens (not 'RED' compatible)
+        plt.figure(109,figsize=figsize10X,facecolor=facecolor10X); # Moyennes mensuelles par classe
+        #plt.subplots_adjust(wspace=wspace10X,hspace=hspace10X,top=top10X,bottom=bottom10X-0.12,left=left10X,right=right10X)
         Dmdl_TVm = np.ones((Nmodels,NDobs))*np.nan; # Tableau des Variance sur climatologie
                    # cumulée, moyennée par pixel. J'utiliserais ainsi showimgdata pour avoir
                    # une colorbar commune
-        suptitle109="VCUM - %sSST(%s)). Variance sur la Moyenne Cumulée de Modeles complétés" \
-                     %(fcodage,DATAMDL);
+        suptitle109="VCUM - %sSST(%s)). Variance sur la Moyenne Cumulée de Modeles complétés (%d models)" \
+                     %(fcodage,DATAMDL,Nmodels);
 #
 #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
@@ -1257,6 +1477,10 @@ if MCUM > 0 :
 #           DEUXIEME BOUCLE SUR LES MODELES START HERE
 #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+if mdlnamewnumber_ok :
+    Tmdlname10X = Tmdlnamewnb;
+else :
+    Tmdlname10X = Tmdlname;
 isubplot = 0;
 Tperfglob_Qm = np.zeros((Nmodels,)); # Tableau des Perf globales des modèles cumulees
 print("\nooooooooooooooooooooooooooooo 2nd loop ooooooooooooooooooooooooooooo")
@@ -1264,7 +1488,7 @@ for imodel in np.arange(Nmodels) :
     isubplot=isubplot+1;
     #
     Dmdl    = TDmdl4CT[imodel];
-    mdlname = Tmdlname[imodel];
+    mdlname = Tmdlname10X[imodel];
     # 
     classe_DMdl = Tclasse_DMdl[imodel];
     XC_Mgeo     = dto2d(classe_DMdl,LObs,CObs,isnumObs); # Classification géographique
@@ -1319,7 +1543,7 @@ for imodel in np.arange(Nmodels) :
         plt.imshow(X_, interpolation='none', cmap=ccmap,vmin=1,vmax=nb_class);
         del X_
         plt.axis('off'); #grid(); # for easier check
-        plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob,'%'),fontsize=sztitle); 
+        plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob,'%'),fontsize=sztitle,y=ysstitre10X); 
         hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(Tperf);
         hcb.ax.tick_params(labelsize=8)
@@ -1333,15 +1557,17 @@ for imodel in np.arange(Nmodels) :
         hcb.ax.tick_params(labelsize=8);
         plt.axis('off');
         #grid(); # for easier check
-        plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob,'%'),fontsize=sztitle);
+        plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob,'%'),fontsize=sztitle,y=ysstitre10X);
         #
     if OK106 : # Courbes des moyennes mensuelles par classe
         plt.figure(106); plt.subplot(nbsubl,nbsubc,isubplot);
+        # trace l'axe des abscices (a Y=0) en noir
+        plt.plot([-0.5,Tmoymensclass.shape[1]-1+0.5],[0,0],'-',color='k',linewidth=1.0);
         for i in np.arange(nb_class) :
             plt.plot(Tmoymensclass[imodel,:,i],'.-',color=pcmap[i]);
-        plt.axis([0, 11, min_moymensclass, max_moymensclass]);
+        plt.axis([-0.5, 11.5, min_moymensclass, max_moymensclass]);
         plt.xticks([]); #plt.axis('off');     
-        plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob,'%'),fontsize=sztitle);
+        plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob,'%'),fontsize=sztitle,y=ysstitre10X);
         #       
     if OK107 : # Variance (not 'RED' compatible)
         Dmdl_TVar[imodel] = np.var(Dmdl, axis=1, ddof=0);
@@ -1373,7 +1599,7 @@ for imodel in np.arange(Nmodels) :
         hcb.ax.tick_params(labelsize=8);
         plt.axis('off');
         #grid(); # for easier check
-        plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob_Qm,'%'),fontsize=sztitle);
+        plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob_Qm,'%'),fontsize=sztitle,y=ysstitre10X);
         #
         pgqm_ = np.round_(Perfglob_Qm*100)
         if pgqm_ >= MaxPerfglob_Qm :
@@ -1398,14 +1624,18 @@ if OK104 : # Obs for 104
     hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
     hcb.set_ticklabels(coches);
     hcb.ax.tick_params(labelsize=8)
-    plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle);
-    plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
-    plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle,y=ysstitre10X);
+    if 0 :
+        plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
+        plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    else :
+        set_lonlat_ticks(lon,lat,step=4,fontsize=8,verbose=False,lengthen=True)
     #grid(); # for easier check
-    plt.suptitle(suptitle104)
+    plt.suptitle(suptitle104,fontsize=suptitlefs10X,y=ysuptitre10X)
     #
     if SAVEFIG : # sauvegarde de la figure
-        figfile = "Fig-104_{:s}{:s}_{:s}{:s}{:d}MdlvsObstrans".format(fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class)
+        figfile = "Fig-104_{:s}{:s}_{:s}{:s}{:d}MdlvsObstrans_{:d}-mod".format(fprefixe,
+                           SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
         # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
         # et eventuellement en PDF, si SAVEPDF active. 
         do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -1417,45 +1647,58 @@ if OK105 : # Obs for 105
     hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
     hcb.set_ticklabels(coches);
     hcb.ax.tick_params(labelsize=8)
-    plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle);
-    plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
-    plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle,y=ysstitre10X);
+    if 0 :
+        plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
+        plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    else :
+        set_lonlat_ticks(lon,lat,step=4,fontsize=8,verbose=False,lengthen=True)
     #grid(); # for easier check
-    plt.suptitle(suptitle105)
+    plt.suptitle(suptitle105,fontsize=suptitlefs10X,y=ysuptitre10X)
     if SAVEFIG :
-        figfile = "Fig-105_{:s}{:s}_{:s}{:s}{:d}Mdl".format(fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class)
+        figfile = "Fig-105_{:s}{:s}_{:s}{:s}{:d}Mdl_{:d}-mod".format(fprefixe,
+                           SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
         # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
         # et eventuellement en PDF, si SAVEPDF active. 
         do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
 if OK106 : # Obs for 106
-    plt.figure(106); plt.subplot(nbsubl,nbsubc,isubplot);
+    plt.figure(106);
+    plt.subplot(nbsubl,nbsubc,isubplot);
+    # plt.figure();plt.subplots_adjust(wspace=0.2, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.80)
+    # trace l'axe des abscices (a Y=0) en noir
+    plt.plot([-0.5,Tmoymensclass.shape[1]-1+0.5],[0,0],'-',color='k',linewidth=1.0);
     TmoymensclassObs = moymensclass(sst_obs,isnumobs,classe_Dobs,nb_class);
+    Legendline = []
     for i in np.arange(nb_class) :
-        plt.plot(TmoymensclassObs[:,i],'.-',color=pcmap[i]);
-    plt.axis([0, 11, min_moymensclass, max_moymensclass]);
+        line = plt.plot(TmoymensclassObs[:,i],'.-',color=pcmap[i]);
+        Legendline.append(line[0])
+    plt.axis([-0.5, 11.5, min_moymensclass, max_moymensclass]);
     plt.xlabel('mois');
     plt.xticks(np.arange(12), np.arange(12)+1, fontsize=8)
-    plt.legend(np.arange(nb_class)+1,loc=2,fontsize=6,numpoints=1,bbox_to_anchor=(1.1, 1.0));
-    plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle);
+    plt.legend(Legendline,np.arange(nb_class)+1,loc=2,fontsize=6,numpoints=1,bbox_to_anchor=(1.02, 1.0),title="Class");
+    #plt.legend([x[0] for x in Legendline],np.arange(nb_class)+1,loc=2,fontsize=6,numpoints=1,bbox_to_anchor=(1.1, 1.0),title="Class");
+    plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle,y=ysstitre10X);
     #
     # On repasse sur tous les supblots pour les mettre à la même echelle.
     print("min_moymensclass= {}\nmax_moymensclass= {}".format(min_moymensclass, max_moymensclass));
-    plt.suptitle(suptitle106)
+    plt.suptitle(suptitle106,fontsize=suptitlefs10X,y=ysuptitre10X)
     if SAVEFIG :
-        figfile = "Fig-106_{:s}{:s}_{:s}{:s}{:d}moymensclass".format(fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class)
+        figfile = "Fig-106_{:s}{:s}_{:s}{:s}{:d}moymensclass_{:d}-mod".format(fprefixe,
+                           SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
         # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
         # et eventuellement en PDF, si SAVEPDF active. 
         do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
 #
 if OK107 or OK109 : # Calcul de la variance des obs par pixel de la climatologie
-    Tlabs = np.copy(Tmdlname);  
+    Tlabs = np.copy(Tmdlname10X);  
     Tlabs = np.append(Tlabs,'');                # Pour le subplot vide
     Tlabs = np.append(Tlabs,'Observations');    # Pour les Obs
     varobs= np.ones(Lobs*Cobs)*np.nan;          # Variances des ...
     varobs[isnumobs] = np.var(Dobs, axis=1, ddof=0); # ... Obs par pixel
 #
 if OK107 : # Variance par pixels des modèles
+    plt.figure(107);
     X_ = np.ones((Nmodels,Lobs*Cobs))*np.nan;
     X_[:,isnumobs] = Dmdl_TVar
     # Rajouter nan pour le subplot vide
@@ -1464,12 +1707,15 @@ if OK107 : # Variance par pixels des modèles
     X_    = np.concatenate((X_, varobs.reshape(1,Lobs*Cobs)))
     #
     showimgdata(X_.reshape(Nmodels+2,1,Lobs,Cobs), Labels=Tlabs, n=Nmodels+2,fr=0,
-                vmin=np.nanmin(Dmdl_TVar),vmax=np.nanmax(Dmdl_TVar),fignum=107);
+                vmin=np.nanmin(Dmdl_TVar),vmax=np.nanmax(Dmdl_TVar),fignum=107,
+                wspace=wspace10X,hspace=hspace10X+0.03,top=top10X,bottom=bottom10X,left=left10X,right=right10X,
+                );
     del X_
-    plt.suptitle(suptitle107);
+    plt.suptitle(suptitle107,fontsize=suptitlefs10X,y=ysuptitre10X);
     #
     if SAVEFIG :
-        figfile = "Fig-107_{:s}VAR_{:s}_{:s}Mdl".format(fprefixe,SIZE_REDUCTION,fshortcode)
+        figfile = "Fig-107_{:s}VAR_{:s}_{:s}Mdl_{:d}-mod".format(fprefixe,
+                           SIZE_REDUCTION,fshortcode,Nmodels)
         # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
         # et eventuellement en PDF, si SAVEPDF active. 
         do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -1481,19 +1727,24 @@ if MCUM>0 and OK108 : # idem OK105, but ...
     hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
     hcb.set_ticklabels(coches);
     hcb.ax.tick_params(labelsize=8)
-    plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle);
-    plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
-    plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle,y=ysstitre10X);
+    if 0 :
+        plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
+        plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    else :
+        set_lonlat_ticks(lon,lat,step=4,fontsize=8,verbose=False,lengthen=True)
     #grid(); # for easier check
-    plt.suptitle(suptitle108);
+    plt.suptitle(suptitle108,fontsize=suptitlefs10X,y=ysuptitre10X);
     #
     if SAVEFIG :
-        figfile = "Fig-108_{:s}MCUM_{:s}_{:s}{:s}{:d}Mdl".format(fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class)
+        figfile = "Fig-108_{:s}MCUM_{:s}_{:s}{:s}{:d}Mdl_{:d}-mod".format(fprefixe,
+                           SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
         # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
         # et eventuellement en PDF, si SAVEPDF active. 
         do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
 #
 if MCUM>0 and OK109 : # Variance par pixels des moyenne des modèles cumulés
+    plt.figure(109);
     X_ = np.ones((Nmodels,Lobs*Cobs))*np.nan;
     X_[:,isnumobs] = Dmdl_TVm
     # Rajouter nan pour le subplot vide
@@ -1502,12 +1753,15 @@ if MCUM>0 and OK109 : # Variance par pixels des moyenne des modèles cumulés
     X_ = np.concatenate((X_, varobs.reshape(1,Lobs*Cobs)))
     #
     showimgdata(X_.reshape(Nmodels+2,1,Lobs,Cobs), Labels=Tlabs, n=Nmodels+2,fr=0,
-                vmin=np.nanmin(Dmdl_TVm),vmax=np.nanmax(Dmdl_TVm),fignum=109);
+                vmin=np.nanmin(Dmdl_TVm),vmax=np.nanmax(Dmdl_TVm),fignum=109,
+                wspace=wspace10X,hspace=hspace10X+0.03,top=top10X,bottom=bottom10X,left=left10X,right=right10X,
+                );
     del X_
-    plt.suptitle(suptitle109);
+    plt.suptitle(suptitle109,fontsize=suptitlefs10X,y=ysuptitre10X);
     #
     if SAVEFIG :
-        figfile = "Fig-109_{:s}VCUM_{:s}_{:s}Mdl".format(fprefixe,SIZE_REDUCTION,fshortcode)
+        figfile = "Fig-109_{:s}VCUM_{:s}_{:s}Mdl_{:d}-mod".format(fprefixe,
+                           SIZE_REDUCTION,fshortcode,Nmodels)
         # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
         # et eventuellement en PDF, si SAVEPDF active. 
         do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -1535,26 +1789,29 @@ if Visu_preACFperf : # Tableau des performances en figure de courbes
     else :
         plt.axis("tight");
     plt.grid(axis='both')
-    plt.xticks(np.arange(Nmodels),Tmdlname, fontsize=8, rotation=45,
+    plt.xticks(np.arange(Nmodels),Tmdlname10X, fontsize=8, rotation=45,
                horizontalalignment='right', verticalalignment='baseline');
     plt.ylabel('performance by Model [%]')
     plt.legend(local_legend_labels,numpoints=1,loc=3)
-    plt.title("SST %s (%d-%d) %d Classes -  Classification Indices of Completed Models (vs Obs)"\
-                 %(fcodage,andeb,anfin,nb_class));
+    plt.title("SST %s (%d-%d) %d Classes -  Classification Indices of Completed Models (vs Obs) (%d models)"\
+                 %(fcodage,andeb,anfin,nb_class,Nmodels));
     #             %(fcodage,DATAMDL,method_cah,nb_class));
     if SAVEFIG :
-        figfile = "Fig_{:s}perf-by_model_{:s}_{:s}{:s}{:d}Mdl".format(fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class)
+        figfile = "Fig_{:s}perf-by_model_{:s}_{:s}{:s}{:d}Mdl_{:d}-mod".format(fprefixe,
+                       SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
         # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
         # et eventuellement en PDF, si SAVEPDF active. 
         do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
 #
 #___________________________________________
 # Mettre les Tableaux-Liste en tableau Numpy
-Tmdlname = np.array(Tmdlname);
-TTperf   = np.array(TTperf);
-if NIJ==1 :
-    TNIJ = np.array(TNIJ);
-TDmdl4CT = np.array(TDmdl4CT);
+Tmdlname    = np.array(Tmdlname);
+Tmdlnamewnb = np.array(Tmdlnamewnb);
+Tmdlonlynb  = np.array(Tmdlonlynb);
+TTperf      = np.array(TTperf);
+TDmdl4CT    = np.array(TDmdl4CT);
+if NIJ == 1 :
+    TNIJ    = np.array(TNIJ);
 #
 #======================================================================
 #
@@ -1565,8 +1822,13 @@ if STOP_BEFORE_AFC :
 if NIJ > 0 : # A.F.C
     #Ajout de l'indice dans le nom du modèle
     Tm_ = np.empty(len(Tmdlname),dtype='<U32');
-    for i in np.arange(Nmdlok) : 
-        Tm_[i] = str(i+1) + '-' +Tmdlname[i];
+    for i in np.arange(Nmdlok) :
+        if onlymdlumberAFC_ok : 
+            Tm_[i] = Tmdlonlynb[i];
+        elif mdlnamewnumber_ok :
+            Tm_[i] = Tmdlnamewnb[i];
+        else :
+            Tm_[i] = str(i+1) + '-' +Tmdlname[i];
     #
     # Harmonaiser la variable servant de tableau de contingence (->Tp_), selon le cas
     if NIJ==1 : # Nij = card|classes| ; Pourrait semblé inapproprié car les classes
@@ -1626,6 +1888,10 @@ if NIJ > 0 : # A.F.C
     #-----------------------------------------
     # MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
     if 1 : # CAH on afc Models's coordinates (without obs !!!???)
+        if SIZE_REDUCTION == 'All' :
+            nticks = 5; # 4
+        elif SIZE_REDUCTION == 'sel' :
+            nticks = 2; # 4
         metho_ = 'ward'; #'complete' 'single' 'average' 'ward'; #<><><><><><<><><>
         dist_  = 'euclidean';
         coord2take = np.arange(NBCOORDAFC4CAH); # Coordonnées de l'AFC àprendre pour la CAH
@@ -1683,7 +1949,8 @@ if NIJ > 0 : # A.F.C
                     figsize = (3.5*subc_,1+3*subl_)
                     wspace=0.30; hspace=0.02; top=0.94; bottom=0.01; left=0.03; right=0.94;
                 figclustmoy = plt.figure(figsize=figsize,facecolor="w"); # pour les différents cluster induit par ce niveau.
-                figclustmoy.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
+                figclustmoy.subplots_adjust(wspace=wspace, hspace=hspace, top=top,
+                                            bottom=bottom, left=left, right=right)
             #
             for ii in np.arange(nb_clust) :
                 iclust  = np.where(class_afc==ii+1)[0];
@@ -1705,7 +1972,8 @@ if NIJ > 0 : # A.F.C
                         plt.subplot(8,6,jj+1); # plt.subplot(7,7,jj+1);
                         plt.imshow(XCM_, interpolation='none',cmap=ccmap, vmin=1,vmax=nb_class);
                         plt.axis('off');
-                        plt.title("%s(%.0f%c)"%(CAHindnames[ijj],100*Tperfglob[ijj,0],'%'),fontsize=sztitle);
+                        plt.title("%s(%.0f%c)"%(CAHindnames[ijj],100*Tperfglob[ijj,0],'%'),
+                                  fontsize=sztitle,y=ysstitre);
                             # même si y'a 'Obs' dans CAHindnames, ca devrait pas apparaitre
                             # car elles sont à la fin et ont été retirées de class_afc
                     plt.suptitle("Classification des modèles du cluster %d"%(ii+1));
@@ -1727,13 +1995,15 @@ if NIJ > 0 : # A.F.C
                 # Classification du, des modèles moyen d'un cluster
                 if MultiLevel : # Plusieurs niveaux de découpe, c'est pas la peine de faire toutes ces
                                 # figures, mais on a besoin de la perf
-                    Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,LObs,CObs,isnumObs,TypePerf[0],visu=False);
+                    Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,LObs,CObs,isnumObs,TypePerf[0],
+                                            visu=False,nticks=nticks);
                 else : # 1 seul niveau de découpe, on fait la figure
                     plt.figure(figclustmoy.number)
                     ax = plt.subplot(subl_,subc_,ii+1);
                     Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,LObs,CObs,isnumObs,TypePerf[0],
                                             ax = ax,
-                                            cblabel="performance [%]",cblabelsize=8,labelsize=10);
+                                            cblabel="performance [%]",cblabelsize=8,
+                                            cbticklabelsize=10,nticks=nticks);
                     plt.title("Cluster %d (%d mod.), mean perf=%.0f%c"%(ii+1,len(iclust),
                                                100*Perfglob_,'%'),fontsize=12);
                 #
@@ -1773,7 +2043,7 @@ if NIJ > 0 : # A.F.C
             plt.show(); sys.exit(0)
     # reprend la figure de performanes par cluster
     plt.figure(figclustmoy.number)
-    plt.suptitle("AFC Clusters Class Performance",fontsize=18);
+    plt.suptitle("AFC Clusters Class Performance ({} models)".format(Nmodels),fontsize=18);
     #plt.suptitle("AFC Clusters Class Performance ({:d} Classes)".format(nb_class),fontsize=18);
     if SAVEFIG : # sauvegarde de la figure de performanes par cluster
         plt.figure(figclustmoy.number)
@@ -1781,72 +2051,154 @@ if NIJ > 0 : # A.F.C
             figfile = "FigArt_"
         else :
             figfile = "Fig_"
-        figfile += "{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}".format(nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin)
+        figfile += "{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(nb_clust,
+                    nb_class,fprefixe,fshortcode,andeb,anfin,Nmodels)
         # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
         # eventuellement en PDF, si SAVEPDF active. 
         do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
 
 #%% pwd
 if NIJ > 0 : # A.F.C (suite)
+    if 0 :
+        plt.figure()
+        plt.scatter(np.random.randn(1,100),np.random.randn(1,100),edgecolors='r',marker='o',linewidth=0.5)
     #
     # FIN du if 1 : MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
     #-----------------------------------------
     #      
     # choisir K et son facteur de zoom
     #K=CAi; xoomK=3000; # Pour les contrib Abs (CAi)
-    K=CRi; xoomK=1000;  # Pour les contrib Rel (CRi)
-    if 1 : # ori afc avec tous les points
-        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,indname=NoAFCindnames);
-        if NIJ==1 :
-            plt.title("%sSST(%s)). %s%d AFC on classes of Completed Models (vs Obs)" \
-                 %(fcodage,DATAMDL,method_cah,nb_class));
-        elif NIJ==3 or NIJ==2 :
-            plt.title("%sSST(%s)). %s%d AFC on good classes of Completed Models (vs Obs)" \
-                 %(fcodage,DATAMDL,method_cah,nb_class));
-    #
-    if AFCWITHOBS  : # Mettre en évidence Obs
-        plt.plot(F1U[Nmdlok,pa-1],F1U[Nmdlok,po-1], 'oc', markersize=20,
-                 markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);    
-    else : # Obs en supplémentaire
-        plt.text(F1sU[0,0],F1sU[0,1], ".Obs")
-        plt.plot(F1sU[0,0],F1sU[0,1], 'oc', markersize=20,
-                     markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);
-    #
-    if 1 : # AJOUT ou pas des colonnes (i.e. des classes)
-        colnames = (np.arange(nb_class)+1).astype(str)
-        afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),K=CAj,xoomK=xoomK,
-                 linewidths=2,indname=colnames,holdon=True) 
-        plt.axis("tight"); #?
-    #
+    if Visu_AFC_in_one or Visu_UpwellArt: # plot afc en une seule image
+        # 1- NOUVELLE FIGURE POUR PROJECTIONS DE L'AFC
+        fig = plt.figure(figsize=(16,12));
+        plt.subplots_adjust(top=0.93, bottom=0.05, left=0.05, right=0.95)
+        ax = plt.subplot(111)
+        fignum = fig.number # numero de figure en cours ...
+        if Visu_UpwellArt :
+            afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,linewidths=1.5,
+                     indname=NoAFCindnames,
+                     ax=ax,article_style=True,
+                     marker='o',obsmarker='o',
+                     markersize=60,obsmarkersize=75,
+                     edgecolor='k',edgeobscolor='k',obscolor=[ 0.90, 0.90, 0.90, 1.],
+                     edgeclasscolor='k',faceclasscolor='m',
+                     lblfontsize=14,horizalign='left',vertalign='center',lblprefix=' ',
+                     );
+            # 3- AJOUT ou pas des colonnes (i.e. des classes)
+            colnames = (np.arange(nb_class)+1).astype(str)
+            afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),
+                     gridok=True,aximage=True,axtight=False,
+                     linewidths=1.5,indname=colnames,holdon=True,drawtriangref=False,
+                     ax=ax,article_style=True,
+                     drawaxes=True, axescolors=('k','k'),
+                     markersize=140,lblcolor='w',
+                     lblfontsize=14,horizalign='center',vertalign='center',
+                     )
+            plt.title(("2 axes AFC of SST {:s} Projection with Models, Observations and Classes ({:s})"+\
+                      "\n- {:s}, AFC on {:d} Classes ({} models+Obs) -").format(
+                              fcodage,DATAMDL,method_cah,nb_class,Nmodels),fontsize=14,y=1.02);
+        else :
+            K=CRi; xoomK=1000;  # Pour les contrib Rel (CRi)
+            afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,
+                     indname=NoAFCindnames,
+                     drawaxes=True, gridok=True,
+                     ax=ax);
+            if NIJ==1 :
+                plt.title("AFC Projection - %s SST (%s). %s%d AFC on classes of Completed Models (vs Obs)" \
+                     %(fcodage,DATAMDL,method_cah,nb_class));
+            elif NIJ==3 or NIJ==2 :
+                plt.title("AFC Projection - %s SST (%s). %s%d AFC on good classes of Completed Models (vs Obs)" \
+                     %(fcodage,DATAMDL,method_cah,nb_class));
+            #
+            # 2- MET EN EVIDENCE LES OBS DANS LA FIGURE ...
+            if AFCWITHOBS  :
+                ax.plot(F1U[Nmdlok,pa-1],F1U[Nmdlok,po-1], 'oc', markersize=20,
+                        markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);    
+            else : # Obs en supplémentaire
+                ax.text(F1sU[0,0],F1sU[0,1], ".Obs")
+                ax.plot(F1sU[0,0],F1sU[0,1], 'oc', markersize=20,
+                        markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);
+            #
+            # 3- AJOUT ou pas des colonnes (i.e. des classes)
+            colnames = (np.arange(nb_class)+1).astype(str)
+            afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),K=CAj,xoomK=xoomK,
+                     linewidths=2,indname=colnames,holdon=True,drawtriangref=True,
+                     ax=ax,drawaxes=True,aximage=True,axtight=False) 
+        #plt.axis("tight"); #?
+        if SAVEFIG : # sauvegarde de la figure
+            if Visu_UpwellArt :
+                figfile = "FigArt_"
+            else :
+                figfile = "Fig_"
+            figfile += "AFC2DProj-{:d}-{:d}_{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(
+                    pa,po,nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin,Nmodels)
+            # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
+            # eventuellement en PDF, si SAVEPDF active. 
+            do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+#%% pwd
+if NIJ > 0 : # A.F.C (suite bis)
     if Visu_afcnu_det : # plot afc etape par étape"
         # Que les points lignes (modèles)
         K=CRi; xoomK=1000
-        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,indname=NoAFCindnames);
-        plt.title("%sSST(%s)). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
+        fig = plt.figure(figsize=(12,8));
+        plt.subplots_adjust(top=0.93, bottom=0.05, left=0.05, right=0.95)
+        ax = plt.subplot(111)
+        fignum = fig.number # numero de figure en cours ...
+        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,indname=NoAFCindnames,
+                 ax=ax);
+        plt.title("%s SST (%s). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
                  %(fcodage,DATAMDL,method_cah,nb_class,NIJ));
         # Que les points colonnes (Classe)
-        plt.figure()
+        fig = plt.figure(figsize=(12,8));
+        plt.subplots_adjust(top=0.93, bottom=0.05, left=0.05, right=0.95)
+        ax = plt.subplot(111)
         afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),K=CAj,xoomK=xoomK,
-                 linewidths=2,indname=colnames,holdon=True)
-        plt.title("%sSST(%s)). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
+                 linewidths=2,indname=colnames,holdon=True,
+                 ax=ax, gridok=True)
+        plt.title("%s SST (%s). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
                  %(fcodage,DATAMDL,method_cah,nb_class,NIJ));          
     #
     if Visu_Inertie : # Inertie
-        inertie, icum = acp.phinertie(VAPT); 
+        #inertie, icum = acp.phinertie(VAPT); 
+        #if NIJ==1 :
+        #    plt.title("%sSST(%s)). \n%s%d AFC on classes of Completed Models (vs Obs)" \
+        #             %(fcodage,DATAMDL,method_cah,nb_class));
+        #elif NIJ==3 :
+        #    plt.title("%sSST(%s)). \n%s%d AFC on good classes of Completed Models (vs Obs)" \
+        #             %(fcodage,DATAMDL,method_cah,nb_class));
+        fig = plt.figure(figsize=(8,6));
+        fignum = fig.number # numero de figure en cours ...
+        plt.subplots_adjust(top=0.93, bottom=0.08, left=0.08, right=0.98)
+        ax = plt.subplot(111)
+        inertie, icum = acp.phinertie(VAPT,ax=ax,ygapbar=0.01, ygapcum=0.01); #print("inertie=:"); tls.tprin(inertie," %6.3f ")
+        ax.grid(axis='y')
         if NIJ==1 :
-            plt.title("%sSST(%s)). \n%s%d AFC on classes of Completed Models (vs Obs)" \
+            ax.set_title("%sSST(%s)) [%s]\n%s%d AFC on classes of Completed Models (vs Obs)" \
+                     %(fcodage,DATAMDL,case_label,method_cah,nb_class));
+        elif NIJ==2 :
+            ax.set_title("%sSST(%s))\n%s%d AFC on good classes of Completed Models (vs Obs)" \
                      %(fcodage,DATAMDL,method_cah,nb_class));
         elif NIJ==3 :
-            plt.title("%sSST(%s)). \n%s%d AFC on good classes of Completed Models (vs Obs)" \
-                     %(fcodage,DATAMDL,method_cah,nb_class));
+            ax.set_title("%sSST(%s)) [%s]\n%s%d AFC on good classes of Completed Models (vs Obs)" \
+                     %(fcodage,DATAMDL,case_label,method_cah,nb_class));
+        if SAVEFIG : # sauvegarde de la figure de performanes par cluster
+            plt.figure(figclustmoy.number)
+            figfile = "Fig_"
+            figfile += "Inertia-{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}".format(nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin)
+            # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
+            # eventuellement en PDF, si SAVEPDF active. 
+            do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
 #
-#======================================================================
+#%%======================================================================
 #
 if STOP_BEFORE_GENERAL :
     plt.show(); sys.exit(0)
 #**********************************************************************
 #............................. GENERALISATION .........................
-def mixtgeneralisation (TMixtMdl, label=None, cblabel=None) :
+def mixtgeneralisation (TMixtMdl, lon=None, lat=None,
+                        label=None, cblabel=None, fignum=None,
+                        nticks=1,
+                        ytitre=0.98, fsizetitre=14) :
     ''' Ici, j'ai :
              - Tmdlname : une table de NOMS de N modèles valides ; ##!!??? 
              - TDmdl4ct : la table correspondante des modèles 4CT (N, v,12)
@@ -1894,24 +2246,37 @@ def mixtgeneralisation (TMixtMdl, label=None, cblabel=None) :
     #
     # Modèle moyen
     MdlMoy = Dmdlmoy4CT(TDmdl4CT,IMixtMdl);
-    if 1 : # Affichage du moyen for CT
-        aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,
-              wvmin=wvmin,wvmax=wvmax,figsize=(12,9),cmap=eqcmap);
-        plt.suptitle("MdlMoy (%s) \n%s(%d-%d) for CT\nmin=%f, max=%f, moy=%f, std=%f"
-                    %(Tmdlname[IMixtMdl], fcodage,andeb,anfin,np.min(MdlMoy),
-                     np.max(MdlMoy),np.mean(MdlMoy),np.std(MdlMoy)))
+    #if 1 : # Affichage du moyen for CT
+    #    aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,
+    #          wvmin=wvmin,wvmax=wvmax,figsize=(12,9),cmap=eqcmap,fignum=fignum);
+    #    plt.suptitle("MdlMoy (%s) \n%s(%d-%d) for CT\nmin=%f, max=%f, moy=%f, std=%f"
+    #                %(Tmdlname[IMixtMdl], fcodage,andeb,anfin,np.min(MdlMoy),
+    #                 np.max(MdlMoy),np.mean(MdlMoy),np.std(MdlMoy)))
     #
     # Classification du modèles moyen
-    plt.figure();
-    Perfglob_ = Dgeoclassif(sMapO,MdlMoy,LObs,CObs,isnumObs,TypePerf[0],cblabel="class performance [%]"); #use perfbyclass
+    if fignum is None :
+        fig = plt.figure();
+        fignum = fig.number # numero de figure en cours ...
+    else :
+        fig = plt.figure(fignum);
+        fig, ax = plt.subplots(nrows=1, ncols=1, num=fignum,facecolor='w')
+    #
+    #def Dgeoclassif(sMap,Data,L,C,isnum,MajorPerf,visu=True,cbticklabelsize=8,cblabel=None,
+    #                cblabelsize=10,old=False,ax=None,nticks=1,tickfontsize=10) :
+    Perfglob_ = Dgeoclassif(sMapO,MdlMoy,LObs,CObs,isnumObs,TypePerf[0],
+                            cblabel="class performance [%]",
+                            ax=ax,nticks=nticks,tickfontsize=10,
+                            cbticklabelsize=12,cblabelsize=12); #use perfbyclass
+    plt.xlabel('Longitude', fontsize=12); plt.ylabel('Latitude', fontsize=12)
     if label is None :
         titre = "MdlMoy ({} models: {})".format(len(Tmdlname[IMixtMdl]),Tmdlname[IMixtMdl])
     else :
         titre = "{} ({} models)".format(label,len(Tmdlname[IMixtMdl]))
     titre += ", mean perf={:.0f}%".format(100*Perfglob_)
     #
-    plt.title(titre,fontsize=sztitle);
+    plt.title(titre,fontsize=fsizetitre,y=ytitre);
     #tls.klavier();
+    return MdlMoy, IMixtMdl
 #
 #%% ---------------------------------------------------------------------------
 # Modèles Optimaux (Sopt) ;  Avec "NEW Obs - v3b " 1975-2005
@@ -1921,29 +2286,40 @@ def mixtgeneralisation (TMixtMdl, label=None, cblabel=None) :
 #TMixtMdl= [];
 #TMixtMdl =['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']; 
 #TMixtMdl = Sfiltre;
-if 0 :
-    # Grande Zone (All): BEST AFC CLUSTER:
-    TMixtMdlLabel = 'Best AFC Cluster'
-    TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
-                'CNRM-CM5-2', 'CanESM2', 'CanCM4', 'GFDL-CM3', 'CNRM-CM5',
-                'CSIRO-Mk3-6-0', 'CMCC-CESM']
-elif 1 :
-    # Petite Zone (sel): BEST AFC CLUSTER:
-    TMixtMdlLabel = 'Best AFC Cluster'
-    TMixtMdl = ['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3']
-elif 1 :
+if 1 : # Best AFC Clusters
+    if SIZE_REDUCTION == 'All' :
+        # Grande Zone (All): BEST AFC CLUSTER:
+        TMixtMdlLabel = 'Best AFC Cluster'
+        TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
+                    'CNRM-CM5-2', 'CanESM2', 'CanCM4', 'GFDL-CM3', 'CNRM-CM5', 'FGOALS-s2(2004)', 
+                    'CSIRO-Mk3-6-0', 'CMCC-CESM']
+    elif SIZE_REDUCTION == 'sel' :
+        # Petite Zone (sel): BEST AFC CLUSTER:
+        TMixtMdlLabel = 'Best AFC Cluster'
+        TMixtMdl = ['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2(2004)']
+elif 1 : # Best Cum Clusters Mopr
+    if SIZE_REDUCTION == 'All' :
+        # Grande Zone (All): BEST CUM GROUP OF MODELS:
+        TMixtMdlLabel = 'Best Cumulated Models Group'
+        TMixtMdl = ['CMCC-CM']
+    elif SIZE_REDUCTION == 'sel' :
+        # Petite Zone (sel): BEST CUM GROUP OF MODELS:
+        TMixtMdlLabel = 'Best Cumulated Models Group'
+        TMixtMdl = ['CanCM4', 'CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'CanESM2', 'NorESM1-ME']
+else :
     # ALL MODELS (but 'FGOALS-s2', there is no 1975-2005 data for it):
     TMixtMdlLabel = 'All Models'
-    TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
-                'FGOALS-g2', 'IPSL-CM5B-LR', 'CNRM-CM5-2', 'CanESM2', 'CanCM4',
-                'GFDL-CM3', 'CNRM-CM5', 'CSIRO-Mk3-6-0', 'MPI-ESM-MR', 'MRI-CGCM3',
-                'MRI-ESM1', 'CMCC-CESM', 'inmcm4', 'bcc-csm1-1', 'MPI-ESM-LR',
-                'CESM1-BGC', 'MPI-ESM-P', 'IPSL-CM5A-LR', 'GISS-E2-R',
-                'GISS-E2-R-CC', 'NorESM1-M', 'CCSM4', 'NorESM1-ME', 'bcc-csm1-1-m',
-                'GFDL-CM2p1', 'GISS-E2-H', 'ACCESS1-3', 'MIROC5', 'GFDL-ESM2G',
-                'MIROC-ESM-CHEM', 'GFDL-ESM2M', 'GISS-E2-H-CC', 'MIROC-ESM',
-                'IPSL-CM5A-MR', 'HadCM3', 'CESM1-CAM5', 'CESM1-CAM5-1-FV2',
-                'ACCESS1-0']
+    TMixtMdl = Tmdlname
+    #TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
+    #            'FGOALS-g2', 'IPSL-CM5B-LR', 'CNRM-CM5-2', 'CanESM2', 'CanCM4',
+    #            'GFDL-CM3', 'CNRM-CM5', 'CSIRO-Mk3-6-0', 'MPI-ESM-MR', 'MRI-CGCM3',
+    #            'MRI-ESM1', 'CMCC-CESM', 'inmcm4', 'bcc-csm1-1', 'MPI-ESM-LR',
+    #            'CESM1-BGC', 'MPI-ESM-P', 'IPSL-CM5A-LR', 'GISS-E2-R',
+    #            'GISS-E2-R-CC', 'NorESM1-M', 'CCSM4', 'NorESM1-ME', 'bcc-csm1-1-m',
+    #            'GFDL-CM2p1', 'GISS-E2-H', 'ACCESS1-3', 'MIROC5', 'GFDL-ESM2G',
+    #            'MIROC-ESM-CHEM', 'GFDL-ESM2M', 'GISS-E2-H-CC', 'MIROC-ESM',
+    #            'IPSL-CM5A-MR', 'HadCM3', 'CESM1-CAM5', 'CESM1-CAM5-1-FV2',
+    #            'ACCESS1-0']
 #------------------------------------------------------------------------
 if SIZE_REDUCTION == 'All' :
     misttitlelabel = TMixtMdlLabel+" (Big Zone)"
@@ -1955,19 +2331,86 @@ mistfilelabel = misttitlelabel.replace(' ','').replace('(','').replace(')','')
 #TMixtMdl = []
 #
 if TMixtMdl == [] :
-    print("\nSopt non renseigné ; Ce Cas n'a pa encore été prévu")
+    print("\nSopt non renseigné ; Ce Cas n'a pas encore été prévu")
 else :
-    print("\n{:d}-model(s)' generalization: {} ".format(len(TMixtMdl),TMixtMdl))
-    mixtgeneralisation (TMixtMdl, label=misttitlelabel);
+    if 1 :
+        if SIZE_REDUCTION == 'All' :
+            figsize = (9,6)
+            wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.06; right=0.925;
+            nticks = 5; # 4
+        elif SIZE_REDUCTION == 'sel' :
+            figsize=(9,9)
+            wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.05; right=0.96;
+            nticks = 2; # 4
+        fig = plt.figure(figsize=figsize)
+        fignum = fig.number # numero de figure en cours ...
+        fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
+    
+        print("\n{:d}-model(s)' generalization: {} ".format(len(TMixtMdl),TMixtMdl))
+        MdlMoy, IMixtMdl = mixtgeneralisation (TMixtMdl, label=misttitlelabel, fignum=fignum,
+                                               fsizetitre=14,ytitre=1.01,nticks=nticks);
+        #
+        if SAVEFIG : # sauvegarde de la figure
+            if Visu_UpwellArt :
+                figfile = "FigArt_"
+            else :
+                figfile = "Fig_"
+            figfile += "MeanModel_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
+            figfile += "_{:s}{:s}_{:d}Class".format(fprefixe,fshortcode,nb_class)
+            do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+
+    if 1 : # Affichage du moyen for CT
+        if SIZE_REDUCTION == 'All' :
+            figsize = (12,7)
+            wspace=0.04; hspace=0.12; top=0.925; bottom=0.035; left=0.035; right=0.97;
+            nticks = 5; # 4
+        elif SIZE_REDUCTION == 'sel' :
+            figsize=(10,8.5)
+            wspace=0.04; hspace=0.12; top=0.925; bottom=0.035; left=0.035; right=0.965;
+            nticks = 2; # 4
+        fig = plt.figure(figsize=figsize)
+        fignum = fig.number # numero de figure en cours ...
+        if Show_ModSTD and len(Tmdlname[IMixtMdl]) > 2:
+            std_ = np.std(TDmdl4CT[IMixtMdl],axis=0);
+            print(np.min(std_),np.max(std_),np.mean(std_),np.std(std_))
+            aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,
+                  wvmin=wvmin,wvmax=wvmax,
+                  fignum=fignum,varnames=varnames,cmap=eqcmap,
+                  wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
+                  noaxes=False,noticks=False,nolabels=False,y=0.98,cblabel="SST Anomaly [°C]",
+                  lolast=lolast,lonlat=(lon,lat),
+                  vcontour=std_, ncontour=np.arange(0,2,1/10), ccontour='k', lblcontourok=True,
+                  ); #...
+        else :
+            aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,
+                  wvmin=wvmin,wvmax=wvmax,
+                  fignum=fignum,varnames=varnames,cmap=eqcmap,
+                  wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
+                  noaxes=False,noticks=False,nolabels=False,y=0.98,cblabel="SST Anomaly [°C]",
+                  lolast=lolast,lonlat=(lon,lat),
+                  ); #...
+        sptitre = "{}".format(misttitlelabel)
+        if Show_ModSTD :
+            if len(Tmdlname[IMixtMdl]) > 2 :
+                sptitre += " and inter-model STD in contours"
+            else:
+                sptitre += " (not enouth models STD)"
+        sptitre += " ({} models)".format(len(Tmdlname[IMixtMdl]))
+        sptitre += ", mean perf={:.0f}%".format(100*Perfglob_)
+        sptitre += "\nmin=%f, max=%f, moy=%f, std=%f"%(np.min(MdlMoy),np.max(MdlMoy),
+                                                       np.mean(MdlMoy),np.std(MdlMoy))
+        plt.suptitle(sptitre,fontsize=14,y=0.995);
+        #
+        if SAVEFIG : # sauvegarde de la figure
+            figfile = "Fig_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
+            if Show_ModSTD :
+                figfile += "+{:d}ySTD".format(Nda)
+            figfile += "_Lim{:+.1f}-{:+.1f}_{:s}{:s}Clim-{:d}-{:d}".format(wvmin,wvmax,
+                            fprefixe,fshortcode,andeb,anfin)
+            # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
+            # eventuellement en PDF, si SAVEPDF active. 
+            do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
-    if SAVEFIG : # sauvegarde de la figure
-        figfile = "Fig_{:s}_{:s}{:s}_{:d}Class".format(mistfilelabel,fprefixe,fshortcode,nb_class)
-        # sauvegarde en format FIGEXT (normalement BITMAP (png,jpg))
-        plt.savefig(case_figs_dir+os.sep+figfile+FIGEXT, dpi=FIGDPI)
-        # sauvegarde en fotmat vectoriel, PDF ou Postscript Encapsule
-        #if SAVEPDF : 
-        #    plt.savefig(case_figs_dir+os.sep+figfile+VFIGEXT,
-        #                transparent=False)
 #
 #**********************************************************************
 plt.show();

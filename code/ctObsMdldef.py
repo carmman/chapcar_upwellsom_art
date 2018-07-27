@@ -21,7 +21,7 @@ if 0 :
     Tmodels_anyall = np.array([
         ["bcc-csm1-1",      ""],    #( 3)
         ["bcc-csm1-1-m",    ""],    #( 4)
-        #["BNU-ESM",         ""],        # non fourni
+        #["BNU-ESM",         ""],        # initialement non fourni, mais present actuellement
         ["CanCM4",          ""],    #( 5)
         ["CanESM2",         ""],    #( 6)
         ["CMCC-CESM",       ""],    #(13)
@@ -74,7 +74,7 @@ else :
     Tmodels_and_institut_anyall = np.array([
         ['BCC',          'bcc-csm1-1',       ''],   #( 3)
         ['BCC',          'bcc-csm1-1-m',     ''],   #( 4)
-        #['BNU',          'BNU-ESM',          ''],   # non fourni
+        #['BNU',          'BNU-ESM',          ''],   # initialement non fourni, mais present actuellement
         ['CCCma',        'CanCM4',           ''],
         ['CCCma',        'CanESM2',          ''],
         ['CMCC',         'CMCC-CESM',        ''],

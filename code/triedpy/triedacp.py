@@ -41,7 +41,7 @@ def acp (X) :
     return VAPU, VEPU, XU
 
 
-def phinertie (VAPU) : # Inertie
+def phinertie (VAPU, ax=None, ygapbar=0.0, ygapcum=0.0) : # Inertie
     ''' INERTIE, ICUM = phinertie (VAPU)
     | Calcule et retourne l'inertie (INERTIE) et l'inertie cumulée (ICUM)
     | des valeurs propres (VAPU) d'une ACP.
@@ -54,16 +54,19 @@ def phinertie (VAPU) : # Inertie
     INERTIE   = VAPU/sumI;  
     ICUM      = np.cumsum(INERTIE); 
     #print('\nInertie=', INERTIE, '\nInertie cum.=',ICUM);
-    plt.figure();
+    if ax is None :
+        fig = plt.figure();
+        ax = plt.subplot(111)
     index = np.arange(p);
-    plt.bar(index+.6,INERTIE);
-    plt.plot(index+1, ICUM, 'r-*');
+    ax.bar(index+1,INERTIE,align='center');
+    ax.plot(index+1, ICUM, 'r-*');
     for i in range(p) :
-        plt.text(i+0.75,INERTIE[i],"%.4f" % (INERTIE[i]));
-        plt.text(i+0.75,ICUM[i],"%.4f" % (ICUM[i]));
-    plt.legend(["Inertie cumulée", "Inertie"], loc=1);
-    plt.xlabel("Axes principaux");
-    plt.ylabel("Poucentage d'Inertie des valeurs propres");
+        if i != 0 :  # n'affiche pas le premier (il est affiché de suite)
+            ax.text(i+1,INERTIE[i]+ygapbar,"{:.4f}".format(INERTIE[i]),horizontalalignment='center');
+        ax.text(i+1,ICUM[i]+ygapcum,"{:.4f}".format(ICUM[i]),horizontalalignment='center');
+    ax.legend(["Inertie cumulée", "Inertie"], loc=7);
+    ax.set_xlabel("Axes principaux");
+    ax.set_ylabel("Poucentage d'Inertie des valeurs propres");
     return INERTIE, ICUM;
 
 

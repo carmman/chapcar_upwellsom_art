@@ -44,6 +44,11 @@ Tinstit = Tinstitut_anyall;
 Tmodels = Tmodels_anyall;
 #Tmodels= Tmodels[2:12];  # Pour limiter le nombre de modèle en phase de mise au point
 Nmodels = len(Tmodels); # print(Nmodels); sys.exit(0)
+# tableau de numero de modele
+Tnmodel = []
+for imodel in np.arange(Nmodels) :
+    Tnmodel.append("{:d}".format(imodel+1))
+Tnmodel = np.array(Tnmodel)
 
 # -----------------------------------------------------------------------------
 # Conditions d'execution:
@@ -183,7 +188,7 @@ MCUM = 3; # Moyenne des Models climatologiques CUmulés
 # attendre que le besoin émerge.
 #>>>
 OK101 = True; # Pour produire les Ecarts types d'un modèle moyen par
-              # pixel et par mois (eventuellement controlé par Sopt...)
+               # pixel et par mois (eventuellement controlé par Sopt...)
 ecvmin = 0.10; ecvmax = 0.70; # si ecvmin<0 on utilise les min et max
 ecvmin= -1.0                 # des valeurs à afficher: si negatif prend les limites de chaque figure
 #<<<
@@ -194,7 +199,7 @@ if SIZE_REDUCTION == 'RED' :
 else :
     OK107=OK109=False;
 #OK104=OK105=OK106=OK107=OK108=OK109=True;
-OK101=OK104=OK105=OK106=OK107=OK109=False;
+#OK104=OK105=OK106=OK107=OK109=False;
 #
 # Other stuff
 FONDTRANS = "Obs"; # "Obs", "Mdl"
@@ -286,6 +291,9 @@ ccmap      = cm.jet;       # Accent, Set1, Set1_r, gist_ncar; jet, ...
 # pour avoir des couleurs à peu près equivalente pour les plots
 #pcmap     = ccmap(np.arange(1,256,round(256/nb_class)));ko 512ko, 384ko
 pcmap      = ccmap(np.arange(0,320,round(320/nb_class))); #ok?
+pcmap *= 0.95 # fonce les legerement tous les couleurs ...
+if ccmap.name == 'jet' and nb_class == 4:
+    pcmap[2] *= 0.9 # fonce la couleur de la classe qui est trop claire(si ccmap = jet)
 # -------------------------
 # map de couleur par defaut
 dcmap      = cm.gist_ncar; 
@@ -334,14 +342,15 @@ STOP_BEFORE_GENERAL  = False;
 #
 # Flag de visualisation
 Show_ObsSTD     = False;    # Flag de visu des la STD des Obs (si Visu_ObsStuff est True)
+Show_ModSTD     = True;    # Flag de visu des la STD des Obs (si Visu_ObsStuff est True)
 
-Visu_UpwellArt  = True;    # Flag de visu des figures pour article avec Juliette et Adama
-Visu_ObsStuff   = False;   # Flag de visu des Obs  : 4CT, classif et courbes moy. mens.
-Visu_CTStuff    = False;   # Flag de visu de la CT : Umat, Map, Profils (sauf Dendro) 
-Visu_Dendro     = False;   # Flag de visualisation des dendrogrammes
+Visu_ObsStuff   = False;    # Flag de visu des Obs  : 4CT, classif et courbes moy. mens.
+Visu_CTStuff    = False;    # Flag de visu de la CT : Umat, Map, Profils (sauf Dendro) 
+Visu_Dendro     = False;    # Flag de visualisation des dendrogrammes
 Visu_preACFperf = False;    # performances avant l'AFC: MeanClassAccuracy, GlobalAccuracy, ...
-Visu_afcnu_det  = True;    # Sylvie
-Visu_Inertie    = True;    # Flag de visualisation de l'Inertie
+Visu_AFC_in_one = False;    # plot afc en une seule image
+Visu_afcnu_det  = False;    # Sylvie: plot afc etape par étape
+Visu_Inertie    = False;    # Flag de visualisation de l'Inertie
 #Flag visu classif des modèles des cluster
 AFC_Visu_Classif_Mdl_Clust  = []; # liste des cluster a afficher (à partir de 1)
 #AFC_Visu_Classif_Mdl_Clust = [1,2,3,4,5,6,7]; 
@@ -349,6 +358,19 @@ AFC_Visu_Classif_Mdl_Clust  = []; # liste des cluster a afficher (à partir de 1
 AFC_Visu_Clust_Mdl_Moy_4CT  = []; # liste des cluster a afficher (à partir de 1)
 #AFC_Visu_Clust_Mdl_Moy_4CT = [1,2,3,4,5,6,7];
 #
+# FLAGS en vue de l'article
+Visu_UpwellArt  = True;     # Flag de visu des figures pour article avec Juliette et Adama
+if Visu_UpwellArt :
+    OK101 = False; # Pour produire les Ecarts types d'un modèle moyen par
+ysstitre        = 0.96   # position vertical des soustitres dans figures de groupe
+same_minmax_ok  = True;  # MIN = -MAX
+mdlnamewnumber_ok  = True; # fait apparaitre le numero de modele dans fogures 10X (104, 105, ...)
+onlymdlumberAFC_ok = True; # identifie les modeles uniquement par leur numero dans la projection AFC
+#
+# POUT TEST:
+OK104=OK105=OK106=OK107=OK108=OK109=True;
+Visu_ObsStuff=Visu_CTStuff=Visu_Dendro=Visu_preACFperf=Visu_AFC_in_one=Visu_afcnu_det=Visu_Inertie=True;
+
 #######################################################################
 TM_label_base = "TM{}x{}_Ep1-{}_Ep2-{}".format(nbl, nbc, epoch1, epoch2)
 case_label_base="Case_{}{}_NIJ{:d}".format(fprefixe,TM_label_base,NIJ)
