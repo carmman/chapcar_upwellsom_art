@@ -95,6 +95,6 @@ if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
         figfile += "_Lim{:+.1f}-{:+.1f}_{:s}_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(wvmin,wvmax,localcmap.name,fprefixe,fshortcode,andeb,anfin,data_label_base)
         # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
         # eventuellement en PDF, si SAVEPDF active. 
-        do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     del wvmin,wvmax,localcmap

@@ -131,4 +131,4 @@ git checkout master
 git add ctLoopMain.py ctLoopTools.py models_def_tb.py
 
 # commit
-git -am "Traveaux de 
+git commit -am "Traveaux de rendre fontionnel toutes les actions dans ctLoopAnyS.py. Version preliminaire non fonctionnelle"

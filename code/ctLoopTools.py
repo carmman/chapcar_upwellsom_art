@@ -680,6 +680,9 @@ def plot_obs(sst_obs,lon,lat,varnames=None,title="",
     return wvmin,wvmax
     #%%
 def plot_obsbis(sst_obs,lon,lat) :
+    sst_obs, Dobs, NDobs = ctobs.datacodification4CT(sst_obs,
+                TRENDLESS=TRENDLESS,WITHANO=WITHANO,climato=climato,UISST=UISST,
+                NORMMAX=NORMMAX,CENTRED=CENTRED);
     # Figure FREE LIMITS
     localcmap = eqcmap
     ND,p      = np.shape(Dobs);
@@ -687,7 +690,7 @@ def plot_obsbis(sst_obs,lon,lat) :
     X_[isnumobs] = Dobs   
     X_[isnanobs] = np.nan
     X = X_.T.reshape(p,1,Lobs,Cobs)
-    
+
     if SIZE_REDUCTION == 'All' :
         figsize = (12,7)
         wspace=0.04; hspace=0.12; top=0.925; bottom=0.035; left=0.035; right=0.97;
