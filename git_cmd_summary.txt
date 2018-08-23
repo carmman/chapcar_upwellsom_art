@@ -117,3 +117,18 @@ git checkout 54ac88636a6647f1618f0e697bf877fa71c2db92
 
 git checkout master
 
+
+# Modificatione pour rendre pure fonctions le contenu de ctLoopAnyS.py
+# afin de pouvoir realiser des experiences avec un simple appels a une
+# procedure, prise en compte d'arguments externes dans ctLoopMain.py.
+#
+# Creation de nouveux fichiers python remplacant ctLoopAnyS.py :
+#   ctLoopMain.py
+#   ctLoopTools.py
+# plus models_def_tb.py avec description des modeles (tableau) issu de ctObsMdldef.py
+
+# ajout des nouveaux fichiers
+git add ctLoopMain.py ctLoopTools.py models_def_tb.py
+
+# commit
+git -am "Traveaux de 

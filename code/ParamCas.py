@@ -1,4 +1,15 @@
-from   ctObsMdldef import *
+# -*- coding: utf-8 -*-
+"""
+Created on ???  2018
+
+Tables de Modeles
+
+@author: charles
+"""
+from   matplotlib import cm
+##from   ctObsMdldef import *
+from models_def_tb import *
+
 #######################################################################
 # FLAGS DE COMPORTEMENT
 #======================================================================
