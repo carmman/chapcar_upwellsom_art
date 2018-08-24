@@ -541,7 +541,8 @@ def showbarcell (sm,norm='brute',a=0,b=1,scale=0,cmap=cm.rainbow,sztext=11) :
 
 def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
                 Clevel=None, Gscale=0.25, showcellid=None, ColorClass=None,
-                sztext=11, axsztext=8, markrsz=6, marker='*',pltcolor='r',ticklabels=None,
+                sztext=11, axsztext=8, markrsz=6, marker='*',pltcolor='r',xticks=None,
+                ticklabels=None,
                 figsize=(12,16),fignum=None, y=0.98,verbose=False) :
     ''' showprofils (sm, visu, Data, bmus ,scale, Clevel, Gscale)
     | Pour chaque neurone, on représente, dans un subplot, le référent et/ou des
@@ -659,7 +660,8 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
                 if l < (nbl - 1) :
                     ax.tick_params(labelbottom=False)
                 elif ticklabels is not None :
-                    xticks = plt.xticks()[0];
+                    if xticks is None :
+                        xticks = plt.xticks()[0];
                     if verbose:
                         print(xticks)
                         print(ticklabels)
@@ -680,6 +682,10 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
                             locallbls.append('')
                     ax.set_xticks(localtcks)
                     ax.set_xticklabels(locallbls,rotation=60)
+                else :
+                    if xticks is not None :
+                        ax.set_xticks(xticks)
+                #
                 if c > 0:
                     ax.tick_params(labelleft=False)
                 inode +=1;
