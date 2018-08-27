@@ -438,8 +438,8 @@ if 1 :
     #                        MODELS STUFFS START HERE
     #======================================================================
     ctloop.printwarning([ "    MODELE: INITIALISATION AND FIRST LOOP" ])
-    TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,\
-        Tmoymensclass,Dmdl,NDmdl,Nmdlok,Smoy_101,Tsst_102 = ctloop.do_models_startnloop(sMapO,
+    TDmdl4CT0,Tmdlname0,Tmdlnamewnb0,Tmdlonlynb0,Tperfglob4Sort0,Tclasse_DMdl0,\
+        Tmoymensclass0,Dmdl,NDmdl,Nmdlok,Smoy_101,Tsst_102 = ctloop.do_models_startnloop(sMapO,
                                 Tmodels,Tinstit,ilat,ilon,
                                 isnanobs,isnumobs,nb_class,class_ref,classe_Dobs,
                                 Tnmodel=Tnmodel,
@@ -457,6 +457,11 @@ if 1 :
     #
     # -------------------------------------------------------------------------
     ctloop.printwarning([ "    MODELS: PLOT 101 AND 102 AND PAST FIRST LOOP" ])
+    if mdlnamewnumber_ok :
+        Tmdlname10X = Tmdlnamewnb;
+    else :
+        Tmdlname10X = Tmdlname;
+    #
     if len(Tmdlname10X) > 6 :            # Sous forme de liste, la liste des noms de modèles
         Tnames_ = Tmdlname10X;           # n'est pas coupé dans l'affichage du titre de la figure
     else :                               # par contre il l'est sous forme d'array; selon le cas, ou 
@@ -493,6 +498,27 @@ if 1 :
     #
     # -------------------------------------------------------------------------
     ctloop.printwarning([ "    MODELES: PRIOR SECOND LOOP" ])
+    # re-initialise des variables qui seront alterees par la fonction "do_models_pior_second_loop"
+    TDmdl4CT       = np.copy(TDmdl4CT0)
+    Tmdlname       = np.copy(Tmdlname0)
+    Tmdlnamewnb    = np.copy(Tmdlnamewnb0)
+    Tmdlonlynb     = np.copy(Tmdlonlynb0)
+    Tperfglob4Sort = np.copy(Tperfglob4Sort0)
+    Tclasse_DMdl   = np.copy(Tclasse_DMdl0)
+    Tmoymensclass  = np.copy(Tmoymensclass0)
+    #
+    TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,Tmoymensclass,\
+        min_moymensclass,max_moymensclass,\
+        MaxPerfglob_Qm,IMaxPerfglob_Qm = ctloop.do_models_pior_second_loop(
+                                TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,
+                                Tclasse_DMdl,Tmoymensclass,
+                                MCUM,
+                                same_minmax_ok=same_minmax_ok,
+                                OK106=OK106,
+                                )
+    #
+    # -------------------------------------------------------------------------
+    ctloop.printwarning([ "    MODELS: SECOND LOOP" ])
     if OK104 :
         suptitle104="%sSST(%s)).  Classification of Completed Models (vs Obs) (%d models)" \
                      %(fcodage,DATAMDL,Nmodels);
@@ -518,23 +544,7 @@ if 1 :
     elif SIZE_REDUCTION == 'sel' :
         figsize=(18,12);
         wspace=0.01; hspace=0.14; top=0.94; bottom=0.04; left=0.01; right=0.99;
-
-    TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,Tmoymensclass,\
-        min_moymensclass,max_moymensclass,\
-        MaxPerfglob_Qm,IMaxPerfglob_Qm,Dmdl_TVar,DMdl_Q,DMdl_Qm,\
-        Dmdl_TVm = ctloop.do_models_pior_second_loop(
-                                TDmdl4CT,Tmdlname,
-                                Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,
-                                Tclasse_DMdl,Tmoymensclass,
-                                MCUM,Nmodels,NDobs,NDmdl,
-                                same_minmax_ok=same_minmax_ok,
-                                figsize=figsize,
-                                wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
-                                OK104=OK104, OK105=OK105, OK106=OK106, OK107=OK107, OK108=OK108, OK109=OK109,
-                                )
     #
-    # -------------------------------------------------------------------------
-    ctloop.printwarning([ "    MODELS: SECOND LOOP" ])
     sztitle = 10;
     suptitlefs = 16
     ysuptitre = 0.99
@@ -542,9 +552,9 @@ if 1 :
         TDmdl4CT = ctloop.do_models_second_loop(sst_obs_coded,Dobs,lon,lat,sMapO,XC_Ogeo,TDmdl4CT,
                                 Tmdlname,Tmdlnamewnb,Tmdlonlynb,
                                 Tperfglob4Sort,Tclasse_DMdl,Tmoymensclass,
-                                MaxPerfglob_Qm,IMaxPerfglob_Qm,Dmdl_TVar,DMdl_Q,DMdl_Qm,Dmdl_TVm,
+                                MaxPerfglob_Qm,IMaxPerfglob_Qm,
                                 min_moymensclass,max_moymensclass,
-                                MCUM,Lobs,Cobs,
+                                MCUM,Lobs,Cobs,NDobs,NDmdl,
                                 isnumobs,nb_class,class_ref,classe_Dobs,fond_C,
                                 ccmap=ccmap,pcmap=pcmap,sztitle=sztitle,ysstitre=ysstitre,
                                 ysuptitre=ysuptitre,suptitlefs=suptitlefs,
@@ -553,11 +563,13 @@ if 1 :
                                 TypePerf=TypePerf,
                                 mdlnamewnumber_ok=mdlnamewnumber_ok,
                                 OK104=OK104, OK105=OK105, OK106=OK106, OK107=OK107, OK108=OK108, OK109=OK109,
+                                figsize=figsize,
+                                wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
                                 suptitle104=suptitle104,  suptitle105=suptitle105,
                                 suptitle106=suptitle106,  suptitle107=suptitle107,
                                 suptitle108=suptitle108,  suptitle109=suptitle109,
-                                wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
                                 )
+    # Dmdl_TVar,DMdl_Q,DMdl_Qm,Dmdl_TVm
     if OK104 :
         if SAVEFIG : # sauvegarde de la figure
             plt.figure(104);
@@ -612,6 +624,8 @@ if 1 :
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
+    # -------------------------------------------------------------------------
+    ctloop.printwarning([ "    MODELS: APRES SECOND LOOP" ])
     # Figure a ploter apres le deuxieme loop
     if Visu_preACFperf : # Tableau des performances en figure de courbes
         stitre = "SST {:s} ({:d}-{:d}) - {:d} Classes -  Classification Indices of Completed Models (vs Obs) ({:d} models)".format(fcodage,andeb,anfin,nb_class,Nmodels)

@@ -1285,11 +1285,9 @@ def do_models_next_first_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob
 #
 def do_models_pior_second_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,
                     Tclasse_DMdl,Tmoymensclass,
-                    MCUM,Nmodels,NDobs,NDmdl,
+                    MCUM,
                     same_minmax_ok=True,
-                    figsize=(7.5,12),
-                    wspace=0.01, hspace=0.05, top=0.95, bottom=0.04, left=0.15, right=0.86,
-                    OK104='False', OK105='False', OK106='False', OK107='False', OK108='False', OK109='False',
+                    OK106='False',
                     ):
     #*****************************************
     MaxPerfglob_Qm  = 0.0; # Utilisé pour savoir les quels premiers modèles
@@ -1353,50 +1351,17 @@ def do_models_pior_second_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglo
             min_moymensclass = -1.0*max_moymensclass
     #
     # -----------------------------------------------------------------------------
-    Dmdl_TVar=None; DMdl_Q=None; DMdl_Qm=None; Dmdl_TVm=None
-    if OK104 : # Classification avec, "en transparance", les mals classés
-               # par rapport aux obs
-        plt.figure(104,figsize=figsize,facecolor=facecolor)
-        plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
-    #                     
-    if OK105 : #Classification
-        plt.figure(105,figsize=figsize,facecolor=facecolor)
-        plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
-    #                     
-    if OK106 : # Courbes des moyennes mensuelles par classe
-        plt.figure(106,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
-        plt.subplots_adjust(wspace=wspace+0.015,hspace=hspace,top=top,bottom=bottom+0.00,left=left+0.02,right=right-0.025)
-    if OK107 : # Variance (not 'RED' compatible)
-        plt.figure(107,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
-        Dmdl_TVar  = np.ones((Nmodels,NDobs))*np.nan; # Tableau des Variance par pixel sur climatologie
-                       # J'utiliserais ainsi showimgdata pour avoir une colorbar commune
-    if MCUM > 0 :
-        # Moyenne CUMulative
-        if OK108 : # Classification en Model Cumulé Moyen
-            plt.figure(108,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
-            plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
-        #
-        DMdl_Q  = np.zeros((NDmdl,12));  # f(modèle climatologique Cumulé) #+
-        DMdl_Qm = np.zeros((NDmdl,12));  # f(modèle climatologique Cumulé moyen) #+
-        #
-        # Variance CUMulative
-        if OK109 : # Variance sur les Models Cumulés Moyens (not 'RED' compatible)
-            plt.figure(109,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
-            #plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom-0.12,left=left,right=right)
-            Dmdl_TVm = np.ones((Nmodels,NDobs))*np.nan; # Tableau des Variance sur climatologie
-                       # cumulée, moyennée par pixel. J'utiliserais ainsi showimgdata pour avoir
-                       # une colorbar commune
     #
         return TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,\
                Tmoymensclass,min_moymensclass,max_moymensclass,\
-               MaxPerfglob_Qm,IMaxPerfglob_Qm,Dmdl_TVar,DMdl_Q,DMdl_Qm,Dmdl_TVm
-#
+               MaxPerfglob_Qm,IMaxPerfglob_Qm
+#Dmdl_TVar,DMdl_Q,DMdl_Qm,Dmdl_TVm
 def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                           Tmdlname,Tmdlnamewnb,Tmdlonlynb,
                           Tperfglob4Sort,Tclasse_DMdl,Tmoymensclass,
-                          MaxPerfglob_Qm,IMaxPerfglob_Qm,Dmdl_TVar,DMdl_Q,DMdl_Qm,Dmdl_TVm,
+                          MaxPerfglob_Qm,IMaxPerfglob_Qm,
                           min_moymensclass,max_moymensclass,
-                          MCUM,Lobs,Cobs,
+                          MCUM,Lobs,Cobs,NDobs,NDmdl,
                           isnumobs,nb_class,class_ref,classe_Dobs,fond_C,
                           ccmap='jet',pcmap=None,sztitle=10,ysstitre=0.98,
                           ysuptitre=14,suptitlefs=0.98,
@@ -1404,6 +1369,8 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                           FONDTRANS="Obs",
                           TypePerf = ["MeanClassAccuracy"],
                           mdlnamewnumber_ok=False,
+                          figsize=(7.5,12),
+                          wspace=0.01, hspace=0.05, top=0.95, bottom=0.04, left=0.15, right=0.86,
                           OK104='False', OK105='False', OK106='False', OK107='False', OK108='False', OK109='False',
                           suptitle104='fig104',
                           suptitle105='fig105',
@@ -1411,7 +1378,6 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                           suptitle107='fig107',
                           suptitle108='fig108',
                           suptitle109='fig109',
-                          wspace=0.01, hspace=0.15, top=0.94, bottom=0.05, left=0.01, right=0.99,
                           ):
     #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
     #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
@@ -1439,6 +1405,47 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     Nmodels = len(Tmdlname)
     #
     print("\n {:s}".format(" 2nd loop ".center(79,'o')));
+    #
+    facecolor = 'w'
+    Dmdl_TVar=None; DMdl_Q=None; DMdl_Qm=None; Dmdl_TVm=None
+    if OK104 : # Classification avec, "en transparance", les mals classés
+               # par rapport aux obs
+        fig = plt.figure(104,figsize=figsize,facecolor=facecolor)
+        plt.clf() # efface une eventuelle figure existente 
+        plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
+    #                     
+    if OK105 : #Classification
+        plt.figure(105,figsize=figsize,facecolor=facecolor)
+        plt.clf() # efface une eventuelle figure existente 
+        plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
+    #                     
+    if OK106 : # Courbes des moyennes mensuelles par classe
+        plt.figure(106,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
+        plt.clf() # efface une eventuelle figure existente 
+        plt.subplots_adjust(wspace=wspace+0.015,hspace=hspace,top=top,bottom=bottom+0.00,left=left+0.02,right=right-0.025)
+    if OK107 : # Variance (not 'RED' compatible)
+        plt.figure(107,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
+        plt.clf() # efface une eventuelle figure existente 
+        Dmdl_TVar  = np.ones((Nmodels,NDobs))*np.nan; # Tableau des Variance par pixel sur climatologie
+                       # J'utiliserais ainsi showimgdata pour avoir une colorbar commune
+    if MCUM > 0 :
+        # Moyenne CUMulative
+        if OK108 : # Classification en Model Cumulé Moyen
+            plt.figure(108,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
+            plt.clf() # efface une eventuelle figure existente 
+            plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
+        #
+        DMdl_Q  = np.zeros((NDmdl,12));  # f(modèle climatologique Cumulé) #+
+        DMdl_Qm = np.zeros((NDmdl,12));  # f(modèle climatologique Cumulé moyen) #+
+        #
+        # Variance CUMulative
+        if OK109 : # Variance sur les Models Cumulés Moyens (not 'RED' compatible)
+            plt.figure(109,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
+            plt.clf() # efface une eventuelle figure existente 
+            #plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom-0.12,left=left,right=right)
+            Dmdl_TVm = np.ones((Nmodels,NDobs))*np.nan; # Tableau des Variance sur climatologie
+                       # cumulée, moyennée par pixel. J'utiliserais ainsi showimgdata pour avoir
+                       # une colorbar commune
     #
     coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
     ticks  = coches + 0.5;            # [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]
@@ -1578,11 +1585,13 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                 MaxPerfglob_Qm = pgqm_; # Utilisé pour savoir les quels premiers modèles
                 IMaxPerfglob_Qm = imodel+1;   # prendre dans la stratégie du "meilleur cumul moyen"
                 print(" New best cumul perf for {:d} models : {:.0f}% ...".format(imodel+1,pgqm_))
+            else :
+                print(".",end="")
          #
         if MCUM>0 and OK109 : # Variance sur les Models Cumulés Moyens (not 'RED' compatible)
                               # Perf par classe en colorbar)
             Dmdl_TVm[imodel] = np.var(DMdl_Qm, axis=1, ddof=0);
-    print("MaxPerfglob_Qm: {}% for {} model(s)".format(MaxPerfglob_Qm,IMaxPerfglob_Qm))
+    print("\nMaxPerfglob_Qm: {}% for {} model(s)".format(MaxPerfglob_Qm,IMaxPerfglob_Qm))
     #
     # Fin de la DEUXIEME boucle sur les modèles
     #__________________________________________
@@ -1656,15 +1665,19 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
         plt.figure(107);
         X_ = np.ones((Nmodels,Lobs*Cobs))*np.nan;
         X_[:,isnumobs] = Dmdl_TVar
-        # Rajouter nan pour le subplot vide
-        X_    = np.concatenate(( X_, np.ones((1,Lobs*Cobs))*np.nan))
+        for iextra in np.arange(nsubmax - Nmodels - 1):
+            print()
+            # Rajouter nan pour le subplot vide
+            X_ = np.concatenate((X_, np.ones((1,Lobs*Cobs))*np.nan))
         # Rajout de la variance des obs
         X_    = np.concatenate((X_, varobs.reshape(1,Lobs*Cobs)))
+        print("X_.shape = {} ({})".format(X_.shape,nsubmax))
         #
-        ldef.showimgdata(X_.reshape(Nmodels+2,1,Lobs,Cobs), Labels=Tlabs, n=Nmodels+2,fr=0,
+        ldef.showimgdata(X_.reshape(nsubmax,1,Lobs,Cobs), Labels=Tlabs, n=nsubmax,fr=0,
                     vmin=np.nanmin(Dmdl_TVar),vmax=np.nanmax(Dmdl_TVar),fignum=107,
                     wspace=wspace,hspace=hspace+0.03,top=top,bottom=bottom,left=left,right=right,
                     );
+#                    wspace=wspace,hspace=hspace+0.10,top=top-0.01,bottom=bottom-0.01,left=left+0.14,right=right-0.13,
         del X_
         plt.suptitle(suptitle107,fontsize=suptitlefs,y=ysuptitre);
     #
