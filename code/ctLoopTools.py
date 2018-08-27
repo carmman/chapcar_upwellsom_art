@@ -1656,7 +1656,8 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     #
     if OK107 or OK109 : # Calcul de la variance des obs par pixel de la climatologie
         Tlabs = np.copy(Tmdlname10X);  
-        Tlabs = np.append(Tlabs,'');                # Pour le subplot vide
+        for iextra in np.arange(nsubmax - Nmodels - 1):
+            Tlabs = np.append(Tlabs,'');            # Pour le(s) subplot(S) vide
         Tlabs = np.append(Tlabs,'Observations');    # Pour les Obs
         varobs= np.ones(Lobs*Cobs)*np.nan;          # Variances des ...
         varobs[isnumobs] = np.var(Dobs, axis=1, ddof=0); # ... Obs par pixel
@@ -1665,9 +1666,9 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
         plt.figure(107);
         X_ = np.ones((Nmodels,Lobs*Cobs))*np.nan;
         X_[:,isnumobs] = Dmdl_TVar
+        # Rajouter plussieurs couches de nan pour le(s) subplot(s) vide
         for iextra in np.arange(nsubmax - Nmodels - 1):
             print()
-            # Rajouter nan pour le subplot vide
             X_ = np.concatenate((X_, np.ones((1,Lobs*Cobs))*np.nan))
         # Rajout de la variance des obs
         X_    = np.concatenate((X_, varobs.reshape(1,Lobs*Cobs)))
@@ -1701,12 +1702,14 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
         plt.figure(109);
         X_ = np.ones((Nmodels,Lobs*Cobs))*np.nan;
         X_[:,isnumobs] = Dmdl_TVm
-        # Rajouter nan pour le subplot vide
-        X_ = np.concatenate(( X_, np.ones((1,Lobs*Cobs))*np.nan))
+        # Rajouter plussieurs couches de nan pour le(s) subplot(s) vide
+        for iextra in np.arange(nsubmax - Nmodels - 1):
+            print()
+            X_ = np.concatenate((X_, np.ones((1,Lobs*Cobs))*np.nan))
         # Rajout de la variance des obs
         X_ = np.concatenate((X_, varobs.reshape(1,Lobs*Cobs)))
         #
-        ldef.showimgdata(X_.reshape(Nmodels+2,1,Lobs,Cobs), Labels=Tlabs, n=Nmodels+2,fr=0,
+        ldef.showimgdata(X_.reshape(nsubmax,1,Lobs,Cobs), Labels=Tlabs, n=nsubmax,fr=0,
                     vmin=np.nanmin(Dmdl_TVm),vmax=np.nanmax(Dmdl_TVm),fignum=109,
                     wspace=wspace,hspace=hspace+0.03,top=top,bottom=bottom,left=left,right=right,
                     );
