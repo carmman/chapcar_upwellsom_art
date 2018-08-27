@@ -574,7 +574,8 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
     | Gscale : (réel entre 0 et 1 : Permet de jouer un peu sur les nuances des
     |          niveaux de gris (=0.25 par defaut) lorsque Clevel est utilisé.
     | showcellid : si True (ou 1), le n° de la cellule est affiché. ###<<<
-    '''
+    '''        
+    #
     nbl, nbc = sm.mapsize;
     if visu == 2 or visu == 3 : # Si on veut des données
         if Data==[] or Data is None :  # Par defaut on prend les données de sm qui
@@ -595,7 +596,7 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
     else :  # Si on ne veut que les référents
         minX = np.min(sm.codebook);
         maxX = np.max(sm.codebook);
-
+    #        
     # Color stuff pour éventuellement différencier les référents selon un critère
     if ColorClass is None :
         if Clevel == [] or Clevel is None :
@@ -616,12 +617,13 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
     if visu<1 or visu>3 :
        print("showprofils : bad visu value -> turn to 1 (referents only)");
        visu=1;
-   
+    #        
     if fignum is not None :
         fig = plt.figure(fignum);
     else:
         fig = plt.figure(figsize=figsize);
-
+        fignum = fig.number # numero de figure en cours ...
+    #
     if visu==2 or visu==3 : # Les données
         inode =  0;
         for l in np.arange(nbl) :     # en supposant les référents
@@ -635,7 +637,7 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
                 # To have Neurone indice number (if required)
                 if showcellid :
                     plt.title("Cell N° %d" %(inode),fontsize=sztext); 
-
+    #
     if visu==1 or visu==3 : # Les référents   
         inode =  0;
         for l in np.arange(nbl) :     # en supposant qu'ils sont
@@ -645,11 +647,12 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
                 #
                 plt.plot(sm.codebook[inode,:],'-',color=pltcolor,linewidth=0.5);
                 plt.plot(sm.codebook[inode,:],marker=marker,markersize=markrsz,color=pltcolor);
+                #
                 if scale==1 :
                     plt.axis("tight");
                 elif scale==2 :
                     plt.axis([0,sm.dim-1,minX,maxX]);
-                if 1 : # Couleur de fonds qu'il faut faire correspondre à la celle de la classe
+                if 1 : # Couleur de fond qu'il faut faire correspondre à la celle de la classe
                     from matplotlib import __version__ as plt_version
                     if plt_version < '2.0.' :
                         ax.set_axis_bgcolor(ColorClass[Clevel[inode]])

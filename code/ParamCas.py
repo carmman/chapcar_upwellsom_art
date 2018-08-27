@@ -201,7 +201,9 @@ MCUM = 3; # Moyenne des Models climatologiques CUmulés
 # pour 'RED'. Je ne sais pas si c'est vraiment intéressant de le faire,
 # attendre que le besoin émerge.
 #>>>
-OK101 = True; # Pour produire les Ecarts types d'un modèle moyen par
+OK101 = True; # Pour produire la Moyenne des modèles en entrée moyennées par
+               # pixel et par mois (eventuellement controlé par Sopt...)
+OK102 = True; # Pour produire l'Ecart type des modèles en entrée moyennées par
                # pixel et par mois (eventuellement controlé par Sopt...)
 ecvmin = 0.10; ecvmax = 0.70; # si ecvmin<0 on utilise les min et max
 ecvmin= -1.0                 # des valeurs à afficher: si negatif prend les limites de chaque figure
@@ -375,8 +377,9 @@ AFC_Visu_Clust_Mdl_Moy_4CT  = []; # liste des cluster a afficher (à partir de 1
 # FLAGS en vue de l'article
 Visu_UpwellArt  = True;     # Flag de visu des figures pour article avec Juliette et Adama
 if Visu_UpwellArt :
-    OK101 = False; # Pour produire les Ecarts types d'un modèle moyen par
-    OK101=OK104=OK105=OK106=OK107=OK108=OK109=True;
+    OK101 = False; # Pour produire la Moyenne d'un modèle moyen par ...
+    OK102 = False; # Pour produire les Ecarts types d'un modèle moyen 
+    OK101=OK102=OK104=OK105=OK106=OK107=OK108=OK109=True;
 ysstitre        = 0.96   # position vertical des soustitres dans figures de groupe
 same_minmax_ok  = True;  # MIN = -MAX
 mdlnamewnumber_ok  = True; # fait apparaitre le numero de modele dans fogures 10X (104, 105, ...)

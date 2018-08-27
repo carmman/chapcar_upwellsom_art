@@ -939,7 +939,9 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
                              MDLCOMPLETION=True,
                              SIZE_REDUCTION="All",
                              NIJ=0,
-                             OK101='False', OK106='False',
+                             OK101='False',
+                             OK102='False',
+                             OK106='False',
                              ) :
     #######################################################################
     #                        MODELS STUFFS START HERE
@@ -988,6 +990,7 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
     Tmoymensclass    = [];
     #
     Smoy_101 = None
+    Tsst_102 = None
     #
     #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
     #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
@@ -1107,7 +1110,8 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
                 Smoy_101 = Dmoy_;        
             else :
                 Smoy_101 += Dmoy_;
-            #
+        #
+        if OK102 :
             # Ecart type (à cause de FGOALS-s2 ca complique tout ...
             # (Il y aura un décalage entre moyenne et ecart type qui sera un peu
             # faussé, mais ainsi je retrouverai les même résultats qu'avant ...
@@ -1120,9 +1124,9 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
                 sst_ = np.concatenate((sst_, sst_[360-12:360]))
             #
             if Nmdlok == 1 :
-                Tsst_101 = sst_;        
+                Tsst_102 = sst_;        
             else :
-                Tsst_101 += sst_;
+                Tsst_102 += sst_;
         #________________________________________________________
         TDmdl4CT.append(Dmdl);  # stockage des modèles climatologiques 4CT pour AFC-CAH ...
         #
@@ -1143,35 +1147,34 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
     # Fin de la PREMIERE boucle sur les modèles
     #
     return TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,\
-           Tmoymensclass,Dmdl,NDmdl,Nmdlok,Smoy_101,Tsst_101
+           Tmoymensclass,Dmdl,NDmdl,Nmdlok,Smoy_101,Tsst_102
 #
 def print_tb_models(mdlname,mdlonlynb,ncol_prnt=1):
     Nmodels = len(mdlname)
     for col in np.arange(ncol_prnt) :
-        print(" {:->5s} {:->5s} {:->15s} ".format('','',''), end='')
+        print(" {:->5s} {:->5s} {:->16s} ".format('','',''), end='')
     print("")
     for col in np.arange(ncol_prnt) :
-        print(" {:5s} {:5s} {:15s} ".format('Order'.center(5,'-'),' No. '.center(5,'-'),' Model name '.center(15,'-')), end='')
+        print(" {:5s} {:5s} {:16s} ".format('Order'.center(5,'-'),' No. '.center(5,'-'),' Model name '.center(16,'-')), end='')
     print("")
     for col in np.arange(ncol_prnt) :
-        print(" {:->5s} {:->5s} {:->15s} ".format('','',''), end='')
+        print(" {:->5s} {:->5s} {:->16s} ".format('','',''), end='')
     print("")
     for imodel in np.arange(Nmodels) :
-        print(" {:5d} {:5s} {:15s} ".format(imodel+1,mdlonlynb[imodel].rjust(5),mdlname[imodel]), end='')
+        print(" {:5d} {:5s} {:16s} ".format(imodel+1,mdlonlynb[imodel].rjust(5),mdlname[imodel]), end='')
         if np.mod(imodel+1,ncol_prnt) == 0 or imodel == (Nmodels - 1):
             print("")
 #
-def do_models_past_first_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,
-                              Tclasse_DMdl,Tmoymensclass,Nmdlok,Lobs,Cobs,isnumobs,isnanobs,
+def do_models_plot101et102_past_fl(Nmdlok,Lobs,Cobs,isnumobs,isnanobs,
                               cmap='jet',varnames=None,
                               wvmin=None, wvmax=None,
                               ecvmin=None, ecvmax=None,
-                              mdlnamewnumber_ok=False,
-                              same_minmax_ok=True,
-                              title101="Mdl MOY SST",
+                              title101="Mdl MOY SST Mod",
+                              title102="EcrtType SST Mod",
                               Smoy_101=None,
-                              Tsst_101=None,
-                              OK101='False', OK106='False',
+                              Tsst_102=None,
+                              OK101='False',
+                              OK102='False',
                               ) :
     #
     if OK101 :
@@ -1183,31 +1186,45 @@ def do_models_past_first_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob
         if wvmax is None : 
             wvmax = np.nanmax(Smoy_)
         #
+        fig = plt.figure(101,figsize=(12,9))
+        fignum = fig.number
+        plt.clf() # efface une eventuelle figure existente 
+        #
         ctobs.aff2D(Smoy_,Lobs,Cobs,isnumobs,isnanobs,
-                    figsize=(12,9),cmap=cmap,varnames=varnames,
+                    fignum=fignum,cmap=cmap,varnames=varnames,
                     wvmin=wvmin,wvmax=wvmax);
         #
         plt.suptitle("%s. Moyenne par mois et par pixel (Before Climatologie)\nmin=%f, max=%f, moy=%f, std=%f" \
                          %(title101,
                            np.nanmin(Smoy_),np.nanmax(Smoy_),np.nanmean(Smoy_),np.nanstd(Smoy_),));
-        #
+    if OK102 :
         # Ecart type des modèles en entrée moyennées
-        Tsst_ = Tsst_101 / Nmdlok; # Moyenne des cumuls des animalies (modèle moyen des annomalies mais en fait avant climato))
+        Tsst_ = Tsst_102 / Nmdlok; # Moyenne des cumuls des animalies (modèle moyen des annomalies mais en fait avant climato))
         Dstd_, pipo_, pipo_  = ctobs.Dpixmoymens(Tsst_,stat='std'); # cliamtologie
         if ecvmin is None or ecvmin < 0 :
             ecvmin = np.nanmin(Dstd_)
         if ecvmax is None or ecvmin < 0 : 
             ecvmax = np.nanmax(Dstd_)
         #
+        fig = plt.figure(102,figsize=(12,9))
+        fignum = fig.number
+        plt.clf() # efface une eventuelle figure existente 
+        #
         ctobs.aff2D(Dstd_,Lobs,Cobs,isnumobs,isnanobs,
-                    figsize=(12,9),cmap=cmap,varnames=varnames,
+                    fignum=fignum,cmap=cmap,varnames=varnames,
                     wvmin=ecvmin,wvmax=ecvmax);
         #
         plt.suptitle("%s. \nEcarts Types par mois et par pixel (Before Climatologie)" \
-                         %(title101));
+                         %(title102));
         #
         del Smoy_, Tsst_, Dstd_, pipo_
         #plt.show(); sys.exit(0)
+#
+def do_models_next_first_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,
+                              Tclasse_DMdl,Tmoymensclass,
+                              same_minmax_ok=True,
+                              OK106='False',
+                              ) :
     #_____________________________________________________________________
     ######################################################################
     # Reprise de la boucle (avec les modèles valides du coup).
@@ -1246,6 +1263,8 @@ def do_models_past_first_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob
     printwarning([ "    Reorderer List of Models" ])
     print_tb_models(Tmdlname,Tmdlonlynb,ncol_prnt=3)
     #
+    min_moymensclass=None;
+    max_moymensclass=None; 
     if OK106 :
         X1_ = np.copy(Tmoymensclass);
         for i in np.arange(Nmodels) :
@@ -1264,7 +1283,10 @@ def do_models_past_first_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob
     return TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,\
            Tmoymensclass,min_moymensclass,max_moymensclass
 #
-def do_models_pior_second_loop(MCUM,Nmodels,NDobs,NDmdl,
+def do_models_pior_second_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,
+                    Tclasse_DMdl,Tmoymensclass,
+                    MCUM,Nmodels,NDobs,NDmdl,
+                    same_minmax_ok=True,
                     figsize=(7.5,12),
                     wspace=0.01, hspace=0.05, top=0.95, bottom=0.04, left=0.15, right=0.86,
                     OK104='False', OK105='False', OK106='False', OK107='False', OK108='False', OK109='False',
@@ -1275,6 +1297,60 @@ def do_models_pior_second_loop(MCUM,Nmodels,NDobs,NDmdl,
     #*****************************************
     # l'Init des figures à produire doit pouvoir etre placé ici (sauf la 106) -----
     facecolor='w'
+    #
+    ######################################################################
+    # Reprise de la boucle (avec les modèles valides du coup).
+    # (question l'emplacement des modèles sur les figures ne devrait pas etre un problème ?)
+    #*****************************************
+    #del Tmodels ##!!??
+    #_________________________________________
+    # TRI et Reformatage des tableaux si besoin
+    Nmodels = len(TDmdl4CT);            ##!!??
+    if 1 : # Sort On Perf
+        IS_ = np.argsort(Tperfglob4Sort)
+        IS_= np.flipud(IS_)
+    else : # no sort
+        IS_ = np.arange(Nmodels)
+    Tperfglob4Sort = np.array(Tperfglob4Sort)
+    Tperfglob4Sort = Tperfglob4Sort[IS_];
+    # Not sorted model lists
+    NSTmdlname    = np.copy(Tmdlname)
+    NSTmdlnamewnb = np.copy(Tmdlnamewnb)
+    NSTmdlonlynb  = np.copy(Tmdlonlynb)
+    printwarning([ "    List of Models" ])
+    print_tb_models(NSTmdlname,NSTmdlonlynb,ncol_prnt=3)
+    #
+    X1_ = np.copy(TDmdl4CT)
+    X2_ = np.copy(Tmdlname)
+    X3_ = np.copy(Tmdlnamewnb)
+    X4_ = np.copy(Tmdlonlynb)
+    X5_ = np.copy(Tclasse_DMdl)
+    for i in np.arange(Nmodels) : # TDmdl4CT = TDmdl4CT[I_];
+        TDmdl4CT[i]     = X1_[IS_[i]]
+        Tmdlname[i]     = X2_[IS_[i]]  
+        Tmdlnamewnb[i]  = X3_[IS_[i]]  
+        Tmdlonlynb[i]   = X4_[IS_[i]]
+        Tclasse_DMdl[i] = X5_[IS_[i]]
+    del X1_, X2_, X3_, X4_, X5_;
+    printwarning([ "    Reorderer List of Models" ])
+    print_tb_models(Tmdlname,Tmdlonlynb,ncol_prnt=3)
+    #
+    min_moymensclass=None;
+    max_moymensclass=None; 
+    if OK106 :
+        X1_ = np.copy(Tmoymensclass);
+        for i in np.arange(Nmodels) :
+            Tmoymensclass[i] = X1_[IS_[i]]
+        del X1_   
+        Tmoymensclass    = np.array(Tmoymensclass);
+        min_moymensclass = np.nanmin(Tmoymensclass); ##!!??
+        max_moymensclass = np.nanmax(Tmoymensclass); ##!!??
+        delta_moymensclass = max_moymensclass - min_moymensclass;
+        min_moymensclass -= delta_moymensclass/30; # diminue legerement le MIN pour que la figure ne toucha pas le bord
+        max_moymensclass += delta_moymensclass/30; # aumente legerement le MAX pour que la figure ne toucha pas le bord
+        if same_minmax_ok and min_moymensclass < 0:
+            max_moymensclass = max(-1.0*min_moymensclass,max_moymensclass)
+            min_moymensclass = -1.0*max_moymensclass
     #
     # -----------------------------------------------------------------------------
     Dmdl_TVar=None; DMdl_Q=None; DMdl_Qm=None; Dmdl_TVm=None
@@ -1311,9 +1387,12 @@ def do_models_pior_second_loop(MCUM,Nmodels,NDobs,NDmdl,
                        # cumulée, moyennée par pixel. J'utiliserais ainsi showimgdata pour avoir
                        # une colorbar commune
     #
-    return MaxPerfglob_Qm,IMaxPerfglob_Qm,Dmdl_TVar,DMdl_Q,DMdl_Qm,Dmdl_TVm
+        return TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,\
+               Tmoymensclass,min_moymensclass,max_moymensclass,\
+               MaxPerfglob_Qm,IMaxPerfglob_Qm,Dmdl_TVar,DMdl_Q,DMdl_Qm,Dmdl_TVm
 #
-def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,Tmdlname,Tmdlnamewnb,
+def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
+                          Tmdlname,Tmdlnamewnb,Tmdlonlynb,
                           Tperfglob4Sort,Tclasse_DMdl,Tmoymensclass,
                           MaxPerfglob_Qm,IMaxPerfglob_Qm,Dmdl_TVar,DMdl_Q,DMdl_Qm,Dmdl_TVm,
                           min_moymensclass,max_moymensclass,
@@ -1359,18 +1438,20 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,Tmdlname,T
     #
     Nmodels = len(Tmdlname)
     #
+    print("\n {:s}".format(" 2nd loop ".center(79,'o')));
+    #
     coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
     ticks  = coches + 0.5;            # [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]
     bounds = np.arange(nb_class+1)+1; # pour bounds faut une frontière de plus [1, 2, 3, 4, 5, 6, 7]
     nsub   = Nmodels + 1; # actuellement au plus 48 modèles + 1 pour les obs.      
     nbsubl, nbsubc = ldef.nsublc(nsub);
+    nsubmax = nbsubl * nbsubc; # derniere casse subplot, pour les OBS
     if mdlnamewnumber_ok :
         Tmdlname10X = Tmdlnamewnb;
     else :
         Tmdlname10X = Tmdlname;
     isubplot = 0;
-    Tperfglob_Qm = np.zeros((Nmodels,)); # Tableau des Perf globales des modèles cumulees
-    print("\n {:s}".format(" 2nd loop ".center(79,'o')));
+    Tperfglob_Qm     = np.zeros((Nmodels,)); # Tableau des Perf globales des modèles cumulees
     Tperfglob        = np.zeros((Nmodels,len(TypePerf))); # Tableau des Perf globales des modèles
     if NIJ==1 :
         TNIJ         = [];
@@ -1508,7 +1589,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,Tmdlname,T
     #
     # Les Obs à la fin 
     #isubplot = 49;
-    isubplot = nsub
+    isubplot = nsubmax
     #isubplot = isubplot + 1; # Michel (ou pas ?)
     if OK104 : # Obs for 104
         plt.figure(104); plt.subplot(nbsubl,nbsubc,isubplot);
@@ -1619,47 +1700,6 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,Tmdlname,T
         del X_
         plt.suptitle(suptitle109,fontsize=suptitlefs,y=ysuptitre);
     #
-    return
-#
-if 0:
-    ##
-    ##---------------------------------------------------------------------
-    # Redimensionnement de Tperfglob au nombre de modèles effectif
-    Tperfglob = Tperfglob[0:Nmodels];
-    #
-    # Edition des résultats
-    if Visu_preACFperf : # Tableau des performances en figure de courbes
-        local_legend_labels = np.copy(TypePerf)
-        local_legend_labels = np.concatenate((local_legend_labels,["Cumulated MeanClassAccuracy"]))
-        fig = plt.figure(figsize=(12,6),facecolor='w');
-        if len(Tperfglob.shape) > 1 :
-            for icol in np.arange(len(Tperfglob.shape)) :
-                plt.plot(100*Tperfglob[:,icol],'.-',color=list_of_plot_colors[icol]);
-        kcol = len(Tperfglob.shape)
-        plt.plot(100*Tperfglob_Qm,'.-',color=list_of_plot_colors[kcol]);
-        plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.15, left=0.05, right=0.98)
-        fignum = fig.number
-        #plt.plot(Tperfglob,'.-');
-        if 1:
-            lax=plt.axis()
-            plt.axis([lax[0],lax[1],0,100]); # axis fixex pour l'affichage d'un pourcentage
-        else :
-            plt.axis("tight");
-        plt.grid(axis='both')
-        plt.xticks(np.arange(Nmodels),Tmdlname10X, fontsize=8, rotation=45,
-                   horizontalalignment='right', verticalalignment='baseline');
-        plt.ylabel('performance by Model [%]')
-        plt.legend(local_legend_labels,numpoints=1,loc=3)
-        plt.title("SST %s (%d-%d) %d Classes -  Classification Indices of Completed Models (vs Obs) (%d models)"\
-                     %(fcodage,andeb,anfin,nb_class,Nmodels));
-        #             %(fcodage,DATAMDL,method_cah,nb_class));
-        if SAVEFIG :
-            figfile = "Fig_{:s}perf-by_model_{:s}_{:s}{:s}{:d}Mdl_{:d}-mod".format(fprefixe,
-                           SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
-            # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
-            # et eventuellement en PDF, si SAVEPDF active. 
-            do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
-    #
     #___________________________________________
     # Mettre les Tableaux-Liste en tableau Numpy
     Tmdlname    = np.array(Tmdlname);
@@ -1670,12 +1710,48 @@ if 0:
     if NIJ == 1 :
         TNIJ    = np.array(TNIJ);
     #
-    #======================================================================
+    return Tperfglob,Tperfglob_Qm,Tmdlname,Tmdlnamewnb,Tmdlonlynb,TTperf,TDmdl4CT
+#
+def do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_colors,  
+                                title="SST - Classification Indices of Completed Models",
+                                TypePerf = ["MeanClassAccuracy"],
+                                fcodage="",
+                                ) :
+    ##
+    ##---------------------------------------------------------------------
+    # Redimensionnement de Tperfglob au nombre de modèles effectif
+    Nmodels = Tperfglob.shape[0]
+    Tperfglob = Tperfglob[0:Nmodels];
     #
-    if STOP_BEFORE_AFC :
-        plt.show(); sys.exit(0)
+    # Edition des résultats
+    local_legend_labels = np.copy(TypePerf)
+    local_legend_labels = np.concatenate((local_legend_labels,["Cumulated MeanClassAccuracy"]))
+    fig = plt.figure(figsize=(12,6),facecolor='w');
+    if len(Tperfglob.shape) > 1 :
+        for icol in np.arange(len(Tperfglob.shape)) :
+            plt.plot(100*Tperfglob[:,icol],'.-',color=list_of_plot_colors[icol]);
+    kcol = len(Tperfglob.shape)
+    plt.plot(100*Tperfglob_Qm,'.-',color=list_of_plot_colors[kcol]);
+    plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.15, left=0.05, right=0.98)
+    fignum = fig.number
+    #plt.plot(Tperfglob,'.-');
+    if 1:
+        lax=plt.axis()
+        plt.axis([lax[0],lax[1],0,100]); # axis fixex pour l'affichage d'un pourcentage
+    else :
+        plt.axis("tight");
+    plt.grid(axis='both')
+    plt.xticks(np.arange(Nmodels),Tmdlname, fontsize=8, rotation=45,
+               horizontalalignment='right', verticalalignment='baseline');
+    plt.ylabel('performance by Model [%]')
+    plt.legend(local_legend_labels,numpoints=1,loc=3)
+    plt.title(title);
     #
-    #%%======================================================================
+    #
+    
+#%%
+if 0:
+    #%=========================================================================
     if NIJ > 0 : # A.F.C
         #Ajout de l'indice dans le nom du modèle
         Tm_ = np.empty(len(Tmdlname),dtype='<U32');

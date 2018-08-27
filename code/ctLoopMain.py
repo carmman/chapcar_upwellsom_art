@@ -439,7 +439,7 @@ if 1 :
     #======================================================================
     ctloop.printwarning([ "    MODELE: INITIALISATION AND FIRST LOOP" ])
     TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,\
-        Tmoymensclass,Dmdl,NDmdl,Nmdlok,Smoy_101,Tsst_101 = ctloop.do_models_startnloop(sMapO,
+        Tmoymensclass,Dmdl,NDmdl,Nmdlok,Smoy_101,Tsst_102 = ctloop.do_models_startnloop(sMapO,
                                 Tmodels,Tinstit,ilat,ilon,
                                 isnanobs,isnumobs,nb_class,class_ref,classe_Dobs,
                                 Tnmodel=Tnmodel,
@@ -450,35 +450,46 @@ if 1 :
                                 MDLCOMPLETION=MDLCOMPLETION,
                                 SIZE_REDUCTION=SIZE_REDUCTION,
                                 NIJ=NIJ,
-                                OK101=OK101, OK106=OK106,
+                                OK101=OK101,
+                                OK102=OK102,
+                                OK106=OK106,
                                 )
     #
     # -------------------------------------------------------------------------
-    ctloop.printwarning([ "    MODELS: PAST FIRST LOOP" ])
-    if mdlnamewnumber_ok :
-        Tmdlname10X = Tmdlnamewnb;
-    else :
-        Tmdlname10X = Tmdlname;
-    #
+    ctloop.printwarning([ "    MODELS: PLOT 101 AND 102 AND PAST FIRST LOOP" ])
     if len(Tmdlname10X) > 6 :            # Sous forme de liste, la liste des noms de modèles
         Tnames_ = Tmdlname10X;           # n'est pas coupé dans l'affichage du titre de la figure
     else :                               # par contre il l'est sous forme d'array; selon le cas, ou 
         Tnames_ = np.array(Tmdlname10X); # le nombre de modèles, il faut adapter comme on peut
-    stitre101 = "Mdl_MOY{:}\n({:d} mod.) {:s}SST({:s})".format(Tnames_,len(Tnames_),fcodage,DATAMDL)
-    TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,Tmoymensclass,\
-        min_moymensclass,max_moymensclass = ctloop.do_models_past_first_loop(
-                                TDmdl4CT,Tmdlname,
-                                Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,
-                                Tclasse_DMdl,Tmoymensclass,Nmdlok,Lobs,Cobs,
-                                isnumobs,isnanobs,
-                                cmap=eqcmap,varnames=varnames,
-                                mdlnamewnumber_ok=mdlnamewnumber_ok,
-                                same_minmax_ok=same_minmax_ok,
-                                title101=stitre101,
-                                Smoy_101=Smoy_101,
-                                Tsst_101=Tsst_101,
-                                OK101=OK101, OK106=OK106,
-                                )
+    stitre = "Mdl_MOY{:}\n({:d} mod.) {:s}SST({:s})".format(Tnames_,len(Tnames_),fcodage,DATAMDL)
+    ctloop.do_models_plot101et102_past_fl(Nmdlok,Lobs,Cobs,
+                                          isnumobs,isnanobs,
+                                          cmap=eqcmap,varnames=varnames,
+                                          title101=stitre,
+                                          title102=stitre,
+                                          Smoy_101=Smoy_101,
+                                          Tsst_102=Tsst_102,
+                                          OK101=OK101,
+                                          OK102=OK102,
+                                          )
+    #
+    if OK101 :
+        if SAVEFIG : # sauvegarde de la figure
+            plt.figure(101);
+            figfile = "Fig-101_{:s}{:s}_{:s}{:s}{:d}Mdl_MOY_{:d}-mod".format(fprefixe,
+                               SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
+            # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
+            # et eventuellement en PDF, si SAVEPDF active. 
+            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+    #
+    if OK102 : 
+        if SAVEFIG :
+            plt.figure(102);
+            figfile = "Fig-102_{:s}{:s}_{:s}{:s}{:d}Mdl_ECRTYPE_{:d}-mod".format(fprefixe,
+                               SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
+            # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
+            # et eventuellement en PDF, si SAVEPDF active. 
+            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     # -------------------------------------------------------------------------
     ctloop.printwarning([ "    MODELES: PRIOR SECOND LOOP" ])
@@ -508,8 +519,15 @@ if 1 :
         figsize=(18,12);
         wspace=0.01; hspace=0.14; top=0.94; bottom=0.04; left=0.01; right=0.99;
 
-    MaxPerfglob_Qm,IMaxPerfglob_Qm,Dmdl_TVar,DMdl_Q,DMdl_Qm,\
-        Dmdl_TVm = ctloop.do_models_pior_second_loop(MCUM,Nmodels,NDobs,NDmdl,
+    TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,Tmoymensclass,\
+        min_moymensclass,max_moymensclass,\
+        MaxPerfglob_Qm,IMaxPerfglob_Qm,Dmdl_TVar,DMdl_Q,DMdl_Qm,\
+        Dmdl_TVm = ctloop.do_models_pior_second_loop(
+                                TDmdl4CT,Tmdlname,
+                                Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,
+                                Tclasse_DMdl,Tmoymensclass,
+                                MCUM,Nmodels,NDobs,NDmdl,
+                                same_minmax_ok=same_minmax_ok,
                                 figsize=figsize,
                                 wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
                                 OK104=OK104, OK105=OK105, OK106=OK106, OK107=OK107, OK108=OK108, OK109=OK109,
@@ -520,8 +538,9 @@ if 1 :
     sztitle = 10;
     suptitlefs = 16
     ysuptitre = 0.99
-    Dmdl_TVm = ctloop.do_models_second_loop(sst_obs_coded,Dobs,lon,lat,sMapO,XC_Ogeo,
-                                TDmdl4CT,Tmdlname,Tmdlnamewnb,
+    Tperfglob,Tperfglob_Qm,Tmdlname,Tmdlnamewnb,Tmdlonlynb,TTperf,\
+        TDmdl4CT = ctloop.do_models_second_loop(sst_obs_coded,Dobs,lon,lat,sMapO,XC_Ogeo,TDmdl4CT,
+                                Tmdlname,Tmdlnamewnb,Tmdlonlynb,
                                 Tperfglob4Sort,Tclasse_DMdl,Tmoymensclass,
                                 MaxPerfglob_Qm,IMaxPerfglob_Qm,Dmdl_TVar,DMdl_Q,DMdl_Qm,Dmdl_TVm,
                                 min_moymensclass,max_moymensclass,
@@ -593,3 +612,19 @@ if 1 :
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
+    # Figure a ploter apres le deuxieme loop
+    if Visu_preACFperf : # Tableau des performances en figure de courbes
+        stitre = "SST {:s} ({:d}-{:d}) - {:d} Classes -  Classification Indices of Completed Models (vs Obs) ({:d} models)".format(fcodage,andeb,anfin,nb_class,Nmodels)
+        ctloop.do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_colors,
+                                           title=stitre,
+                                           TypePerf=TypePerf,fcodage=fcodage)
+        #
+        if SAVEFIG :
+            figfile = "Fig_{:s}perf-by_model_{:s}_{:s}{:s}{:d}Mdl_{:d}-mod".format(fprefixe,
+                           SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
+            # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
+            # et eventuellement en PDF, si SAVEPDF active. 
+            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+#
+if STOP_BEFORE_AFC :
+    plt.show(); sys.exit(0)
