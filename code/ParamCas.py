@@ -376,12 +376,13 @@ AFC_Visu_Clust_Mdl_Moy_4CT  = []; # liste des cluster a afficher (à partir de 1
 #
 # FLAGS en vue de l'article
 Visu_UpwellArt  = True;     # Flag de visu des figures pour article avec Juliette et Adama
+FIGARTDPI     = 300  # DPI pour les figures bitmap de l'article
 if Visu_UpwellArt :
     OK101 = False; # Pour produire la Moyenne d'un modèle moyen par ...
     OK102 = False; # Pour produire les Ecarts types d'un modèle moyen 
-    OK101=OK102=OK104=OK105=OK106=OK107=OK108=OK109=True;
+    #OK101=OK102=OK104=OK105=OK106=OK107=OK108=OK109=True;
 ysstitre        = 0.96   # position vertical des soustitres dans figures de groupe
-same_minmax_ok  = True;  # MIN = -MAX
+same_minmax_ok     = True;  # MIN = -MAX
 mdlnamewnumber_ok  = True; # fait apparaitre le numero de modele dans fogures 10X (104, 105, ...)
 onlymdlumberAFC_ok = True; # identifie les modeles uniquement par leur numero dans la projection AFC
 #

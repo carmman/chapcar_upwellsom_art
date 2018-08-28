@@ -135,3 +135,9 @@ git commit -am "Traveaux de rendre fontionnel toutes les actions dans ctLoopAnyS
 
 # commit
 git commit -am "Traveaux de rendre fontionnel toutes les actions dans ctLoopAnyS.py. Ok jusqu'au traitement des Modeles - Il manque l'AFC"
+
+# ...
+
+
+# commit
+git commit -am "Travaux pour rendre fontionnel les actions dans ctLoopAnyS.py.  Ok jusqu'au traitement des Modeles. Reorg entre Loop1 et Loop2 TER l'AFC"

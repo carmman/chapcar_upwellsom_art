@@ -43,7 +43,9 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
               markersize=None,obsmarkersize=None,
               edgecolor=None,
               edgeobscolor='k',obscolor='k',edgeclasscolor='k',faceclasscolor='m',
-              article_style=False) :
+              article_style=False,
+              xdeltapos=0.0,ydeltapos=0.0,
+              xdeltaposobs=0.0,ydeltaposobs=0.0) :
 # pompé de WORKZONE ... TPA05
     if ax is None :
         fig = plt.figure(figsize=(16,12));
@@ -181,13 +183,17 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
             else :
                 localrotlabels = rotlabels
             if lblbgcolor is None :
-                ax.text(CP[i,cpa-1],CP[i,cpb-1],currentlbl,color=lblcolor,
+                ax.text(CP[i,cpa-1],CP[i,cpb-1],currentlbl,
+                        position=(CP[i,cpa-1] + xdeltapos,CP[i,cpb-1] + ydeltapos),
+                        color=lblcolor,
                         fontsize=lblfontsize,
                         horizontalalignment=horizalign,
                         verticalalignment=vertalign,
                         rotation=localrotlabels,rotation_mode="anchor")
             else :
-                ax.text(CP[i,cpa-1],CP[i,cpb-1],currentlbl,color=lblcolor,backgroundcolor=lblbgcolor,
+                ax.text(CP[i,cpa-1],CP[i,cpb-1],currentlbl,
+                        position=(CP[i,cpa-1] + xdeltapos,CP[i,cpb-1] + ydeltapos),
+                        color=lblcolor,backgroundcolor=lblbgcolor,
                         fontsize=lblfontsize,
                         horizontalalignment=horizalign,
                         verticalalignment=vertalign,
@@ -205,13 +211,17 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
             else :
                 localrotlabels = rotlabels
             if lblbgcolor is None :
-                ax.text(CPobs[i,cpa-1],CPobs[i,cpb-1],currentlbl,color=lblcolor,
+                ax.text(CPobs[i,cpa-1],CPobs[i,cpb-1],currentlbl,
+                        position=(CPobs[i,cpa-1] + xdeltaposobs,CPobs[i,cpb-1] + ydeltaposobs),
+                        color=lblcolor,
                         fontsize=lblfontsize,
                         horizontalalignment=horizalign,
                         verticalalignment=vertalign,
                         rotation=localrotlabels,rotation_mode="anchor")
             else :
-                ax.text(CPobs[i,cpa-1],CPobs[i,cpb-1],currentlbl,color=lblcolor,backgroundcolor=lblbgcolor,
+                ax.text(CPobs[i,cpa-1],CPobs[i,cpb-1],currentlbl,
+                        position=(CPobs[i,cpa-1] + xdeltaposobs,CPobs[i,cpb-1] + ydeltaposobs),
+                        color=lblcolor,backgroundcolor=lblbgcolor,
                         fontsize=lblfontsize,
                         horizontalalignment=horizalign,
                         verticalalignment=vertalign,
@@ -264,8 +274,15 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
     ax.set_ylim(ylim)
 #
 #----------------------------------------------------------------------
-def Dgeoclassif(sMap,Data,L,C,isnum,MajorPerf,visu=True,cbticklabelsize=8,cblabel=None,
+def Dgeoclassif(sMap,Data,lon,lat,class_ref,classe_Dobs,nb_class,L,C,isnum,MajorPerf,
+                ccmap="jet", visu=True,
+                cbticklabelsize=8,cblabel=None,
                 cblabelsize=10,old=False,ax=None,nticks=1,tickfontsize=10) :
+    #
+    coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
+    ticks  = coches + 0.5;            # [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]
+    bounds = np.arange(nb_class+1)+1; # pour bounds faut une frontière de plus [1, 2, 3, 4, 5, 6, 7]
+    #
     bmus_   = ctk.mbmus (sMap,Data); 
     classe_ = class_ref[bmus_].reshape(len(bmus_));   
     X_Mgeo_ = ctobs.dto2d(classe_,L,C,isnum); # Classification géographique
@@ -484,7 +501,7 @@ def initialisation(case_label_base,tseed=0):
     else: # si tseed est different de zero on l'ajoute dans le nom du cas en cours
         case_name_base = "{:s}_s{:03d}".format(case_label_base)
     #
-    return case_name_base,casetime,casetimelabel,casetimeTlabel,varnames,list_of_plot_colors
+    return case_name_base,casetime,casetimelabel,casetimeTlabel,varnames,list_of_plot_colors,tpgm0
 #
 #######################################################################
 # ACQUISITION DES DONNEES D'OBSERVATION (et application des codifications)
@@ -770,12 +787,11 @@ def plot_ct_dendro(data, datalinkg, nclass, method='ward', metric='euclidean', c
     #
     fig = plt.figure(figsize=figsize,facecolor='w');
     fignum = fig.number # numero de figure en cours ...
+    plt.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
     #
     # calcule la limite de decoupage selon le nombre de classes ou clusters
     max_d = np.sum(datalinkg[[-nclass+1,-nclass],2])/2
     color_threshold = max_d
-    #
-    plt.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
     #
     R_ = dendrogram(datalinkg,p=Ncell,truncate_mode=None,color_threshold=color_threshold,
                     orientation='top',leaf_font_size=6) #,labels=lignames
@@ -963,13 +979,6 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
     # For (sub)plot by modele
     nsub   = Nmodels + 1; # actuellement au plus 48 modèles + 1 pour les obs.      
     #nsub  = 9;  # Pour MICHEL (8+1pour les obs)
-    #def lcsub(nsub,minncol=None) :   # <-- NON, utiliser plutot nl,nc = nsublc() qui est dans localdef.py
-    #    if minncol is not None:
-    #        nbsubc = minncol
-    #    else :
-    #        nbsubc = np.ceil(np.sqrt(nsub));
-    #    nbsubl = np.ceil(1.0*nsub/nbsubc).as;
-    #    return nbsubc, nbsubl
     #nbsubc, nbsubl = lcsub(nsub);
     nbsubl, nbsubc = ldef.nsublc(nsub);
     isubplot=0;
@@ -1672,7 +1681,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
             X_ = np.concatenate((X_, np.ones((1,Lobs*Cobs))*np.nan))
         # Rajout de la variance des obs
         X_    = np.concatenate((X_, varobs.reshape(1,Lobs*Cobs)))
-        print("X_.shape = {} ({})".format(X_.shape,nsubmax))
+        #print("X_.shape = {} ({})".format(X_.shape,nsubmax))
         #
         ldef.showimgdata(X_.reshape(nsubmax,1,Lobs,Cobs), Labels=Tlabs, n=nsubmax,fr=0,
                     vmin=np.nanmin(Dmdl_TVar),vmax=np.nanmax(Dmdl_TVar),fignum=107,
@@ -1766,607 +1775,519 @@ def do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_col
     #
     
 #%%
-if 0:
+def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
+      Tmdlname, Tmdlnamewnb, Tmdlonlynb, TTperf,
+      Nmdlok, Lobs, Cobs, NDmdl, Nobsc,
+      NBCOORDAFC4CAH, nb_clust,
+      isnumobs, isnanobs, nb_class, class_ref, classe_Dobs,
+      ccmap='jet', sztitle=10, ysstitre=0.98,
+      AFC_Visu_Classif_Mdl_Clust  = [], AFC_Visu_Clust_Mdl_Moy_4CT  = [],
+      TypePerf = ["MeanClassAccuracy"],
+      AFCWITHOBS = True, CAHWITHOBS = True,
+      SIZE_REDUCTION="All",
+      mdlnamewnumber_ok=True, onlymdlumberAFC_ok=True,
+      ) :
     #%=========================================================================
-    if NIJ > 0 : # A.F.C
-        #Ajout de l'indice dans le nom du modèle
-        Tm_ = np.empty(len(Tmdlname),dtype='<U32');
-        for i in np.arange(Nmdlok) :
-            if onlymdlumberAFC_ok : 
-                Tm_[i] = Tmdlonlynb[i];
-            elif mdlnamewnumber_ok :
-                Tm_[i] = Tmdlnamewnb[i];
-            else :
-                Tm_[i] = str(i+1) + '-' +Tmdlname[i];
-        #
-        # Harmonaiser la variable servant de tableau de contingence (->Tp_), selon le cas
-        if NIJ==1 : # Nij = card|classes| ; Pourrait semblé inapproprié car les classes
-                    # peuvent géographiquement être n'importe où, mais ...
-            Tp_ = TNIJ; # TNIJ dans ce cas a été préparé en amont
-            #
-        elif NIJ==2 or NIJ==3 :
-            Tp_ = TTperf; # Pourcentages des biens classés par classe (transformé ci après
-                          # pour NIJ==3 en effectif après éventuel ajout des obs dans l'afc)
-        # On supprime les lignes dont la somme est 0 car l'afc n'aime pas ca.
-        # (en espérant que la suite du code reste cohérente !!!???)
-        som_   = np.sum(Tp_, axis=1);
-        Iok_   = np.where(som_>0)[0]; # Indice des modèles valides pour l'AFC
-        Tp_    = Tp_[Iok_];
-        Nmdlok = len(Iok_); # !!! ATTENTION !!! redéfinition du nombre de modèles valides
-        #  
-        # Tableau (ou liste) des Noms des individus (Modèles valides et Obs)
-        if AFCWITHOBS :
-            AFCindnames   = np.concatenate((Tmdlname[Iok_],['Obs']));
-            NoAFCindnames = np.concatenate((Tm_[Iok_],['Obs']));
-        else : 
-            AFCindnames   = Tmdlname[Iok_];
-            NoAFCindnames = Tm_[Iok_];
-        del som_;
-        #
-        if CAHWITHOBS :
-            CAHindnames   = np.concatenate((Tmdlname[Iok_],['Obs'])); 
-            NoCAHindnames = np.concatenate((Tm_[Iok_],['Obs'])); 
+    if NIJ == 0 : # A.F.C
+        printwarning([""," NIJ MUST BE GREATER THAN ZERO FOR A.F.C ", " current NIJ value is {} ".format(NIJ) ],
+                      " *** RETURN from do_afc function *** ")
+        return
+    #
+    Nmodels = Tmdlname.shape[0]
+    #
+    # Attention 'RED' ne marche pas ... ---------
+    # on remet *Obs* = *obs*
+    LObs     = Lobs
+    CObs     = Cobs
+    isnumObs = isnumobs
+    #
+    #Ajout de l'indice dans le nom du modèle
+    Tm_ = np.empty(len(Tmdlname),dtype='<U32');
+    for i in np.arange(Nmdlok) :
+        if onlymdlumberAFC_ok : 
+            Tm_[i] = Tmdlonlynb[i];
+        elif mdlnamewnumber_ok :
+            Tm_[i] = Tmdlnamewnb[i];
         else :
-            CAHindnames   = Tmdlname[Iok_]; 
-            NoCAHindnames = Tm_[Iok_]; 
-        Nleaves_ = len(CAHindnames);   
+            Tm_[i] = str(i+1) + '-' +Tmdlname[i];
+    #
+    # Harmonaiser la variable servant de tableau de contingence (->Tp_), selon le cas
+    if NIJ==1 : # Nij = card|classes| ; Pourrait semblé inapproprié car les classes
+                # peuvent géographiquement être n'importe où, mais ...
+        Tp_ = TNIJ; # TNIJ dans ce cas a été préparé en amont
         #
-        if AFCWITHOBS : # On ajoute Obs (si required)
-            if NIJ==1 :
-                Tp_ = np.concatenate((Tp_, Nobsc[np.newaxis,:]), axis=0).astype(int);
-            else :
-                # Obs have 100% for any class par définition
-                pobs_ = (np.ones(nb_class)*100).astype(int);
-                Tp_   = np.concatenate((Tp_, pobs_[np.newaxis,:]), axis=0); # je mets les Obs A LA FIN #a
-        #
-        if NIJ == 3 : # On transforme les %tages en Nombre (i.e. en effectif)
-            if 0 : # icicicicici
-                Tp_ = Tp_ * Nobsc / 100;
-            else : 
-                Tp_ = np.round(Tp_ * Nobsc / 100).astype(int); ##$$
-        #
-        # _________________________
-        # Faire l'AFC proprment dit
+    elif NIJ==2 or NIJ==3 :
+        Tp_ = TTperf; # Pourcentages des biens classés par classe (transformé ci après
+                      # pour NIJ==3 en effectif après éventuel ajout des obs dans l'afc)
+    # On supprime les lignes dont la somme est 0 car l'afc n'aime pas ca.
+    # (en espérant que la suite du code reste cohérente !!!???)
+    som_   = np.sum(Tp_, axis=1);
+    Iok_   = np.where(som_>0)[0]; # Indice des modèles valides pour l'AFC
+    Tp_    = Tp_[Iok_];
+    Nmdlok = len(Iok_); # !!! ATTENTION !!! redéfinition du nombre de modèles valides
+    #  
+    # Tableau (ou liste) des Noms des individus (Modèles valides et Obs)
+    if AFCWITHOBS :
+        AFCindnames   = np.concatenate((Tmdlname[Iok_],['Obs']));
+        NoAFCindnames = np.concatenate((Tm_[Iok_],['Obs']));
+    else : 
+        AFCindnames   = Tmdlname[Iok_];
+        NoAFCindnames = Tm_[Iok_];
+    del som_;
+    #
+    if CAHWITHOBS :
+        CAHindnames   = np.concatenate((Tmdlname[Iok_],['Obs'])); 
+        NoCAHindnames = np.concatenate((Tm_[Iok_],['Obs'])); 
+    else :
+        CAHindnames   = Tmdlname[Iok_]; 
+        NoCAHindnames = Tm_[Iok_]; 
+    Nleaves_ = len(CAHindnames);   
+    #
+    if AFCWITHOBS : # On ajoute Obs (si required)
+        if NIJ==1 :
+            Tp_ = np.concatenate((Tp_, Nobsc[np.newaxis,:]), axis=0).astype(int);
+        else :
+            # Obs have 100% for any class par définition
+            pobs_ = (np.ones(nb_class)*100).astype(int);
+            Tp_   = np.concatenate((Tp_, pobs_[np.newaxis,:]), axis=0); # je mets les Obs A LA FIN #a
+    #
+    if NIJ == 3 : # On transforme les %tages en Nombre (i.e. en effectif)
+        if 0 : # icicicicici
+            Tp_ = Tp_ * Nobsc / 100;
+        else : 
+            Tp_ = np.round(Tp_ * Nobsc / 100).astype(int); ##$$
+    #
+    # _________________________
+    # Faire l'AFC proprment dit
+    if AFCWITHOBS :
+        VAPT, F1U, CAi, CRi, F2V, CAj, F1sU = ldef.afaco(Tp_);
+        XoU = F1U[Nmdlok,:]; # coord des Obs
+    else : # Les obs en supplémentaires
+        VAPT, F1U, CAi, CRi, F2V, CAj, F1sU = ldef.afaco(Tp_, Xs=[Nobsc]);
+        XoU = F1sU; # coord des Obs (ok j'aurais pu mettre directement en retour de fonction...)
+    #
+    #-----------------------------------------
+    # MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
+    if 1 : # CAH on afc Models's coordinates (without obs !!!???)
+        if SIZE_REDUCTION == 'All' :
+            nticks = 5; # 4
+        elif SIZE_REDUCTION == 'sel' :
+            nticks = 2; # 4
+        metho_ = 'ward'; #'complete' 'single' 'average' 'ward'; #<><><><><><<><><>
+        dist_  = 'euclidean';
+        coord2take = np.arange(NBCOORDAFC4CAH); # Coordonnées de l'AFC àprendre pour la CAH
         if AFCWITHOBS :
-            VAPT, F1U, CAi, CRi, F2V, CAj, F1sU = afaco(Tp_);
-            XoU = F1U[Nmdlok,:]; # coord des Obs
-        else : # Les obs en supplémentaires
-            VAPT, F1U, CAi, CRi, F2V, CAj, F1sU = afaco(Tp_, Xs=[Nobsc]);
-            XoU = F1sU; # coord des Obs (ok j'aurais pu mettre directement en retour de fonction...)
-        #
-        #-----------------------------------------
-        # MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
-        if 1 : # CAH on afc Models's coordinates (without obs !!!???)
-            if SIZE_REDUCTION == 'All' :
-                nticks = 5; # 4
-            elif SIZE_REDUCTION == 'sel' :
-                nticks = 2; # 4
-            metho_ = 'ward'; #'complete' 'single' 'average' 'ward'; #<><><><><><<><><>
-            dist_  = 'euclidean';
-            coord2take = np.arange(NBCOORDAFC4CAH); # Coordonnées de l'AFC àprendre pour la CAH
-            if AFCWITHOBS :
-                if CAHWITHOBS : # Garder les Obs pour la CAH
-                    Z_ = linkage(F1U[:,coord2take], metho_, dist_);
-                else : # Ne pas prendre les Obs dans la CAH (ne prendre que les modèles)
-                    Z_ = linkage(F1U[0:Nmdlok,coord2take], metho_, dist_);
-                #
-            else : # Cas AFC sans les Obs
-                if CAHWITHOBS : # Alors rajouter les Obs en Supplémentaire
-                    F1U_ = np.concatenate((F1U, F1sU));
-                    Z_   = linkage(F1U_[:,coord2take], metho_, dist_);
-                else : # Ne pas rajouter les obs pour la CAH
-                    Z_   = linkage(F1U[:,coord2take], metho_, dist_);
-    
-            if Visu_Dendro : # dendrogramme
-                plt.figure();
-                if CAHWITHOBS :
-                    R_ = dendrogram(Z_,Nmdlok+1,'lastp');
-                else :
-                    R_ = dendrogram(Z_,Nmdlok,'lastp');           
-                L_ = np.array(NoCAHindnames) # when AFCWITHOBS, "Obs" à déjà été rajouté à la fin
-                plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
-                            rotation=45,horizontalalignment='right', verticalalignment='baseline')
-                plt.title("AFC: Coord(%s), dendro. Métho=%s, dist=%s, nb_clust=%d"
-                          %((coord2take+1).astype(str),metho_,dist_,nb_clust))
+            if CAHWITHOBS : # Garder les Obs pour la CAH
+                Z_ = linkage(F1U[:,coord2take], metho_, dist_);
+            else : # Ne pas prendre les Obs dans la CAH (ne prendre que les modèles)
+                Z_ = linkage(F1U[0:Nmdlok,coord2take], metho_, dist_);
             #
-            if nb_clust < 0 :
-                Loop_nb_clust = np.arange(-nb_clust-1)+2;   MultiLevel = True;
-            else :
-                Loop_nb_clust = np.array([nb_clust]);       MultiLevel = False;
-            if max(Loop_nb_clust) > Nmdlok :
-                print("Warning : You should not require more clusters level than the number of (valid) models");
-            #subc_, subl_ = lcsub(max(Loop_nb_clust)); # <-- NON, utiliser plutot nl,nc = nsublc() qui est dans localdef.py
-            subl_, subc_ = nsublc(max(Loop_nb_clust),nsubc=5);
-            if MultiLevel == True :
-                bestglob_ = 0.0;
-                bestloc_  = []; # meilleure perf localement (i.e pour un niveau de coupe)
-                ninbest_  = []; # nombre de modèle concernés par bestloc_
-            for nb_clust in Loop_nb_clust :
-                best_ = 0.0;
-                class_afc = fcluster(Z_,nb_clust,'maxclust'); 
-                if CAHWITHOBS : # On enlève le dernier indice de classe qui correspond
-                    # aux obs (je crois !!!???) parce qu'on ne veut pas un modèle moyen
-                    # qui tienne compte des obs, ce serait tricher et donc faux
-                    class_afc = class_afc[0:Nleaves_-1];
+        else : # Cas AFC sans les Obs
+            if CAHWITHOBS : # Alors rajouter les Obs en Supplémentaire
+                F1U_ = np.concatenate((F1U, F1sU));
+                Z_   = linkage(F1U_[:,coord2take], metho_, dist_);
+            else : # Ne pas rajouter les obs pour la CAH
+                Z_   = linkage(F1U[:,coord2take], metho_, dist_);
+        #
+        ## dendrogramme --------------------------------------------------------
+        #fig_dendro = Null
+        #if Visu_Dendro : 
+        #    fig_dendro = plt.figure();
+        #    fignum = fig_dendro.number
+        #    if CAHWITHOBS :
+        #        R_ = dendrogram(Z_,Nmdlok+1,'lastp');
+        #    else :
+        #        R_ = dendrogram(Z_,Nmdlok,'lastp');           
+        #    L_ = np.array(NoCAHindnames) # when AFCWITHOBS, "Obs" à déjà été rajouté à la fin
+        #    plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
+        #                rotation=45,horizontalalignment='right', verticalalignment='baseline')
+        #    plt.title("AFC: Coord(%s), dendro. Métho=%s, dist=%s, nb_clust=%d"
+        #              %((coord2take+1).astype(str),metho_,dist_,nb_clust))
+        # ---------------------------------------------------------------------
+        #
+        if nb_clust < 0 :
+            Loop_nb_clust = np.arange(-nb_clust-1)+2;   MultiLevel = True;
+        else :
+            Loop_nb_clust = np.array([nb_clust]);       MultiLevel = False;
+        if max(Loop_nb_clust) > Nmdlok :
+            print("Warning : You should not require more clusters level than the number of (valid) models");
+        #subc_, subl_ = lcsub(max(Loop_nb_clust)); # <-- NON, utiliser plutot nl,nc = nsublc() qui est dans localdef.py
+        subl_, subc_ = ldef.nsublc(max(Loop_nb_clust),nsubc=5);
+        if MultiLevel == True :
+            bestglob_ = 0.0;
+            bestloc_  = []; # meilleure perf localement (i.e pour un niveau de coupe)
+            ninbest_  = []; # nombre de modèle concernés par bestloc_
+        for nb_clust in Loop_nb_clust :
+            best_ = 0.0;
+            class_afc = fcluster(Z_,nb_clust,'maxclust'); 
+            if CAHWITHOBS : # On enlève le dernier indice de classe qui correspond
+                # aux obs (je crois !!!???) parce qu'on ne veut pas un modèle moyen
+                # qui tienne compte des obs, ce serait tricher et donc faux
+                class_afc = class_afc[0:Nleaves_-1];
+            #
+            if MultiLevel == False : # Si il n'y a qu'un seul niveau de découpe, on fera la figure 
+                # Nouvelle figure:  performanes par cluster
+                if SIZE_REDUCTION == 'All' :
+                    figsize = (4*subc_,2+2*subl_)
+                    wspace=0.25; hspace=0.02; top=0.94; bottom=0.01; left=0.02; right=0.94;
+                elif SIZE_REDUCTION == 'sel' :
+                    figsize = (3.5*subc_,1+3*subl_)
+                    wspace=0.30; hspace=0.02; top=0.94; bottom=0.01; left=0.03; right=0.94;
+                figclustmoy = plt.figure(figsize=figsize,facecolor="w"); # pour les différents cluster induit par ce niveau.
+                figclustmoynum = figclustmoy.number
+                figclustmoy.subplots_adjust(wspace=wspace, hspace=hspace, top=top,
+                                            bottom=bottom, left=left, right=right)
+            #
+            for ii in np.arange(nb_clust) :
+                iclust  = np.where(class_afc==ii+1)[0];
+                # print(len(iclust),iclust)
+                # Du coup, en ayant enlever l'indice de classe de l'obs dans class_afc,
+                # iclust peut etre vide (ce qui devrait correspondre au cluster qui n'aurait
+                # contenu que les Obs).
+                if len(iclust) == 0 :
+                    print("\nProbably Obs cluster (%d) empty\n"%(ii+1));
+                    continue;
                 #
-                if MultiLevel == False : # Si il n'y a qu'un seul niveau de découpe, on fera la figure 
-                    # Nouvelle figure:  performanes par cluster
-                    if SIZE_REDUCTION == 'All' :
-                        figsize = (4*subc_,2+2*subl_)
-                        wspace=0.25; hspace=0.02; top=0.94; bottom=0.01; left=0.02; right=0.94;
-                    elif SIZE_REDUCTION == 'sel' :
-                        figsize = (3.5*subc_,1+3*subl_)
-                        wspace=0.30; hspace=0.02; top=0.94; bottom=0.01; left=0.03; right=0.94;
-                    figclustmoy = plt.figure(figsize=figsize,facecolor="w"); # pour les différents cluster induit par ce niveau.
-                    figclustmoy.subplots_adjust(wspace=wspace, hspace=hspace, top=top,
-                                                bottom=bottom, left=left, right=right)
+                if  ii+1 in AFC_Visu_Classif_Mdl_Clust :
+                    plt.figure(facecolor='w');
+                    for jj in np.arange(len(iclust)) :
+                        ijj      = iclust[jj];
+                        bmusj_   = ctk.mbmus (sMapO, Data=TDmdl4CT[ijj]);
+                        classej_ = class_ref[bmusj_].reshape(NDmdl);
+                        XCM_     = ctobs.dto2d(classej_,LObs,CObs,isnumObs); # Classification géographique
+                        plt.subplot(8,6,jj+1); # plt.subplot(7,7,jj+1);
+                        plt.imshow(XCM_, interpolation='none',cmap=ccmap, vmin=1,vmax=nb_class);
+                        plt.axis('off');
+                        plt.title("%s(%.0f%c)"%(CAHindnames[ijj],100*Tperfglob[ijj,0],'%'),
+                                  fontsize=sztitle,y=ysstitre);
+                            # même si y'a 'Obs' dans CAHindnames, ca devrait pas apparaitre
+                            # car elles sont à la fin et ont été retirées de class_afc
+                    plt.suptitle("Classification des modèles du cluster %d"%(ii+1));
+                #if MultiLevel == False :    
+                #    print("%d Modèles du cluster %d, performance: %d :\n"%(len(iclust),ii+1,Perfglob_), CAHindnames[iclust]);
                 #
-                for ii in np.arange(nb_clust) :
-                    iclust  = np.where(class_afc==ii+1)[0];
-                    # print(len(iclust),iclust)
-                    # Du coup, en ayant enlever l'indice de classe de l'obs dans class_afc,
-                    # iclust peut etre vide (ce qui devrait correspondre au cluster qui n'aurait
-                    # contenu que les Obs).
-                    if len(iclust) == 0 :
-                        print("\nProbably Obs cluster (%d) empty\n"%(ii+1));
-                        continue;
-                    #
-                    if  ii+1 in AFC_Visu_Classif_Mdl_Clust :
-                        plt.figure(facecolor='w');
-                        for jj in np.arange(len(iclust)) :
-                            ijj      = iclust[jj];
-                            bmusj_   = ctk.mbmus (sMapO, Data=TDmdl4CT[ijj]);
-                            classej_ = class_ref[bmusj_].reshape(NDmdl);
-                            XCM_     = ctobs.dto2d(classej_,LObs,CObs,isnumObs); # Classification géographique
-                            plt.subplot(8,6,jj+1); # plt.subplot(7,7,jj+1);
-                            plt.imshow(XCM_, interpolation='none',cmap=ccmap, vmin=1,vmax=nb_class);
-                            plt.axis('off');
-                            plt.title("%s(%.0f%c)"%(CAHindnames[ijj],100*Tperfglob[ijj,0],'%'),
-                                      fontsize=sztitle,y=ysstitre);
-                                # même si y'a 'Obs' dans CAHindnames, ca devrait pas apparaitre
-                                # car elles sont à la fin et ont été retirées de class_afc
-                        plt.suptitle("Classification des modèles du cluster %d"%(ii+1));
-                    #if MultiLevel == False :    
-                    #    print("%d Modèles du cluster %d, performance: %d :\n"%(len(iclust),ii+1,Perfglob_), CAHindnames[iclust]);
-                    #
-                    # Modèle Moyen d'un cluster (plus de gestion de pondération)
-                    CmdlMoy  = Dmdlmoy4CT(TDmdl4CT,iclust,pond=None);                
-                    #
-                    #if 1 : # Affichage Data cluster moyen for CT
-                    if  ii+1 in AFC_Visu_Clust_Mdl_Moy_4CT :
-                        aff2D(CmdlMoy,Lobs,Cobs,isnumobs,isnanobs,
-                              wvmin=wvmin,wvmax=wvmax,
-                              figsize=(12,9),cmap=eqcmap, varnames=varnames);
-                        plt.suptitle("MdlMoy[%s]\nclust%d %s(%d-%d) for CT\nmin=%f, max=%f, moy=%f, std=%f"
-                                %(Tmdlname[Iok_][iclust],ii+1,fcodage,andeb,anfin,np.min(CmdlMoy),
-                                  np.max(CmdlMoy),np.mean(CmdlMoy),np.std(CmdlMoy)))    
-                    #
-                    # Classification du, des modèles moyen d'un cluster
-                    if MultiLevel : # Plusieurs niveaux de découpe, c'est pas la peine de faire toutes ces
-                                    # figures, mais on a besoin de la perf
-                        Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,LObs,CObs,isnumObs,TypePerf[0],
-                                                visu=False,nticks=nticks);
-                    else : # 1 seul niveau de découpe, on fait la figure
-                        plt.figure(figclustmoy.number)
-                        ax = plt.subplot(subl_,subc_,ii+1);
-                        Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,LObs,CObs,isnumObs,TypePerf[0],
-                                                ax = ax,
-                                                cblabel="performance [%]",cblabelsize=8,
-                                                cbticklabelsize=10,nticks=nticks);
-                        plt.title("Cluster %d (%d mod.), mean perf=%.0f%c"%(ii+1,len(iclust),
-                                                   100*Perfglob_,'%'),fontsize=12);
-                    #
-                    if MultiLevel :
-                        if Perfglob_ > bestglob_ :
-                            print("\n-> Cluster {:d}, {:d} Models, performance: {:.1f} :\n {}".format(
-                                    ii+1,len(iclust),100*Perfglob_,Tmdlname[iclust]));
-                            print("      >>>>>>>> clust %d-%d : new best perf = %f <<<<<<<<"
-                                  %(nb_clust, ii+1, Perfglob_));
-                            bestglob_ = Perfglob_
-                        if Perfglob_ > best_ :
-                            best_ = Perfglob_
-                            nbest_ = len(iclust)
-                    else :    
-                        print("\n-> Cluster {:d}, {:d} Models, performance: {:.1f} :\n {}".format(
-                                ii+1,len(iclust),100*Perfglob_,CAHindnames[iclust]));
-                #        
+                # Modèle Moyen d'un cluster (plus de gestion de pondération)
+                CmdlMoy  = ctobs.Dmdlmoy4CT(TDmdl4CT,iclust,pond=None);                
+                #
+                #if 1 : # Affichage Data cluster moyen for CT
+                if  ii+1 in AFC_Visu_Clust_Mdl_Moy_4CT :
+                    ctobs.aff2D(CmdlMoy,Lobs,Cobs,isnumobs,isnanobs,
+                                wvmin=wvmin,wvmax=wvmax,
+                                figsize=(12,9),cmap=eqcmap, varnames=varnames);
+                    plt.suptitle("MdlMoy[%s]\nclust%d %s(%d-%d) for CT\nmin=%f, max=%f, moy=%f, std=%f"
+                            %(Tmdlname[Iok_][iclust],ii+1,fcodage,andeb,anfin,np.min(CmdlMoy),
+                              np.max(CmdlMoy),np.mean(CmdlMoy),np.std(CmdlMoy)))    
+                #
+                # Classification du, des modèles moyen d'un cluster
+                if MultiLevel : # Plusieurs niveaux de découpe, c'est pas la peine de faire toutes ces
+                                # figures, mais on a besoin de la perf
+                    Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,lon,lat,class_ref,classe_Dobs,nb_class,
+                                            LObs,CObs,isnumObs,TypePerf[0],
+                                            ccmap=ccmap,
+                                            visu=False,nticks=nticks);
+                else : # 1 seul niveau de découpe, on fait la figure
+                    plt.figure(figclustmoynum)
+                    ax = plt.subplot(subl_,subc_,ii+1);
+                    Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,lon,lat,class_ref,classe_Dobs,nb_class,
+                                            LObs,CObs,isnumObs,TypePerf[0],
+                                            ccmap=ccmap,
+                                            ax = ax,
+                                            cblabel="performance [%]",cblabelsize=8,
+                                            cbticklabelsize=10,nticks=nticks);
+                    plt.title("Cluster %d (%d mod.), mean perf=%.0f%c"%(ii+1,len(iclust),
+                                               100*Perfglob_,'%'),fontsize=12);
+                #
                 if MultiLevel :
-                    bestloc_.append(best_)
-                    ninbest_.append(nbest_)
-                # FIN de la boucle sur le nombre de cluster
-            # FIN de la boucle sur les différents niveau de cluster
+                    if Perfglob_ > bestglob_ :
+                        print("\n-> Cluster {:d}, {:d} Models, performance: {:.1f} :\n {}".format(
+                                ii+1,len(iclust),100*Perfglob_,Tmdlname[iclust]));
+                        print("      >>>>>>>> clust %d-%d : new best perf = %f <<<<<<<<"
+                              %(nb_clust, ii+1, Perfglob_));
+                        bestglob_ = Perfglob_
+                    if Perfglob_ > best_ :
+                        best_ = Perfglob_
+                        nbest_ = len(iclust)
+                else :    
+                    print("\n-> Cluster {:d}, {:d} Models, performance: {:.1f} :\n {}".format(
+                            ii+1,len(iclust),100*Perfglob_,CAHindnames[iclust]));
+            #        
             if MultiLevel :
-                plt.figure();
-                plt.subplot(2,1,1); plt.plot(bestloc_,'-*');
-                plt.xticks(np.arange(len(Loop_nb_clust)),Loop_nb_clust);
-                plt.title("Meilleures perf pour chaque cas de découpe");
-                
-                plt.subplot(2,1,2); plt.plot(ninbest_,'-*');
-                plt.xticks(np.arange(len(Loop_nb_clust)),Loop_nb_clust);
-                plt.xlabel("nombre de découpe (clusters)");
-                plt.title("Nombre de modèles dans le meilleur cluster de la découpe");
-                plt.suptitle("best cluster depending nb cluster");
-            #
-            del metho_, dist_, Z_
-            if MultiLevel == True :
-                plt.show(); sys.exit(0)
-        # reprend la figure de performanes par cluster
-        plt.figure(figclustmoy.number)
-        plt.suptitle("AFC Clusters Class Performance ({} models)".format(Nmodels),fontsize=18);
-        #plt.suptitle("AFC Clusters Class Performance ({:d} Classes)".format(nb_class),fontsize=18);
-        if SAVEFIG : # sauvegarde de la figure de performanes par cluster
-            plt.figure(figclustmoy.number)
-            if Visu_UpwellArt :
-                figfile = "FigArt_"
-            else :
-                figfile = "Fig_"
-            figfile += "{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(nb_clust,
-                        nb_class,fprefixe,fshortcode,andeb,anfin,Nmodels)
-            # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
-            # eventuellement en PDF, si SAVEPDF active. 
-            do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
-    
-    #%% pwd
-    if NIJ > 0 : # A.F.C (suite)
-        if 0 :
-            plt.figure()
-            plt.scatter(np.random.randn(1,100),np.random.randn(1,100),edgecolors='r',marker='o',linewidth=0.5)
+                bestloc_.append(best_)
+                ninbest_.append(nbest_)
+            # FIN de la boucle sur le nombre de cluster
+        # FIN de la boucle sur les différents niveau de cluster
+        if MultiLevel :
+            plt.figure();
+            plt.subplot(2,1,1); plt.plot(bestloc_,'-*');
+            plt.xticks(np.arange(len(Loop_nb_clust)),Loop_nb_clust);
+            plt.title("Meilleures perf pour chaque cas de découpe");
+            
+            plt.subplot(2,1,2); plt.plot(ninbest_,'-*');
+            plt.xticks(np.arange(len(Loop_nb_clust)),Loop_nb_clust);
+            plt.xlabel("nombre de découpe (clusters)");
+            plt.title("Nombre de modèles dans le meilleur cluster de la découpe");
+            plt.suptitle("best cluster depending nb cluster");
         #
-        # FIN du if 1 : MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
-        #-----------------------------------------
-        #      
-        # choisir K et son facteur de zoom
-        #K=CAi; xoomK=3000; # Pour les contrib Abs (CAi)
-        if Visu_AFC_in_one or Visu_UpwellArt: # plot afc en une seule image
-            # 1- NOUVELLE FIGURE POUR PROJECTIONS DE L'AFC
-            fig = plt.figure(figsize=(16,12));
-            plt.subplots_adjust(top=0.93, bottom=0.05, left=0.05, right=0.95)
-            ax = plt.subplot(111)
-            fignum = fig.number # numero de figure en cours ...
-            if Visu_UpwellArt :
-                afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,linewidths=1.5,
-                         indname=NoAFCindnames,
-                         ax=ax,article_style=True,
-                         marker='o',obsmarker='o',
-                         markersize=60,obsmarkersize=75,
-                         edgecolor='k',edgeobscolor='k',obscolor=[ 0.90, 0.90, 0.90, 1.],
-                         edgeclasscolor='k',faceclasscolor='m',
-                         lblfontsize=14,horizalign='left',vertalign='center',lblprefix=' ',
-                         );
-                # 3- AJOUT ou pas des colonnes (i.e. des classes)
-                colnames = (np.arange(nb_class)+1).astype(str)
-                afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),
-                         gridok=True,aximage=True,axtight=False,
-                         linewidths=1.5,indname=colnames,holdon=True,drawtriangref=False,
-                         ax=ax,article_style=True,
-                         drawaxes=True, axescolors=('k','k'),
-                         markersize=140,lblcolor='w',
-                         lblfontsize=14,horizalign='center',vertalign='center',
-                         )
-                plt.title(("2 axes AFC of SST {:s} Projection with Models, Observations and Classes ({:s})"+\
-                          "\n- {:s}, AFC on {:d} Classes ({} models+Obs) -").format(
-                                  fcodage,DATAMDL,method_cah,nb_class,Nmodels),fontsize=14,y=1.02);
-            else :
-                K=CRi; xoomK=1000;  # Pour les contrib Rel (CRi)
-                afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,
-                         indname=NoAFCindnames,
-                         drawaxes=True, gridok=True,
-                         ax=ax);
-                if NIJ==1 :
-                    plt.title("AFC Projection - %s SST (%s). %s%d AFC on classes of Completed Models (vs Obs)" \
-                         %(fcodage,DATAMDL,method_cah,nb_class));
-                elif NIJ==3 or NIJ==2 :
-                    plt.title("AFC Projection - %s SST (%s). %s%d AFC on good classes of Completed Models (vs Obs)" \
-                         %(fcodage,DATAMDL,method_cah,nb_class));
-                #
-                # 2- MET EN EVIDENCE LES OBS DANS LA FIGURE ...
-                if AFCWITHOBS  :
-                    ax.plot(F1U[Nmdlok,pa-1],F1U[Nmdlok,po-1], 'oc', markersize=20,
-                            markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);    
-                else : # Obs en supplémentaire
-                    ax.text(F1sU[0,0],F1sU[0,1], ".Obs")
-                    ax.plot(F1sU[0,0],F1sU[0,1], 'oc', markersize=20,
-                            markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);
-                #
-                # 3- AJOUT ou pas des colonnes (i.e. des classes)
-                colnames = (np.arange(nb_class)+1).astype(str)
-                afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),K=CAj,xoomK=xoomK,
-                         linewidths=2,indname=colnames,holdon=True,drawtriangref=True,
-                         ax=ax,drawaxes=True,aximage=True,axtight=False) 
-            #plt.axis("tight"); #?
-            if SAVEFIG : # sauvegarde de la figure
-                if Visu_UpwellArt :
-                    figfile = "FigArt_"
-                else :
-                    figfile = "Fig_"
-                figfile += "AFC2DProj-{:d}-{:d}_{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(
-                        pa,po,nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin,Nmodels)
-                # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
-                # eventuellement en PDF, si SAVEPDF active. 
-                do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
-    #%% pwd
-    if NIJ > 0 : # A.F.C (suite bis)
-        if Visu_afcnu_det : # plot afc etape par étape"
-            # Que les points lignes (modèles)
-            K=CRi; xoomK=1000
-            fig = plt.figure(figsize=(12,8));
-            plt.subplots_adjust(top=0.93, bottom=0.05, left=0.05, right=0.95)
-            ax = plt.subplot(111)
-            fignum = fig.number # numero de figure en cours ...
-            afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,indname=NoAFCindnames,
-                     ax=ax);
-            plt.title("%s SST (%s). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
-                     %(fcodage,DATAMDL,method_cah,nb_class,NIJ));
-            # Que les points colonnes (Classe)
-            fig = plt.figure(figsize=(12,8));
-            plt.subplots_adjust(top=0.93, bottom=0.05, left=0.05, right=0.95)
-            ax = plt.subplot(111)
-            afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),K=CAj,xoomK=xoomK,
-                     linewidths=2,indname=colnames,holdon=True,
-                     ax=ax, gridok=True)
-            plt.title("%s SST (%s). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
-                     %(fcodage,DATAMDL,method_cah,nb_class,NIJ));          
+        del metho_, dist_, Z_
+        if MultiLevel == True :
+            plt.show(); sys.exit(0)
+    # reprend la figure de performanes par cluster
+    plt.figure(figclustmoynum)
+    plt.suptitle("AFC Clusters Class Performance ({} models)".format(Nmodels),fontsize=18);
+    #
+    # FIN du if 1 : MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
+    #
+    return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,NoCAHindnames,figclustmoynum,class_afc,NoAFCindnames
+#
+def do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnames,NIJ,Nmdlok,
+                    title="AFC Projection",
+                    Visu4Art=False,
+                    AFCWITHOBS = True,
+                    figsize=(16,12),
+                    top=0.93, bottom=0.05, left=0.05, right=0.95,
+                    mdlmarkersize=60, obsmarkersize=75,clsmarkersize=140,
+                    lblprefix=None,
+                    xdeltapos=0.02,ydeltapos=-0.002,
+                    xdeltaposobs=0.02,ydeltaposobs=-0.002,
+                    xdeltaposcls=0.01,ydeltaposcls=-0.003,
+                    ) :
+    # 1- NOUVELLE FIGURE POUR PROJECTIONS DE L'AFC
+    fig = plt.figure(figsize=figsize);
+    fignum = fig.number # numero de figure en cours ...
+    plt.subplots_adjust(top=top, bottom=bottom, left=left, right=right)
+    ax = plt.subplot(111) # un seul axe
+    if Visu4Art :
+        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,linewidths=1.5,
+                 indname=NoAFCindnames,
+                 ax=ax,article_style=True,
+                 marker='o',obsmarker='o',
+                 markersize=mdlmarkersize,
+                 obsmarkersize=obsmarkersize,
+                 edgecolor='k',edgeobscolor='k',obscolor=[ 0.90, 0.90, 0.90, 1.],
+                 edgeclasscolor='k',faceclasscolor='m',
+                 lblfontsize=14,horizalign='left',vertalign='center',lblprefix=lblprefix,
+                 xdeltapos=xdeltapos, ydeltapos=ydeltapos,
+                 xdeltaposobs=xdeltaposobs, ydeltaposobs=ydeltaposobs,
+                 );
+        # 3- AJOUT ou pas des colonnes (i.e. des classes)
+        colnames = (np.arange(nb_class)+1).astype(str)
+        afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),
+                 gridok=True,aximage=True,axtight=False,
+                 linewidths=1.5,indname=colnames,holdon=True,drawtriangref=False,
+                 ax=ax,article_style=True,
+                 drawaxes=True, axescolors=('k','k'),
+                 markersize=clsmarkersize,
+                 lblcolor='w',
+                 lblfontsize=14,horizalign='center',vertalign='center',
+                 xdeltapos=xdeltaposcls, ydeltapos=ydeltaposcls,
+                 )
+        plt.title(title,fontsize=14,y=1.02);
+    else :
+        K=CRi; xoomK=500;  # Pour les contrib Rel (CRi)
+        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,
+                 indname=NoAFCindnames,
+                 drawaxes=True, gridok=True,
+                 ax=ax,
+                 lblfontsize=14,
+                 );
+        if NIJ==1 :
+            plt.title("{:s} {:d} AFC on classes of Completed Models (vs Obs)".format( \
+                      title,nb_class));
+        elif NIJ==3 or NIJ==2 :
+            plt.title("{:s} {:d} AFC on good classes of Completed Models (vs Obs)".format( \
+                      title,nb_class));
         #
-        if Visu_Inertie : # Inertie
-            #inertie, icum = acp.phinertie(VAPT); 
-            #if NIJ==1 :
-            #    plt.title("%sSST(%s)). \n%s%d AFC on classes of Completed Models (vs Obs)" \
-            #             %(fcodage,DATAMDL,method_cah,nb_class));
-            #elif NIJ==3 :
-            #    plt.title("%sSST(%s)). \n%s%d AFC on good classes of Completed Models (vs Obs)" \
-            #             %(fcodage,DATAMDL,method_cah,nb_class));
-            fig = plt.figure(figsize=(8,6));
-            fignum = fig.number # numero de figure en cours ...
-            plt.subplots_adjust(top=0.93, bottom=0.08, left=0.08, right=0.98)
-            ax = plt.subplot(111)
-            inertie, icum = acp.phinertie(VAPT,ax=ax,ygapbar=0.01, ygapcum=0.01); #print("inertie=:"); tls.tprin(inertie," %6.3f ")
-            ax.grid(axis='y')
-            if NIJ==1 :
-                ax.set_title("%sSST(%s)) [%s]\n%s%d AFC on classes of Completed Models (vs Obs)" \
-                         %(fcodage,DATAMDL,case_label,method_cah,nb_class));
-            elif NIJ==2 :
-                ax.set_title("%sSST(%s))\n%s%d AFC on good classes of Completed Models (vs Obs)" \
-                         %(fcodage,DATAMDL,method_cah,nb_class));
-            elif NIJ==3 :
-                ax.set_title("%sSST(%s)) [%s]\n%s%d AFC on good classes of Completed Models (vs Obs)" \
-                         %(fcodage,DATAMDL,case_label,method_cah,nb_class));
-            if SAVEFIG : # sauvegarde de la figure de performanes par cluster
-                plt.figure(figclustmoy.number)
-                figfile = "Fig_"
-                figfile += "Inertia-{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}".format(nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin)
-                # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
-                # eventuellement en PDF, si SAVEPDF active. 
-                do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        # 2- MET EN EVIDENCE LES OBS DANS LA FIGURE ...
+        if AFCWITHOBS  :
+            ax.plot(F1U[Nmdlok,pa-1],F1U[Nmdlok,po-1], 'oc', markersize=20,
+                    markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);    
+        else : # Obs en supplémentaire
+            ax.text(F1sU[0,0],F1sU[0,1], ".Obs")
+            ax.plot(F1sU[0,0],F1sU[0,1], 'oc', markersize=20,
+                    markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);
+        #
+        # 3- AJOUT ou pas des colonnes (i.e. des classes)
+        colnames = (np.arange(nb_class)+1).astype(str)
+        afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),K=CAj,xoomK=xoomK,
+                 linewidths=2,indname=colnames,holdon=True,drawtriangref=True,
+                 ax=ax,drawaxes=True,aximage=True,axtight=False) 
+    #plt.axis("tight"); #?
+    return
+#
+#if 0 :
+#    if Visu_afcnu_det : # plot afc etape par étape"
+#        # Que les points lignes (modèles)
+#        K=CRi; xoomK=1000
+#        fig = plt.figure(figsize=(12,8));
+#        plt.subplots_adjust(top=0.93, bottom=0.05, left=0.05, right=0.95)
+#        ax = plt.subplot(111)
+#        fignum = fig.number # numero de figure en cours ...
+#        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,indname=NoAFCindnames,
+#                 ax=ax);
+#        plt.title("%s SST (%s). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
+#                 %(fcodage,DATAMDL,method_cah,nb_class,NIJ));
+#        # Que les points colonnes (Classe)
+#        fig = plt.figure(figsize=(12,8));
+#        plt.subplots_adjust(top=0.93, bottom=0.05, left=0.05, right=0.95)
+#        ax = plt.subplot(111)
+#        afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),K=CAj,xoomK=xoomK,
+#                 linewidths=2,indname=colnames,holdon=True,
+#                 ax=ax, gridok=True)
+#        plt.title("%s SST (%s). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
+#                 %(fcodage,DATAMDL,method_cah,nb_class,NIJ));
+#       
+def do_plot_afc_dendro(F1U,F1sU,nb_clust,CAHindnames,NoCAHindnames,
+                       NBCOORDAFC4CAH,Nmdlok,
+                       AFCWITHOBS = True,CAHWITHOBS = True,
+                       figsize=(14,6),
+                       wspace=0.0, hspace=0.2, top=0.92, bottom=0.12, left=0.05, right=0.99,
+                       ):
+    Nleaves_ = len(CAHindnames);
+    metho_ = 'ward'; #'complete' 'single' 'average' 'ward'; #<><><><><><<><><>
+    dist_  = 'euclidean';
+    coord2take = np.arange(NBCOORDAFC4CAH); # Coordonnées de l'AFC àprendre pour la CAH
+    if AFCWITHOBS :
+        if CAHWITHOBS : # Garder les Obs pour la CAH
+            Z_ = linkage(F1U[:,coord2take], metho_, dist_);
+        else : # Ne pas prendre les Obs dans la CAH (ne prendre que les modèles)
+            Z_ = linkage(F1U[0:Nmdlok,coord2take], metho_, dist_);
+        #
+    else : # Cas AFC sans les Obs
+        if CAHWITHOBS : # Alors rajouter les Obs en Supplémentaire
+            F1U_ = np.concatenate((F1U, F1sU));
+            Z_   = linkage(F1U_[:,coord2take], metho_, dist_);
+        else : # Ne pas rajouter les obs pour la CAH
+            Z_   = linkage(F1U[:,coord2take], metho_, dist_);
     #
-    #%%======================================================================
+    fig = plt.figure(figsize=figsize);
+    fignum = fig.number # numero de figure en cours ...
+    plt.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
     #
+    if CAHWITHOBS :
+        R_ = dendrogram(Z_,Nmdlok+1,'lastp');
+    else :
+        R_ = dendrogram(Z_,Nmdlok,'lastp');           
+    L_ = np.array(NoCAHindnames) # when AFCWITHOBS, "Obs" à déjà été rajouté à la fin
+    plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
+                rotation=45,horizontalalignment='right', verticalalignment='baseline')
+    plt.title("AFC: Coord(%s), dendro. Métho=%s, dist=%s, nb_clust=%d"
+              %((coord2take+1).astype(str),metho_,dist_,nb_clust))
+    #
+    return
+#
+def do_plot_afc_inertie(VAPT,
+                title="AFC Inertie",
+                figsize=(8,6),
+                top=0.93, bottom=0.08, left=0.08, right=0.98,
+                ) :
+    #
+    fig = plt.figure(figsize=figsize);
+    fignum = fig.number # numero de figure en cours ...
+    plt.subplots_adjust(top=top, bottom=bottom, left=left, right=right)
+    ax = plt.subplot(111)
+    inertie, icum = acp.phinertie(VAPT,ax=ax,ygapbar=0.01, ygapcum=0.01); #print("inertie=:"); tls.tprin(inertie," %6.3f ")
+    ax.grid(axis='y')
+    ax.set_title(title);
+    #
+    return
+    #
+#
+def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
+                        class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
+                        lon=None, lat=None,
+                        TypePerf = ["MeanClassAccuracy"],
+                        label=None, cblabel=None, fignum=None,
+                        nticks=1,
+                        ytitre=0.98, fsizetitre=14) :
+    ''' Ici, j'ai :
+             - Tmdlname : une table de NOMS de N modèles valides ; ##!!??? 
+             - TDmdl4ct : la table correspondante des modèles 4CT (N, v,12)
+        D'autre part, je vais définir d'une manière ou d'une autre les
+        modèles devant participer à la définition du modèles moyen.
+        Ici, il y a plusieurs possibilités :
+        
+        1) Une seule ligne de modèles à utiliser sans dicernement de classe
+           par exemple :
+        TMixtMdl = ['ACCESS1-3','NorESM1-ME','bcc-csm1-1','NorESM1-M','CESM1-BGC']
+        
+        2) Plusieurs lignes de modèle : une par classe, par exemple
+        TMixtMdl = [['ACCESS1-3','NorESM1-ME','bcc-csm1-1','NorESM1-M','CESM1-BGC'],
+             ['IPSL-CM5B-LR','ACCESS1-3','MPI-ESM-P','CMCC-CMS','GISS-E2-R-CC'],
+             ['bcc-csm1-1-m','MIROC-ESM-CHEM','MIROC-ESM','CSIRO-Mk3-6-0','CanESM2'],
+             ['MPI-ESM-MR','CMCC-CM','IPSL-CM5A-MR','FGOALS-g2','MPI-ESM-LR'],
+             ['IPSL-CM5A-MR','CNRM-CM5-2','MPI-ESM-MR','MRI-ESM1','MRI-CGCM3'],
+             ['FGOALS-s2','CNRM-CM5','CNRM-CM5-2','GFDL-CM3','CMCC-CM'],
+             ['GFDL-CM3','GFDL-CM2p1','GFDL-ESM2G','CNRM-CM5','GFDL-ESM2M']];
+
+        Dans les 2 cas, il faut :
+        - Prendre les modèles de TMixtMdl à condition qu'ils soient aussi
+          dans Tmdlname
+        - Envisager ou pas une 2ème phase ...  
+    '''
+    #
+    # Attention 'RED' ne marche pas ... ---------
+    # on remet *Obs* = *obs*
+    LObs     = Lobs
+    CObs     = Cobs
+    isnumObs = isnumobs
+    # -------------------------------------------
+    #
+    # Je commence par le plus simple : Une ligne de modèle sans classe en une phase
+    # Je prend le cas : CAH effectuée sur les 6 coordonnées d’une AFC  nij=3 ... 
+    # TMixtMdl = ['CMCC-CM',   'MRI-ESM1',    'HadGEM2-AO','MRI-CGCM3',   'HadGEM2-ES',
+    #             'HadGEM2-CC','FGOALS-g2',   'CMCC-CMS',  'GISS-E2-R-CC','IPSL-CM5B-LR',
+    #             'GISS-E2-R', 'IPSL-CM5A-LR','FGOALS-s2', 'bcc-csm1-1'];
+    #
+    # déterminer l'indice des modèles de TMixtMdl dans Tmdlname
+    IMixtMdl = [];
+    for mname in TMixtMdl :
+        im = np.where(Tmdlname == mname)[0];
+        if len(im) == 1 :
+            IMixtMdl.append(im[0])
+    #
+    if len(IMixtMdl) == 0 :
+        print("\nGENERALISATION IMPOSSIBLE : AUCUN MODELE DISPONIBLE (sur %d)"%(len(TMixtMdl)))
+        return
+    else :
+        print("\n%d modèles disponibles (sur %d) pour la generalisation : %s"
+              %(len(IMixtMdl),len(TMixtMdl),Tmdlname[IMixtMdl]));
+    #
+    # Modèle moyen
+    MdlMoy = ctobs.Dmdlmoy4CT(TDmdl4CT,IMixtMdl);
+    #if 1 : # Affichage du moyen for CT
+    #    ctobs.aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,
+    #          wvmin=wvmin,wvmax=wvmax,figsize=(12,9),cmap=eqcmap,fignum=fignum);
+    #    plt.suptitle("MdlMoy (%s) \n%s(%d-%d) for CT\nmin=%f, max=%f, moy=%f, std=%f"
+    #                %(Tmdlname[IMixtMdl], fcodage,andeb,anfin,np.min(MdlMoy),
+    #                 np.max(MdlMoy),np.mean(MdlMoy),np.std(MdlMoy)))
+    #
+    # Classification du modèles moyen
+    if fignum is None :
+        fig = plt.figure();
+        fignum = fig.number # numero de figure en cours ...
+    else :
+        fig = plt.figure(fignum);
+        fig, ax = plt.subplots(nrows=1, ncols=1, num=fignum,facecolor='w')
+    #
+    #def Dgeoclassif(sMap,Data,lon,lat,class_ref,classe_Dobs,nb_class,L,C,isnum,MajorPerf,visu=True,cbticklabelsize=8,cblabel=None,
+    #                cblabelsize=10,old=False,ax=None,nticks=1,tickfontsize=10) :
+    Perfglob_ = Dgeoclassif(sMapO,MdlMoy,lon,lat,class_ref,classe_Dobs,nb_class,LObs,CObs,isnumObs,TypePerf[0],
+                            cblabel="class performance [%]",
+                            ax=ax,nticks=nticks,tickfontsize=10,
+                            cbticklabelsize=12,cblabelsize=12); #use perfbyclass
+    plt.xlabel('Longitude', fontsize=12); plt.ylabel('Latitude', fontsize=12)
+    if label is None :
+        titre = "MdlMoy ({} models: {})".format(len(Tmdlname[IMixtMdl]),Tmdlname[IMixtMdl])
+    else :
+        titre = "{} ({} models)".format(label,len(Tmdlname[IMixtMdl]))
+    titre += ", mean perf={:.0f}%".format(100*Perfglob_)
+    #
+    plt.title(titre,fontsize=fsizetitre,y=ytitre);
+    #tls.klavier();
+    return MdlMoy, IMixtMdl, Perfglob_
+
+
+#%%
+if 0 :
     if STOP_BEFORE_GENERAL :
         plt.show(); sys.exit(0)
-    #**********************************************************************
-    #............................. GENERALISATION .........................
-    def mixtgeneralisation (TMixtMdl, lon=None, lat=None,
-                            label=None, cblabel=None, fignum=None,
-                            nticks=1,
-                            ytitre=0.98, fsizetitre=14) :
-        ''' Ici, j'ai :
-                 - Tmdlname : une table de NOMS de N modèles valides ; ##!!??? 
-                 - TDmdl4ct : la table correspondante des modèles 4CT (N, v,12)
-            D'autre part, je vais définir d'une manière ou d'une autre les
-            modèles devant participer à la définition du modèles moyen.
-            Ici, il y a plusieurs possibilités :
-            
-            1) Une seule ligne de modèles à utiliser sans dicernement de classe
-               par exemple :
-            TMixtMdl = ['ACCESS1-3','NorESM1-ME','bcc-csm1-1','NorESM1-M','CESM1-BGC']
-            
-            2) Plusieurs lignes de modèle : une par classe, par exemple
-            TMixtMdl = [['ACCESS1-3','NorESM1-ME','bcc-csm1-1','NorESM1-M','CESM1-BGC'],
-                 ['IPSL-CM5B-LR','ACCESS1-3','MPI-ESM-P','CMCC-CMS','GISS-E2-R-CC'],
-                 ['bcc-csm1-1-m','MIROC-ESM-CHEM','MIROC-ESM','CSIRO-Mk3-6-0','CanESM2'],
-                 ['MPI-ESM-MR','CMCC-CM','IPSL-CM5A-MR','FGOALS-g2','MPI-ESM-LR'],
-                 ['IPSL-CM5A-MR','CNRM-CM5-2','MPI-ESM-MR','MRI-ESM1','MRI-CGCM3'],
-                 ['FGOALS-s2','CNRM-CM5','CNRM-CM5-2','GFDL-CM3','CMCC-CM'],
-                 ['GFDL-CM3','GFDL-CM2p1','GFDL-ESM2G','CNRM-CM5','GFDL-ESM2M']];
-    
-            Dans les 2 cas, il faut :
-            - Prendre les modèles de TMixtMdl à condition qu'ils soient aussi
-              dans Tmdlname
-            - Envisager ou pas une 2ème phase ...  
-        '''
-        # Je commence par le plus simple : Une ligne de modèle sans classe en une phase
-        # Je prend le cas : CAH effectuée sur les 6 coordonnées d’une AFC  nij=3 ... 
-        # TMixtMdl = ['CMCC-CM',   'MRI-ESM1',    'HadGEM2-AO','MRI-CGCM3',   'HadGEM2-ES',
-        #             'HadGEM2-CC','FGOALS-g2',   'CMCC-CMS',  'GISS-E2-R-CC','IPSL-CM5B-LR',
-        #             'GISS-E2-R', 'IPSL-CM5A-LR','FGOALS-s2', 'bcc-csm1-1'];
-        #
-        # déterminer l'indice des modèles de TMixtMdl dans Tmdlname
-        IMixtMdl = [];
-        for mname in TMixtMdl :
-            im = np.where(Tmdlname == mname)[0];
-            if len(im) == 1 :
-                IMixtMdl.append(im[0])
-        #
-        if len(IMixtMdl) == 0 :
-            print("\nGENERALISATION IMPOSSIBLE : AUCUN MODELE DISPONIBLE (sur %d)"%(len(TMixtMdl)))
-            return
-        else :
-            print("\n%d modèles disponibles (sur %d) pour la generalisation : %s"
-                  %(len(IMixtMdl),len(TMixtMdl),Tmdlname[IMixtMdl]));
-        #
-        # Modèle moyen
-        MdlMoy = Dmdlmoy4CT(TDmdl4CT,IMixtMdl);
-        #if 1 : # Affichage du moyen for CT
-        #    aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,
-        #          wvmin=wvmin,wvmax=wvmax,figsize=(12,9),cmap=eqcmap,fignum=fignum);
-        #    plt.suptitle("MdlMoy (%s) \n%s(%d-%d) for CT\nmin=%f, max=%f, moy=%f, std=%f"
-        #                %(Tmdlname[IMixtMdl], fcodage,andeb,anfin,np.min(MdlMoy),
-        #                 np.max(MdlMoy),np.mean(MdlMoy),np.std(MdlMoy)))
-        #
-        # Classification du modèles moyen
-        if fignum is None :
-            fig = plt.figure();
-            fignum = fig.number # numero de figure en cours ...
-        else :
-            fig = plt.figure(fignum);
-            fig, ax = plt.subplots(nrows=1, ncols=1, num=fignum,facecolor='w')
-        #
-        #def Dgeoclassif(sMap,Data,L,C,isnum,MajorPerf,visu=True,cbticklabelsize=8,cblabel=None,
-        #                cblabelsize=10,old=False,ax=None,nticks=1,tickfontsize=10) :
-        Perfglob_ = Dgeoclassif(sMapO,MdlMoy,LObs,CObs,isnumObs,TypePerf[0],
-                                cblabel="class performance [%]",
-                                ax=ax,nticks=nticks,tickfontsize=10,
-                                cbticklabelsize=12,cblabelsize=12); #use perfbyclass
-        plt.xlabel('Longitude', fontsize=12); plt.ylabel('Latitude', fontsize=12)
-        if label is None :
-            titre = "MdlMoy ({} models: {})".format(len(Tmdlname[IMixtMdl]),Tmdlname[IMixtMdl])
-        else :
-            titre = "{} ({} models)".format(label,len(Tmdlname[IMixtMdl]))
-        titre += ", mean perf={:.0f}%".format(100*Perfglob_)
-        #
-        plt.title(titre,fontsize=fsizetitre,y=ytitre);
-        #tls.klavier();
-        return MdlMoy, IMixtMdl
-    #
-    #%% ---------------------------------------------------------------------------
-    # Modèles Optimaux (Sopt) ;  Avec "NEW Obs - v3b " 1975-2005
-    # Je commence par le plus simple : Une ligne de modèle sans classe en une phase
-    # et une seule codification à la fois
-    # Sopt-1975-2005 : Les meilleurs modèles de la période "de référence" 1975-2005
-    #TMixtMdl= [];
-    #TMixtMdl =['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']; 
-    #TMixtMdl = Sfiltre;
-    if 1 : # Best AFC Clusters
-        if SIZE_REDUCTION == 'All' :
-            # Grande Zone (All): BEST AFC CLUSTER:
-            TMixtMdlLabel = 'Best AFC Cluster'
-            TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
-                        'CNRM-CM5-2', 'CanESM2', 'CanCM4', 'GFDL-CM3', 'CNRM-CM5', 'FGOALS-s2(2004)', 
-                        'CSIRO-Mk3-6-0', 'CMCC-CESM']
-        elif SIZE_REDUCTION == 'sel' :
-            # Petite Zone (sel): BEST AFC CLUSTER:
-            TMixtMdlLabel = 'Best AFC Cluster'
-            TMixtMdl = ['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2(2004)']
-    elif 1 : # Best Cum Clusters Mopr
-        if SIZE_REDUCTION == 'All' :
-            # Grande Zone (All): BEST CUM GROUP OF MODELS:
-            TMixtMdlLabel = 'Best Cumulated Models Group'
-            TMixtMdl = ['CMCC-CM']
-        elif SIZE_REDUCTION == 'sel' :
-            # Petite Zone (sel): BEST CUM GROUP OF MODELS:
-            TMixtMdlLabel = 'Best Cumulated Models Group'
-            TMixtMdl = ['CanCM4', 'CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'CanESM2', 'NorESM1-ME']
-    else :
-        # ALL MODELS (but 'FGOALS-s2', there is no 1975-2005 data for it):
-        TMixtMdlLabel = 'All Models'
-        TMixtMdl = Tmdlname
-        #TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
-        #            'FGOALS-g2', 'IPSL-CM5B-LR', 'CNRM-CM5-2', 'CanESM2', 'CanCM4',
-        #            'GFDL-CM3', 'CNRM-CM5', 'CSIRO-Mk3-6-0', 'MPI-ESM-MR', 'MRI-CGCM3',
-        #            'MRI-ESM1', 'CMCC-CESM', 'inmcm4', 'bcc-csm1-1', 'MPI-ESM-LR',
-        #            'CESM1-BGC', 'MPI-ESM-P', 'IPSL-CM5A-LR', 'GISS-E2-R',
-        #            'GISS-E2-R-CC', 'NorESM1-M', 'CCSM4', 'NorESM1-ME', 'bcc-csm1-1-m',
-        #            'GFDL-CM2p1', 'GISS-E2-H', 'ACCESS1-3', 'MIROC5', 'GFDL-ESM2G',
-        #            'MIROC-ESM-CHEM', 'GFDL-ESM2M', 'GISS-E2-H-CC', 'MIROC-ESM',
-        #            'IPSL-CM5A-MR', 'HadCM3', 'CESM1-CAM5', 'CESM1-CAM5-1-FV2',
-        #            'ACCESS1-0']
-    #------------------------------------------------------------------------
-    if SIZE_REDUCTION == 'All' :
-        misttitlelabel = TMixtMdlLabel+" (Big Zone)"
-    elif SIZE_REDUCTION == 'sel' :
-        misttitlelabel = TMixtMdlLabel+" (Small Zone)"
-    mistfilelabel = misttitlelabel.replace(' ','').replace('(','').replace(')','')
-    #------------------------------------------------------------------------
-    # PZ: BEST AFC CLUSTER:
-    #TMixtMdl = []
-    #
-    if TMixtMdl == [] :
-        print("\nSopt non renseigné ; Ce Cas n'a pas encore été prévu")
-    else :
-        if 1 :
-            if SIZE_REDUCTION == 'All' :
-                figsize = (9,6)
-                wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.06; right=0.925;
-                nticks = 5; # 4
-            elif SIZE_REDUCTION == 'sel' :
-                figsize=(9,9)
-                wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.05; right=0.96;
-                nticks = 2; # 4
-            fig = plt.figure(figsize=figsize)
-            fignum = fig.number # numero de figure en cours ...
-            fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
-        
-            print("\n{:d}-model(s)' generalization: {} ".format(len(TMixtMdl),TMixtMdl))
-            MdlMoy, IMixtMdl = mixtgeneralisation (TMixtMdl, label=misttitlelabel, fignum=fignum,
-                                                   fsizetitre=14,ytitre=1.01,nticks=nticks);
-            #
-            if SAVEFIG : # sauvegarde de la figure
-                if Visu_UpwellArt :
-                    figfile = "FigArt_"
-                else :
-                    figfile = "Fig_"
-                figfile += "MeanModel_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
-                figfile += "_{:s}{:s}_{:d}Class".format(fprefixe,fshortcode,nb_class)
-                do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
-    
-        if 1 : # Affichage du moyen for CT
-            if SIZE_REDUCTION == 'All' :
-                figsize = (12,7)
-                wspace=0.04; hspace=0.12; top=0.925; bottom=0.035; left=0.035; right=0.97;
-                nticks = 5; # 4
-            elif SIZE_REDUCTION == 'sel' :
-                figsize=(10,8.5)
-                wspace=0.04; hspace=0.12; top=0.925; bottom=0.035; left=0.035; right=0.965;
-                nticks = 2; # 4
-            fig = plt.figure(figsize=figsize)
-            fignum = fig.number # numero de figure en cours ...
-            if Show_ModSTD and len(Tmdlname[IMixtMdl]) > 2:
-                std_ = np.std(TDmdl4CT[IMixtMdl],axis=0);
-                print(np.min(std_),np.max(std_),np.mean(std_),np.std(std_))
-                aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,
-                      wvmin=wvmin,wvmax=wvmax,
-                      fignum=fignum,varnames=varnames,cmap=eqcmap,
-                      wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
-                      noaxes=False,noticks=False,nolabels=False,y=0.98,cblabel="SST Anomaly [°C]",
-                      lolast=lolast,lonlat=(lon,lat),
-                      vcontour=std_, ncontour=np.arange(0,2,1/10), ccontour='k', lblcontourok=True,
-                      ); #...
-            else :
-                aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,
-                      wvmin=wvmin,wvmax=wvmax,
-                      fignum=fignum,varnames=varnames,cmap=eqcmap,
-                      wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
-                      noaxes=False,noticks=False,nolabels=False,y=0.98,cblabel="SST Anomaly [°C]",
-                      lolast=lolast,lonlat=(lon,lat),
-                      ); #...
-            sptitre = "{}".format(misttitlelabel)
-            if Show_ModSTD :
-                if len(Tmdlname[IMixtMdl]) > 2 :
-                    sptitre += " and inter-model STD in contours"
-                else:
-                    sptitre += " (not enouth models STD)"
-            sptitre += " ({} models)".format(len(Tmdlname[IMixtMdl]))
-            sptitre += ", mean perf={:.0f}%".format(100*Perfglob_)
-            sptitre += "\nmin=%f, max=%f, moy=%f, std=%f"%(np.min(MdlMoy),np.max(MdlMoy),
-                                                           np.mean(MdlMoy),np.std(MdlMoy))
-            plt.suptitle(sptitre,fontsize=14,y=0.995);
-            #
-            if SAVEFIG : # sauvegarde de la figure
-                figfile = "Fig_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
-                if Show_ModSTD :
-                    figfile += "+{:d}ySTD".format(Nda)
-                figfile += "_Lim{:+.1f}-{:+.1f}_{:s}{:s}Clim-{:d}-{:d}".format(wvmin,wvmax,
-                                fprefixe,fshortcode,andeb,anfin)
-                # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
-                # eventuellement en PDF, si SAVEPDF active. 
-                do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
-        #
-    #
-    #**********************************************************************
-    plt.show();
-    #___________
-    print("\nWITHANO,UISST,climato,NIJ :\n", WITHANO, UISST,climato,NIJ)
-    import os
-    print("whole time code %s: %f" %(os.path.basename(sys.argv[0]), time()-tpgm0));
-    #
-    #======================================================================
-    #

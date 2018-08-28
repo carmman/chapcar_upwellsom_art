@@ -7,7 +7,9 @@ Created on Wed Aug 22 15:38:49 2018
 """
     
 import numpy as np
+import sys
 import os
+from   time  import time
 import matplotlib.pyplot as plt
 from   matplotlib import cm
 import pickle
@@ -40,8 +42,8 @@ tseed = 0;
 ### INITIALISATION ############################################################
 ctloop.printwarning(["","INITIALISATION".center(75),""],
                     "   Nom du Cas de Base ....... '{:s}'".format(case_label_base))
-case_name_base,casetime,casetimelabel,casetimeTlabel,varnames,list_of_plot_colors = \
-    ctloop.initialisation(case_label_base,tseed=tseed)
+case_name_base,casetime,casetimelabel,casetimeTlabel,varnames,list_of_plot_colors,\
+    tpgm0 = ctloop.initialisation(case_label_base,tseed=tseed)
 #
 ### ACQUISITION DES DONNEES D'OBSERVATION #####################################
 ctloop.printwarning([ "","ACQUISITION DES DONNEES D'OBSERVATION: '{:s}'".format(DATAOBS).center(75),""])
@@ -135,7 +137,7 @@ if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
         figfile += "_Lim{:+.1f}-{:+.1f}_{:s}_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(wvmin,wvmax,localcmap.name,fprefixe,fshortcode,andeb,anfin,data_label_base)
         # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
         # eventuellement en PDF, si SAVEPDF active. 
-        ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     del localcmap
 #%%
@@ -166,7 +168,7 @@ if 0 :
                                              fprefixe,fshortcode,andeb,anfin,data_label_base)
             # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
             # eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT)
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT)
 #
 if STOP_BEFORE_CT :
     plt.show(); sys.exit(0);
@@ -367,10 +369,12 @@ if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
     if SAVEFIG : # sauvegarde de la figure
         if Visu_UpwellArt :
             figfile = "FigArt_"
+            dpi = FIGARTDPI
         else :
             figfile = "Fig_"
+            dpi = FIGDPI
         figfile += "ObsGeo{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
-        ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
 #
 if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
     stitre = "Observations, Monthly Mean by Class (method: {:s})".format(method_cah)
@@ -383,10 +387,12 @@ if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
     if SAVEFIG : # sauvegarde de la figure
         if Visu_UpwellArt :
             figfile = "FigArt_"
+            dpi = FIGARTDPI
         else :
             figfile = "Fig_"
+            dpi = FIGDPI
         figfile += "MeanByClass_{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
-        ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
 #
 if Visu_CTStuff : # Visu des profils des référents de la carte
     if SIZE_REDUCTION == 'All' :
@@ -458,9 +464,9 @@ if 1 :
     # -------------------------------------------------------------------------
     ctloop.printwarning([ "    MODELS: PLOT 101 AND 102 AND PAST FIRST LOOP" ])
     if mdlnamewnumber_ok :
-        Tmdlname10X = Tmdlnamewnb;
+        Tmdlname10X = Tmdlnamewnb0;
     else :
-        Tmdlname10X = Tmdlname;
+        Tmdlname10X = Tmdlname0;
     #
     if len(Tmdlname10X) > 6 :            # Sous forme de liste, la liste des noms de modèles
         Tnames_ = Tmdlname10X;           # n'est pas coupé dans l'affichage du titre de la figure
@@ -485,7 +491,7 @@ if 1 :
                                SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     if OK102 : 
         if SAVEFIG :
@@ -494,7 +500,7 @@ if 1 :
                                SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     # -------------------------------------------------------------------------
     ctloop.printwarning([ "    MODELES: PRIOR SECOND LOOP" ])
@@ -577,7 +583,7 @@ if 1 :
                                SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     if OK105 : 
         if SAVEFIG :
@@ -586,7 +592,7 @@ if 1 :
                                SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     if OK106 :
         if SAVEFIG :
@@ -595,7 +601,7 @@ if 1 :
                                SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     if OK107 :
         if SAVEFIG :
@@ -604,7 +610,7 @@ if 1 :
                                SIZE_REDUCTION,fshortcode,Nmodels)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     if MCUM>0 and OK108 :
         if SAVEFIG :
@@ -613,7 +619,7 @@ if 1 :
                                SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     if MCUM>0 and OK109 :
         if SAVEFIG :
@@ -622,7 +628,7 @@ if 1 :
                                SIZE_REDUCTION,fshortcode,Nmodels)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     # -------------------------------------------------------------------------
     ctloop.printwarning([ "    MODELS: APRES SECOND LOOP" ])
@@ -638,7 +644,283 @@ if 1 :
                            SIZE_REDUCTION,fshortcode,method_cah,nb_class,Nmodels)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
 #
 if STOP_BEFORE_AFC :
     plt.show(); sys.exit(0)
+
+#%%
+if NIJ > 0 : # A.F.C
+    ctloop.printwarning([ "","CALCUL DE L'A.F.C".center(75),""])
+    #
+    VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,NoCAHindnames,figclustmoynum,class_afc,\
+        NoAFCindnames = ctloop.do_afc(NIJ,
+                          sMapO, TDmdl4CT, lon, lat,
+                          Tmdlname, Tmdlnamewnb, Tmdlonlynb, TTperf,
+                          Nmdlok, Lobs, Cobs, NDmdl, Nobsc,
+                          NBCOORDAFC4CAH, nb_clust,
+                          isnumobs, isnanobs, nb_class, class_ref, classe_Dobs,
+                          ccmap=ccmap, sztitle=sztitle, ysstitre=ysstitre,
+                          AFC_Visu_Classif_Mdl_Clust=AFC_Visu_Classif_Mdl_Clust,
+                          AFC_Visu_Clust_Mdl_Moy_4CT=AFC_Visu_Clust_Mdl_Moy_4CT,
+                          TypePerf=TypePerf,
+                          AFCWITHOBS = AFCWITHOBS, CAHWITHOBS=CAHWITHOBS,
+                          SIZE_REDUCTION=SIZE_REDUCTION,
+                          mdlnamewnumber_ok=mdlnamewnumber_ok,
+                          onlymdlumberAFC_ok=onlymdlumberAFC_ok,
+                          )
+    if SAVEFIG : # sauvegarde de la figure de performanes par cluster
+        plt.figure(figclustmoynum)
+        if Visu_UpwellArt :
+            figfile = "FigArt_"
+            dpi = FIGARTDPI
+        else :
+            figfile = "Fig_"
+            dpi = FIGDPI
+        figfile += "{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(nb_clust,
+                    nb_class,fprefixe,fshortcode,andeb,anfin,Nmodels)
+        # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
+        # eventuellement en PDF, si SAVEPDF active. 
+        ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+    #
+    if Visu_Dendro : 
+        ctloop.printwarning([ "    AFC: DENDROGRAM" ])
+        # dendrogramme --------------------------------------------------------
+        ctloop.do_plot_afc_dendro(F1U,F1sU,nb_clust,CAHindnames,NoCAHindnames,
+                                  NBCOORDAFC4CAH,Nmdlok,
+                                  AFCWITHOBS = AFCWITHOBS,CAHWITHOBS = CAHWITHOBS,
+                                  )
+    #
+    if Visu_AFC_in_one or Visu_UpwellArt: # plot afc en une seule image
+        ctloop.printwarning([ "    AFC: 2-D PROJECTION" ])
+        if Visu_UpwellArt :
+            stitre = ("A.F.C of SST {:s} Projection with Models, Observations and Classes ({:s})"+\
+                      "\n- {:s}, AFC on {:d} Classes (for {} models+Obs) -").format(fcodage,
+                           DATAMDL,method_cah,nb_class,Nmodels)
+            mdlmarkersize=180,
+            obsmarkersize=250,
+            clsmarkersize=280,
+        else :
+            stitre = ("AFC Projection - {:s} SST ({:s}). {:s}".format(fcodage,
+                      DATAMDL,method_cah));
+            mdlmarkersize=180,
+            obsmarkersize=250,
+            clsmarkersize=280,
+        ctloop.do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnames,NIJ,Nmdlok,
+                    title=stitre,
+                    Visu4Art=Visu_UpwellArt,
+                    AFCWITHOBS = AFCWITHOBS,
+                    figsize=(16,12),
+                    top=0.93, bottom=0.05, left=0.05, right=0.95,
+                    mdlmarkersize=180,
+                    obsmarkersize=250,
+                    clsmarkersize=280,
+                    xdeltapos   =0.02 , ydeltapos   =-0.002,
+                    xdeltaposobs=0.025 , ydeltaposobs=-0.002,
+                    xdeltaposcls=0.001, ydeltaposcls=-0.003,
+                    )
+        #
+        if SAVEFIG : # sauvegarde de la figure
+            if Visu_UpwellArt :
+                figfile = "FigArt_"
+                dpi = FIGARTDPI
+            else :
+                figfile = "Fig_"
+                dpi = FIGDPI
+            figfile += "AFC2DProj-{:d}-{:d}_{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(
+                    pa,po,nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin,Nmodels)
+            # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
+            # eventuellement en PDF, si SAVEPDF active. 
+            ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+
+    if Visu_Inertie : # Inertie
+        ctloop.printwarning([ "    AFC: INERTIE" ])
+        if NIJ==1 :
+            stitre = "{:s}SST({:s})) [{:s}]\n{:s}{:d} AFC on classes of Completed Models (vs Obs)".format(
+                     fcodage,DATAMDL,case_label,method_cah,nb_class)
+        elif NIJ==2 :
+            stitre = "{:s}SST({:s}))\n{:s}{:d} AFC on good classes of Completed Models (vs Obs)".format(
+                     fcodage,DATAMDL,method_cah,nb_class)
+        elif NIJ==3 :
+            stitre = "{:s}SST({:s})) [{:s}]\n{:s}{:d} AFC on good classes of Completed Models (vs Obs)".format(
+                     fcodage,DATAMDL,case_label,method_cah,nb_class)
+        #
+        ctloop.do_plot_afc_inertie(VAPT,
+                     title=stitre,
+                     figsize=(8,6),
+                     top=0.93, bottom=0.08, left=0.08, right=0.98,
+        )
+        if SAVEFIG : # sauvegarde de la figure de performanes par cluster
+            figfile = "Fig_"
+            figfile += "Inertia-{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}".format(nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin)
+            # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
+            # eventuellement en PDF, si SAVEPDF active. 
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+#
+if STOP_BEFORE_GENERAL :
+    plt.show(); sys.exit(0)
+#
+#%%
+if 1 :
+    ctloop.printwarning([ "","GENERALISATION".center(75),""])
+    #==========================================================================
+    #
+    #**************************************************************************
+    #.............................. GENERALISATION ............................
+    #
+    #--------------------------------------------------------------------------
+    # Modèles Optimaux (Sopt) ;  Avec "NEW Obs - v3b " 1975-2005
+    # Je commence par le plus simple : Une ligne de modèle sans classe en une phase
+    # et une seule codification à la fois
+    # Sopt-1975-2005 : Les meilleurs modèles de la période "de référence" 1975-2005
+    #TMixtMdl= [];
+    #TMixtMdl =['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']; 
+    #TMixtMdl = Sfiltre;
+    if 1 : # Best AFC Clusters
+        if SIZE_REDUCTION == 'All' :
+            # Grande Zone (All): BEST AFC CLUSTER:
+            TMixtMdlLabel = 'Best AFC Cluster'
+            TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
+                        'CNRM-CM5-2', 'CanESM2', 'CanCM4', 'GFDL-CM3', 'CNRM-CM5', 'FGOALS-s2(2004)', 
+                        'CSIRO-Mk3-6-0', 'CMCC-CESM']
+        elif SIZE_REDUCTION == 'sel' :
+            # Petite Zone (sel): BEST AFC CLUSTER:
+            TMixtMdlLabel = 'Best AFC Cluster'
+            TMixtMdl = ['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2(2004)']
+    elif 1 : # Best Cum Clusters Mopr
+        if SIZE_REDUCTION == 'All' :
+            # Grande Zone (All): BEST CUM GROUP OF MODELS:
+            TMixtMdlLabel = 'Best Cumulated Models Group'
+            TMixtMdl = ['CMCC-CM']
+        elif SIZE_REDUCTION == 'sel' :
+            # Petite Zone (sel): BEST CUM GROUP OF MODELS:
+            TMixtMdlLabel = 'Best Cumulated Models Group'
+            TMixtMdl = ['CanCM4', 'CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'CanESM2', 'NorESM1-ME']
+    else :
+        # ALL MODELS (but 'FGOALS-s2', there is no 1975-2005 data for it):
+        TMixtMdlLabel = 'All Models'
+        TMixtMdl = Tmdlname
+        #TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
+        #            'FGOALS-g2', 'IPSL-CM5B-LR', 'CNRM-CM5-2', 'CanESM2', 'CanCM4',
+        #            'GFDL-CM3', 'CNRM-CM5', 'CSIRO-Mk3-6-0', 'MPI-ESM-MR', 'MRI-CGCM3',
+        #            'MRI-ESM1', 'CMCC-CESM', 'inmcm4', 'bcc-csm1-1', 'MPI-ESM-LR',
+        #            'CESM1-BGC', 'MPI-ESM-P', 'IPSL-CM5A-LR', 'GISS-E2-R',
+        #            'GISS-E2-R-CC', 'NorESM1-M', 'CCSM4', 'NorESM1-ME', 'bcc-csm1-1-m',
+        #            'GFDL-CM2p1', 'GISS-E2-H', 'ACCESS1-3', 'MIROC5', 'GFDL-ESM2G',
+        #            'MIROC-ESM-CHEM', 'GFDL-ESM2M', 'GISS-E2-H-CC', 'MIROC-ESM',
+        #            'IPSL-CM5A-MR', 'HadCM3', 'CESM1-CAM5', 'CESM1-CAM5-1-FV2',
+        #            'ACCESS1-0']
+    #------------------------------------------------------------------------
+    if SIZE_REDUCTION == 'All' :
+        misttitlelabel = TMixtMdlLabel+" (Big Zone)"
+    elif SIZE_REDUCTION == 'sel' :
+        misttitlelabel = TMixtMdlLabel+" (Small Zone)"
+    mistfilelabel = misttitlelabel.replace(' ','').replace('(','').replace(')','')
+    #------------------------------------------------------------------------
+    # PZ: BEST AFC CLUSTER:
+    #TMixtMdl = []
+    #
+    if TMixtMdl == [] :
+        print("\nSopt non renseigné ; Ce Cas n'a pas encore été prévu")
+    else :
+        if 1 :
+            if SIZE_REDUCTION == 'All' :
+                figsize = (9,6)
+                wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.06; right=0.925;
+                nticks = 5; # 4
+            elif SIZE_REDUCTION == 'sel' :
+                figsize=(9,9)
+                wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.05; right=0.96;
+                nticks = 2; # 4
+            fig = plt.figure(figsize=figsize)
+            fignum = fig.number # numero de figure en cours ...
+            fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
+        
+            print("\n{:d}-model(s)' generalization: {} ".format(len(TMixtMdl),TMixtMdl))
+            MdlMoy, IMixtMdl, MGPerfglob = ctloop.mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT, 
+                                                class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
+                                                lon=lon, lat=lat,
+                                                TypePerf=TypePerf,
+                                                label=misttitlelabel,
+                                                fignum=fignum,
+                                                fsizetitre=14, ytitre=1.01, nticks=nticks);
+            #
+            if SAVEFIG : # sauvegarde de la figure
+                if Visu_UpwellArt :
+                    figfile = "FigArt_"
+                    dpi = FIGARTDPI
+                else :
+                    figfile = "Fig_"
+                    dpi = FIGDPI
+                figfile += "MeanModel_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
+                figfile += "_{:s}{:s}_{:d}Class".format(fprefixe,fshortcode,nb_class)
+                ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+    
+        if 1 : # Affichage du moyen for CT
+            if SIZE_REDUCTION == 'All' :
+                figsize = (12,7)
+                wspace=0.04; hspace=0.12; top=0.925; bottom=0.035; left=0.035; right=0.97;
+                nticks = 5; # 4
+            elif SIZE_REDUCTION == 'sel' :
+                figsize=(10,8.5)
+                wspace=0.04; hspace=0.12; top=0.925; bottom=0.035; left=0.035; right=0.965;
+                nticks = 2; # 4
+            fig = plt.figure(figsize=figsize)
+            fignum = fig.number # numero de figure en cours ...
+            if Show_ModSTD and len(Tmdlname[IMixtMdl]) > 2:
+                std_ = np.std(TDmdl4CT[IMixtMdl],axis=0);
+                print(np.min(std_),np.max(std_),np.mean(std_),np.std(std_))
+                ctobs.aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,
+                      wvmin=wvmin,wvmax=wvmax,
+                      fignum=fignum,varnames=varnames,cmap=eqcmap,
+                      wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
+                      noaxes=False,noticks=False,nolabels=False,y=0.98,cblabel="SST Anomaly [°C]",
+                      lolast=lolast,lonlat=(lon,lat),
+                      vcontour=std_, ncontour=np.arange(0,2,1/10), ccontour='k', lblcontourok=True,
+                      ); #...
+            else :
+                ctobs.aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,
+                      wvmin=wvmin,wvmax=wvmax,
+                      fignum=fignum,varnames=varnames,cmap=eqcmap,
+                      wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
+                      noaxes=False,noticks=False,nolabels=False,y=0.98,cblabel="SST Anomaly [°C]",
+                      lolast=lolast,lonlat=(lon,lat),
+                      ); #...
+            sptitre = "{}".format(misttitlelabel)
+            if Show_ModSTD :
+                if len(Tmdlname[IMixtMdl]) > 2 :
+                    sptitre += " and inter-model STD in contours"
+                else:
+                    sptitre += " (not enouth models STD)"
+            sptitre += " ({} models)".format(len(Tmdlname[IMixtMdl]))
+            sptitre += ", mean perf={:.0f}%".format(100*MGPerfglob)
+            sptitre += "\nmin=%f, max=%f, moy=%f, std=%f"%(np.min(MdlMoy),np.max(MdlMoy),
+                                                           np.mean(MdlMoy),np.std(MdlMoy))
+            plt.suptitle(sptitre,fontsize=14,y=0.995);
+            #
+            if SAVEFIG : # sauvegarde de la figure
+                figfile = "Fig_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
+                if Show_ModSTD :
+                    figfile += "+{:d}ySTD".format(Nda)
+                figfile += "_Lim{:+.1f}-{:+.1f}_{:s}{:s}Clim-{:d}-{:d}".format(wvmin,wvmax,
+                                fprefixe,fshortcode,andeb,anfin)
+                # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
+                # eventuellement en PDF, si SAVEPDF active. 
+                ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        #
+    #
+    #**********************************************************************
+    plt.show();
+    #___________
+    print(("\n{} {},\n{} {},\n{} {},\n{} {},\n{} {}\n").format(
+                   "SIZE_REDUCTION ".ljust(18,'.'),SIZE_REDUCTION,
+                   "WITHANO ".ljust(18,'.'),WITHANO,
+                   "UISST ".ljust(18,'.'),UISST,
+                   "climato ".ljust(18,'.'),climato,
+                   "NIJ ".ljust(18,'.'),NIJ))
+
+    ctloop.printwarning([ "    END: WHOLE TIME CODE '{:s}' IN {:.2f} SECONDS".format(os.path.basename(sys.argv[0]),
+                         time()-tpgm0) ])
+    #
+    #======================================================================
+    #
