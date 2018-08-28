@@ -32,20 +32,26 @@ import UW3_triedctk as ctk
 import ctObsMdldef  as ctobs
 #
 #%=====================================================================
-def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
+def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,indname=None,
               cmap=cm.jet,holdon=False,ax=None,gridok=False,
               drawaxes=False,axescolors=None,axlinewidth=1,
               drawtriangref=False,axtight=False,aximage=False,axdecal=False,
               rotlabels=None,randrotlabels=None,randseed=0,
               horizalign='left',vertalign='center',
               lblcolor=None,lblbgcolor=None,lblfontsize=8,lblprefix=None,
-              marker='o',obsmarker='o',
+              lblcolorobs=None,lblbgcolorobs=None,lblfontsizeobs=8,lblprefixobs=None,
+              marker='o',obsmarker='o',linewidths=1,linewidthsobs=1,
               markersize=None,obsmarkersize=None,
               edgecolor=None,
               edgeobscolor='k',obscolor='k',edgeclasscolor='k',faceclasscolor='m',
               article_style=False,
               xdeltapos=0.0,ydeltapos=0.0,
-              xdeltaposobs=0.0,ydeltaposobs=0.0) :
+              xdeltaposobs=0.0,ydeltaposobs=0.0,
+              xdeltaposlgnd=0.02,ydeltaposlgnd=0.0,
+              legendok=False,legendXstart=None,legendYstart=None,legendYstep=None,
+              legendprefixlbl="AFC Clust.",
+              legendprefixlblobs="Obs.",
+              ) :
 # pompé de WORKZONE ... TPA05
     if ax is None :
         fig = plt.figure(figsize=(16,12));
@@ -53,6 +59,10 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
     else :
         fig = plt.gcf() # figure en cours ...
         ax = ax
+    varsforlegend = None
+    varsforlegendobs = None
+    varsforlegendcls = None
+    #
     if holdon == False :
         # j'ai un pb obs \ pas obs qui apparaissent dans la même couleur que le dernier cluster
         # quand bien même il ne participe pas à la clusterisation
@@ -103,11 +113,18 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
                     omsize = Kobs*xoomK
             else:
                 omsize = obsmarkersize
+                
             ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=msize,marker=marker,
                             edgecolors=edge_ec_colors,facecolor=ec_colors,linewidths=linewidths)
+            if legendok :
+                varsforlegend = msize,marker,edge_ec_colors,cmap,linewidths
+            #
             if lenCP > lenXcol : # cas des surnumeraire, en principe les obs
                 ax.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=omsize,marker=obsmarker,
-                                edgecolors=edgeobscolor,facecolor=obscolor,linewidths=linewidths)
+                                edgecolors=edgeobscolor,facecolor=obscolor,linewidths=linewidthsobs)
+                if legendok :
+                    varsforlegendobs = omsize,obsmarker,edgeobscolor,obscolor,linewidthsobs
+            #
         else : # NO article style
             if p > 1 : # On distingue triangle à droite ou vers le haut selon l'axe
                 ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpa-1]*xoomK,
@@ -116,15 +133,15 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
                                 marker='^',edgecolors=ec_colors,facecolor='none',linewidths=linewidths)
                 if lenCP > lenXcol : # cas des surnumeraire, en principe les obs
                     ax.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs[:,cpa-1]*xoomK,
-                                    marker='>',edgecolors=obscolor,facecolor='none',linewidths=linewidths)
+                                    marker='>',edgecolors=obscolor,facecolor='none',linewidths=linewidthsobs)
                     ax.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs[:,cpb-1]*xoomK,
-                                    marker='^',edgecolors=obscolor,facecolor='none',linewidths=linewidths)            
+                                    marker='^',edgecolors=obscolor,facecolor='none',linewidths=linewidthsobs)            
             else :
                 ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K*xoomK,
                                 marker='s',edgecolors=ec_colors,facecolor='none',linewidths=linewidths);
                 if lenCP > lenXcol : # ? cas des surnumeraire, en principe les obs
                     ax.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs*xoomK,
-                                marker='s',edgecolors=obscolor,facecolor='none',linewidths=linewidths);
+                                marker='s',edgecolors=obscolor,facecolor='none',linewidths=linewidthsobs);
                     
     else : #(c'est pour lescolonnes -les classes)
         if article_style :
@@ -135,8 +152,10 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
                     msize = K*xoomK
             else:
                 msize = markersize
-            ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=msize,marker='s',
+            ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=msize,marker=marker,linewidths=linewidths,
                        edgecolors=edgeclasscolor,facecolor=faceclasscolor)
+            if legendok :
+                varsforlegendcls = msize,marker,edgeclasscolor,faceclasscolor,linewidths
         else :
             ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpa-1]*xoomK,
                             marker='o',facecolor='m')
@@ -163,6 +182,11 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
             
     if rotlabels is None :
         rotlabels = 0
+    if lblcolorobs is None :
+        if lblcolor is not None :
+            lblcolorobs = lblcolor
+        else :
+            lblcolorobs = 'k'
     if lblcolor == None :
         lblcolor = 'k'
     if randrotlabels is None :
@@ -201,28 +225,28 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
     if holdon == False and lenCP > lenXcol :
         N,p = np.shape(CPobs);
         for i in np.arange(N) :
-            if lblprefix is None :
+            if lblprefixobs is None :
                 currentlbl = obsname[i]
             else :
-                currentlbl = lblprefix+obsname[i]
+                currentlbl = lblprefixobs+obsname[i]
             #print("obsname[{}]: {}".format(i,obsname[i]))
             if randrotlabels != 0 :
                 localrotlabels = rotlabels + randrotlabels*np.random.normal()
             else :
                 localrotlabels = rotlabels
-            if lblbgcolor is None :
+            if lblbgcolorobs is None :
                 ax.text(CPobs[i,cpa-1],CPobs[i,cpb-1],currentlbl,
                         position=(CPobs[i,cpa-1] + xdeltaposobs,CPobs[i,cpb-1] + ydeltaposobs),
                         color=lblcolor,
-                        fontsize=lblfontsize,
+                        fontsize=lblfontsizeobs,
                         horizontalalignment=horizalign,
                         verticalalignment=vertalign,
                         rotation=localrotlabels,rotation_mode="anchor")
             else :
                 ax.text(CPobs[i,cpa-1],CPobs[i,cpb-1],currentlbl,
                         position=(CPobs[i,cpa-1] + xdeltaposobs,CPobs[i,cpb-1] + ydeltaposobs),
-                        color=lblcolor,backgroundcolor=lblbgcolor,
-                        fontsize=lblfontsize,
+                        color=lblcolor,backgroundcolor=lblbgcolorobs,
+                        fontsize=lblfontsizeobs,
                         horizontalalignment=horizalign,
                         verticalalignment=vertalign,
                         rotation=localrotlabels,rotation_mode="anchor")
@@ -249,7 +273,93 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,linewidths=1,indname=None,
     # recupere les limites des axes ...
     xlim = ax.set_xlim();
     ylim = ax.set_ylim();
-
+    #
+    if legendok :
+        # legendes des modeles
+        if varsforlegend is not None:
+            Xuniq = np.unique(Xcol)
+            dx = xlim[1] - xlim[0];
+            dy = ylim[1] - ylim[0];
+            dyy = dy/30
+            px = xlim[0] + dx/20; # à ajuster +|- en ...
+            py = ylim[1] - dy/20; # ... fonction de xoomK
+            if legendXstart is None :
+                legendXstart = px
+            if legendYstart is None :
+                legendYstart = py
+            if legendYstep is None :
+                legendYstep = dyy
+            lgndX = legendXstart * np.ones(Xuniq.shape[0])
+            lgndY = legendYstart * np.ones(Xuniq.shape[0])
+            #
+            for jlgnd in np.arange(Xuniq.shape[0]):
+                lgndY[jlgnd] -= jlgnd*legendYstep
+            #
+            lgndmsize,lgndmarker,lgndedge_colors,lgndcmap,lgndlinewidths = varsforlegend
+            lgnd_normed_data = my_norm(Xuniq)
+            lgndec_colors = lgndcmap(lgnd_normed_data) # a Nx4 array of rgba value
+            ax.scatter(lgndX,lgndY,s=lgndmsize,marker=lgndmarker,
+                            edgecolors=lgndedge_colors,facecolor=lgndec_colors,linewidths=lgndlinewidths)
+            N, = np.shape(lgndX);
+            for i in np.arange(N) :
+                currentlbl = "{:s} {:d}".format(legendprefixlbl,i+1)
+                if lblprefix is not None :
+                    currentlbl = lblprefix+currentlbl
+                #print("indname[{}]: {}".format(i,indname[i]))
+                if randrotlabels != 0 :
+                    localrotlabels = rotlabels + randrotlabels*np.random.normal()
+                else :
+                    localrotlabels = rotlabels
+                ax.text(lgndX[i],lgndY[i],currentlbl,
+                        position=(lgndX[i] + xdeltaposlgnd,lgndY[i] + ydeltaposlgnd),
+                        color="k",
+                        fontsize=lblfontsize,
+                        horizontalalignment="left",
+                        verticalalignment=vertalign,
+                        rotation=localrotlabels,rotation_mode="anchor")
+        # legendes des obs
+        if varsforlegendobs is not None:
+            lgndobsmsize,lgndobsmarker,lgndobsedge_colors,lgndobsec_colors,lgndobslinewidths = varsforlegendobs
+            lgndobsX = legendXstart
+            lgndobsY = legendYstart - Xuniq.shape[0]*legendYstep
+            ax.scatter(lgndobsX,lgndobsY,s=lgndobsmsize,marker=lgndobsmarker,
+                            edgecolors=lgndobsedge_colors,facecolor=lgndobsec_colors,linewidths=lgndobslinewidths)
+            currentlbl = legendprefixlblobs
+            if lblprefixobs is not None :
+                currentlbl = lblprefixobs+currentlbl
+            #print("obsname[{}]: {}".format(i,obsname[i]))
+            if randrotlabels != 0 :
+                localrotlabels = rotlabels + randrotlabels*np.random.normal()
+            else :
+                localrotlabels = rotlabels
+            ax.text(lgndobsX,lgndobsY,currentlbl,
+                    position=(lgndobsX + xdeltaposlgnd,lgndobsY + ydeltaposlgnd),
+                    color="k",
+                    fontsize=lblfontsizeobs,
+                    horizontalalignment="left",
+                    verticalalignment=vertalign,
+                    rotation=localrotlabels,rotation_mode="anchor")
+        # legendes des classes
+        if varsforlegendcls is not None:
+            lgndmsize,lgndmarker,lgndedge_colors,lgndface_colors,lgndlinewidths = varsforlegendcls
+            ax.scatter(legendXstart,legendYstart,s=lgndmsize,marker=lgndmarker,
+                            edgecolors=lgndedge_colors,facecolor=lgndface_colors,linewidths=lgndlinewidths)
+            currentlbl = legendprefixlbl
+            if lblprefix is not None :
+                currentlbl = lblprefix+currentlbl
+            #print("indname[{}]: {}".format(i,indname[i]))
+            if randrotlabels != 0 :
+                localrotlabels = rotlabels + randrotlabels*np.random.normal()
+            else :
+                localrotlabels = rotlabels
+            ax.text(legendXstart,legendYstart,currentlbl,
+                    position=(legendXstart + xdeltaposlgnd,legendYstart + ydeltaposlgnd),
+                    color="k",
+                    fontsize=lblfontsize,
+                    horizontalalignment="left",
+                    verticalalignment=vertalign,
+                    rotation=localrotlabels,rotation_mode="anchor")
+    #
     if drawaxes :
         # Tracer les axes
         if axescolors is None :
@@ -1677,7 +1787,6 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
         X_[:,isnumobs] = Dmdl_TVar
         # Rajouter plussieurs couches de nan pour le(s) subplot(s) vide
         for iextra in np.arange(nsubmax - Nmodels - 1):
-            print()
             X_ = np.concatenate((X_, np.ones((1,Lobs*Cobs))*np.nan))
         # Rajout de la variance des obs
         X_    = np.concatenate((X_, varobs.reshape(1,Lobs*Cobs)))
@@ -2046,10 +2155,20 @@ def do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnam
                     figsize=(16,12),
                     top=0.93, bottom=0.05, left=0.05, right=0.95,
                     mdlmarkersize=60, obsmarkersize=75,clsmarkersize=140,
-                    lblprefix=None,
+                    lblfontsize=14,lblprefix=None,      linewidths=2.5,
+                    lblfontsizeobs=14,lblprefixobs=None,linewidthsobs=3,
+                    lblfontsizecls=14,lblprefixcls=None,linewidthscls=2.5,
                     xdeltapos=0.02,ydeltapos=-0.002,
                     xdeltaposobs=0.02,ydeltaposobs=-0.002,
                     xdeltaposcls=0.01,ydeltaposcls=-0.003,
+                    legendok=False,
+                    xdeltaposlgnd=0.02,ydeltaposlgnd=0.0,
+                    legendXstart=-1.24,legendYstart=0.85,legendYstep=0.06,
+                    legendprefixlbl="AFC Cluster",
+                    legendprefixlblobs="Observations",
+                    legendokcls=False,
+                    legendXstartcls=-1.24,legendYstartcls=0.60,
+                    legendprefixlblcls="Classes",
                     ) :
     # 1- NOUVELLE FIGURE POUR PROJECTIONS DE L'AFC
     fig = plt.figure(figsize=figsize);
@@ -2057,7 +2176,7 @@ def do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnam
     plt.subplots_adjust(top=top, bottom=bottom, left=left, right=right)
     ax = plt.subplot(111) # un seul axe
     if Visu4Art :
-        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,linewidths=1.5,
+        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,linewidths=2.5,linewidthsobs=3,
                  indname=NoAFCindnames,
                  ax=ax,article_style=True,
                  marker='o',obsmarker='o',
@@ -2065,21 +2184,34 @@ def do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnam
                  obsmarkersize=obsmarkersize,
                  edgecolor='k',edgeobscolor='k',obscolor=[ 0.90, 0.90, 0.90, 1.],
                  edgeclasscolor='k',faceclasscolor='m',
-                 lblfontsize=14,horizalign='left',vertalign='center',lblprefix=lblprefix,
-                 xdeltapos=xdeltapos, ydeltapos=ydeltapos,
+                 horizalign='left',vertalign='center',
+                 lblfontsize=lblfontsize,       lblprefix=lblprefix,
+                 lblfontsizeobs=lblfontsizeobs, lblprefixobs=lblprefixobs,
+                 xdeltapos=xdeltapos,       ydeltapos=ydeltapos,
                  xdeltaposobs=xdeltaposobs, ydeltaposobs=ydeltaposobs,
+                 legendok=legendok,
+                 xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
+                 legendXstart=legendXstart,legendYstart=legendYstart,legendYstep=legendYstep,
+                 legendprefixlbl=legendprefixlbl,
+                 legendprefixlblobs=legendprefixlblobs,
                  );
         # 3- AJOUT ou pas des colonnes (i.e. des classes)
         colnames = (np.arange(nb_class)+1).astype(str)
         afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),
                  gridok=True,aximage=True,axtight=False,
-                 linewidths=1.5,indname=colnames,holdon=True,drawtriangref=False,
+                 linewidths=linewidthscls,indname=colnames,holdon=True,drawtriangref=False,
                  ax=ax,article_style=True,
                  drawaxes=True, axescolors=('k','k'),
+                 marker='s',
                  markersize=clsmarkersize,
                  lblcolor='w',
-                 lblfontsize=14,horizalign='center',vertalign='center',
+                 lblfontsize=lblfontsizecls, lblprefix=lblprefixcls,
+                 horizalign='center',vertalign='center',
                  xdeltapos=xdeltaposcls, ydeltapos=ydeltaposcls,
+                 legendok=legendokcls,
+                 xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
+                 legendXstart=legendXstartcls,legendYstart=legendYstartcls,
+                 legendprefixlbl=legendprefixlblcls,
                  )
         plt.title(title,fontsize=14,y=1.02);
     else :

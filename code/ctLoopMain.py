@@ -697,27 +697,39 @@ if NIJ > 0 : # A.F.C
             stitre = ("A.F.C of SST {:s} Projection with Models, Observations and Classes ({:s})"+\
                       "\n- {:s}, AFC on {:d} Classes (for {} models+Obs) -").format(fcodage,
                            DATAMDL,method_cah,nb_class,Nmodels)
-            mdlmarkersize=180,
-            obsmarkersize=250,
-            clsmarkersize=280,
+            lblfontsize=14;    mdlmarkersize=250; xdeltapos   =0.025 ; ydeltapos  =-0.002; linewidths   =2.5
+            lblfontsizeobs=16; obsmarkersize=320; xdeltaposobs=0.030; ydeltaposobs=-0.003; linewidthsobs=3
+            lblfontsizecls=16; clsmarkersize=280; xdeltaposcls=0.001; ydeltaposcls=-0.003; linewidthscls=2.5
+            xdeltaposlgnd=0.03; ydeltaposlgnd=-0.002
         else :
             stitre = ("AFC Projection - {:s} SST ({:s}). {:s}".format(fcodage,
                       DATAMDL,method_cah));
-            mdlmarkersize=180,
-            obsmarkersize=250,
-            clsmarkersize=280,
+            lblfontsize=14;    mdlmarkersize=None; xdeltapos   =0.0; ydeltapos   =0.0; linewidths   =2.5
+            lblfontsizeobs=16; obsmarkersize=None; xdeltaposobs=0.0; ydeltaposobs=0.0; linewidthsobs=3
+            lblfontsizecls=16; clsmarkersize=None; xdeltaposcls=0.0; ydeltaposcls=0.0; linewidthscls=2.5
+            xdeltaposlgnd=0.03; ydeltaposlgnd=-0.002
+        #
         ctloop.do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnames,NIJ,Nmdlok,
                     title=stitre,
                     Visu4Art=Visu_UpwellArt,
                     AFCWITHOBS = AFCWITHOBS,
                     figsize=(16,12),
                     top=0.93, bottom=0.05, left=0.05, right=0.95,
-                    mdlmarkersize=180,
-                    obsmarkersize=250,
-                    clsmarkersize=280,
-                    xdeltapos   =0.02 , ydeltapos   =-0.002,
-                    xdeltaposobs=0.025 , ydeltaposobs=-0.002,
-                    xdeltaposcls=0.001, ydeltaposcls=-0.003,
+                    lblfontsize=lblfontsize,       mdlmarkersize=mdlmarkersize,
+                    lblfontsizeobs=lblfontsizeobs, obsmarkersize=obsmarkersize,
+                    lblfontsizecls=lblfontsizecls, clsmarkersize=clsmarkersize,
+                    xdeltapos   =xdeltapos ,   ydeltapos   =ydeltapos,
+                    xdeltaposobs=xdeltaposobs, ydeltaposobs=ydeltaposobs,
+                    xdeltaposcls=xdeltaposcls, ydeltaposcls=ydeltaposcls,
+                    linewidths=linewidths, linewidthsobs=linewidthsobs, linewidthscls=linewidthscls,
+                    legendok=True,
+                    xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
+                    legendXstart=-1.22,legendYstart=0.88,legendYstep=0.06,
+                    legendprefixlbl="AFC Cluster",
+                    legendprefixlblobs="Observations",
+                    legendokcls=True,
+                    legendXstartcls=-1.22,legendYstartcls=0.56,
+                    legendprefixlblcls="CAH Classes",
                     )
         #
         if SAVEFIG : # sauvegarde de la figure
