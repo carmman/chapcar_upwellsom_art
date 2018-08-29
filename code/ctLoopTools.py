@@ -555,11 +555,20 @@ def do_save_figure(figfile,path=None,ext=None,dpi=100,fig2ok=False,ext2=None):
               os.path.basename(figurefilelname)))
         plt.savefig(figurefilelname, transparent=False)
 #
+# Efface toute variable globale
+def clearall():
+    all = [var for var in globals() if var[0] != "_"]
+    for var in all:
+        print(var)
+        del globals()[var]
+#
 # #####################################################################
 # INITIALISATION
 # Des trucs qui pourront servir
 #######################################################################
 def initialisation(case_label_base,tseed=0):
+    # efface toute variable globale
+    #clearall() # NON, elle efface tout en memoire, y compris les modules importes !!! 
     # ferme toutes les fenetres de figures en cours
     plt.close('all')
     # Met a BLANC la couleur des valeurs masquées dans les masked_array,
@@ -2148,13 +2157,62 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
     #
     return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,NoCAHindnames,figclustmoynum,class_afc,NoAFCindnames
 #
-def do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnames,NIJ,Nmdlok,
+def do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+                    indnames=None,
+                    title="AFC Projection",
+                    AFCWITHOBS = True,
+                    figsize=(16,12),
+                    top=0.93, bottom=0.05, left=0.05, right=0.95,
+                    lblfontsize=14, linewidths=2.5,
+                    ) :
+    # 1- NOUVELLE FIGURE POUR PROJECTIONS DE L'AFC
+    fig = plt.figure(figsize=figsize);
+    fignum = fig.number # numero de figure en cours ...
+    plt.subplots_adjust(top=top, bottom=bottom, left=left, right=right)
+    ax = plt.subplot(111) # un seul axe
+    #
+    K=CRi; xoomK=500;  # Pour les contrib Rel (CRi)
+    afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,
+             indname=indnames,
+             drawaxes=True, gridok=True,
+             ax=ax,
+             lblfontsize=lblfontsize,
+             );
+    if NIJ==1 :
+        plt.title("{:s} {:d} AFC on classes of Completed Models (vs Obs)".format( \
+                  title,nb_class));
+    elif NIJ==3 or NIJ==2 :
+        plt.title("{:s} {:d} AFC on good classes of Completed Models (vs Obs)".format( \
+                  title,nb_class));
+    #
+    # 2- MET EN EVIDENCE LES OBS DANS LA FIGURE ...
+    if AFCWITHOBS  :
+        ax.plot(F1U[Nmdlok,pa-1],F1U[Nmdlok,po-1], 'oc', markersize=20,
+                markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);    
+    else : # Obs en supplémentaire
+        ax.text(F1sU[0,0],F1sU[0,1], ".Obs")
+        ax.plot(F1sU[0,0],F1sU[0,1], 'oc', markersize=20,
+                markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);
+    #
+    # 3- AJOUT ou pas des colonnes (i.e. des classes)
+    colnames = (np.arange(nb_class)+1).astype(str)
+    afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),
+             indname=colnames,
+             K=CAj,xoomK=xoomK,
+             linewidths=2,holdon=True,drawtriangref=True,
+             ax=ax,drawaxes=True,aximage=True,axtight=False) 
+    #plt.axis("tight"); #?
+    return
+#
+#
+def do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+                    indnames=None,
                     title="AFC Projection",
                     Visu4Art=False,
                     AFCWITHOBS = True,
                     figsize=(16,12),
                     top=0.93, bottom=0.05, left=0.05, right=0.95,
-                    mdlmarkersize=60, obsmarkersize=75,clsmarkersize=140,
+                    mdlmarkersize=None, obsmarkersize=None,clsmarkersize=None,
                     lblfontsize=14,lblprefix=None,      linewidths=2.5,
                     lblfontsizeobs=14,lblprefixobs=None,linewidthsobs=3,
                     lblfontsizecls=14,lblprefixcls=None,linewidthscls=2.5,
@@ -2176,8 +2234,9 @@ def do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnam
     plt.subplots_adjust(top=top, bottom=bottom, left=left, right=right)
     ax = plt.subplot(111) # un seul axe
     if Visu4Art :
-        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,linewidths=2.5,linewidthsobs=3,
-                 indname=NoAFCindnames,
+        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,
+                 indname=indnames,
+                 linewidths=2.5,linewidthsobs=3,
                  ax=ax,article_style=True,
                  marker='o',obsmarker='o',
                  markersize=mdlmarkersize,
@@ -2198,8 +2257,10 @@ def do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnam
         # 3- AJOUT ou pas des colonnes (i.e. des classes)
         colnames = (np.arange(nb_class)+1).astype(str)
         afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),
+                 indname=colnames,
                  gridok=True,aximage=True,axtight=False,
-                 linewidths=linewidthscls,indname=colnames,holdon=True,drawtriangref=False,
+                 linewidths=linewidthscls,
+                 holdon=True,drawtriangref=False,
                  ax=ax,article_style=True,
                  drawaxes=True, axescolors=('k','k'),
                  marker='s',
@@ -2217,7 +2278,7 @@ def do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnam
     else :
         K=CRi; xoomK=500;  # Pour les contrib Rel (CRi)
         afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,
-                 indname=NoAFCindnames,
+                 indname=indnames,
                  drawaxes=True, gridok=True,
                  ax=ax,
                  lblfontsize=14,
@@ -2240,8 +2301,10 @@ def do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnam
         #
         # 3- AJOUT ou pas des colonnes (i.e. des classes)
         colnames = (np.arange(nb_class)+1).astype(str)
-        afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),K=CAj,xoomK=xoomK,
-                 linewidths=2,indname=colnames,holdon=True,drawtriangref=True,
+        afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),
+                 indname=colnames,
+                 K=CAj,xoomK=xoomK,
+                 linewidths=2,holdon=True,drawtriangref=True,
                  ax=ax,drawaxes=True,aximage=True,axtight=False) 
     #plt.axis("tight"); #?
     return

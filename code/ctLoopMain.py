@@ -23,10 +23,11 @@ import UW3_triedctk as ctk
 import localdef     as ldef
 ##from   ctObsMdldef import *
 
+
+#%%
 # PARAMETRAGE (#1) DU CAS
 from ParamCas import *
 #import ParamCas
-
 
 obs_data_path = '../Datas'
 
@@ -94,7 +95,6 @@ if SAVEFIG :
     if not os.path.exists(case_figs_dir) :
         os.makedirs(case_figs_dir)
 #
-#%%
 if WITHANO :
     #wvmin=-3.9; wvmax = 4.9; # ok pour obs 1975-2005 : ANO 4CT: min=-3.8183; max=4.2445 (4.9 because ...)
     #wvmin=-4.3; wvmax = 4.9; # ok pour obs 2006-2017 : ANO 4CT: min=-4.2712; max=4.3706
@@ -105,6 +105,7 @@ if WITHANO :
 else : # On suppose qu'il s'agit du brute ...
     wvmin =16.0; wvmax =30.0; # ok pour obs 1975-2005 : SST 4CT: min=16.8666; max=29.029
 #
+#%%
 if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
     if SIZE_REDUCTION == 'All' :
         lolast = 4
@@ -701,36 +702,43 @@ if NIJ > 0 : # A.F.C
             lblfontsizeobs=16; obsmarkersize=320; xdeltaposobs=0.030; ydeltaposobs=-0.003; linewidthsobs=3
             lblfontsizecls=16; clsmarkersize=280; xdeltaposcls=0.001; ydeltaposcls=-0.003; linewidthscls=2.5
             xdeltaposlgnd=0.03; ydeltaposlgnd=-0.002
+            #
+            ctloop.do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+                        indnames=NoAFCindnames,
+                        title=stitre,
+                        Visu4Art=Visu_UpwellArt,
+                        AFCWITHOBS = AFCWITHOBS,
+                        figsize=(16,12),
+                        top=0.93, bottom=0.05, left=0.05, right=0.95,
+                        lblfontsize=lblfontsize,       mdlmarkersize=mdlmarkersize,
+                        lblfontsizeobs=lblfontsizeobs, obsmarkersize=obsmarkersize,
+                        lblfontsizecls=lblfontsizecls, clsmarkersize=clsmarkersize,
+                        xdeltapos   =xdeltapos ,   ydeltapos   =ydeltapos,
+                        xdeltaposobs=xdeltaposobs, ydeltaposobs=ydeltaposobs,
+                        xdeltaposcls=xdeltaposcls, ydeltaposcls=ydeltaposcls,
+                        linewidths=linewidths, linewidthsobs=linewidthsobs, linewidthscls=linewidthscls,
+                        legendok=True,
+                        xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
+                        legendXstart=-1.22,legendYstart=0.88,legendYstep=0.06,
+                        legendprefixlbl="AFC Cluster",
+                        legendprefixlblobs="Observations",
+                        legendokcls=True,
+                        legendXstartcls=-1.22,legendYstartcls=0.56,
+                        legendprefixlblcls="CAH Classes",
+                        )
         else :
             stitre = ("AFC Projection - {:s} SST ({:s}). {:s}".format(fcodage,
                       DATAMDL,method_cah));
-            lblfontsize=14;    mdlmarkersize=None; xdeltapos   =0.0; ydeltapos   =0.0; linewidths   =2.5
-            lblfontsizeobs=16; obsmarkersize=None; xdeltaposobs=0.0; ydeltaposobs=0.0; linewidthsobs=3
-            lblfontsizecls=16; clsmarkersize=None; xdeltaposcls=0.0; ydeltaposcls=0.0; linewidthscls=2.5
-            xdeltaposlgnd=0.03; ydeltaposlgnd=-0.002
-        #
-        ctloop.do_plot_afc_projections(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NoAFCindnames,NIJ,Nmdlok,
-                    title=stitre,
-                    Visu4Art=Visu_UpwellArt,
-                    AFCWITHOBS = AFCWITHOBS,
-                    figsize=(16,12),
-                    top=0.93, bottom=0.05, left=0.05, right=0.95,
-                    lblfontsize=lblfontsize,       mdlmarkersize=mdlmarkersize,
-                    lblfontsizeobs=lblfontsizeobs, obsmarkersize=obsmarkersize,
-                    lblfontsizecls=lblfontsizecls, clsmarkersize=clsmarkersize,
-                    xdeltapos   =xdeltapos ,   ydeltapos   =ydeltapos,
-                    xdeltaposobs=xdeltaposobs, ydeltaposobs=ydeltaposobs,
-                    xdeltaposcls=xdeltaposcls, ydeltaposcls=ydeltaposcls,
-                    linewidths=linewidths, linewidthsobs=linewidthsobs, linewidthscls=linewidthscls,
-                    legendok=True,
-                    xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
-                    legendXstart=-1.22,legendYstart=0.88,legendYstep=0.06,
-                    legendprefixlbl="AFC Cluster",
-                    legendprefixlblobs="Observations",
-                    legendokcls=True,
-                    legendXstartcls=-1.22,legendYstartcls=0.56,
-                    legendprefixlblcls="CAH Classes",
-                    )
+            lblfontsize=14; linewidths = 2.0
+            #
+            ctloop.do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+                        indnames=NoAFCindnames,
+                        title=stitre,
+                        AFCWITHOBS = AFCWITHOBS,
+                        figsize=(16,12),
+                        top=0.93, bottom=0.05, left=0.05, right=0.95,
+                        lblfontsize=lblfontsize, linewidths=linewidths,
+                        )
         #
         if SAVEFIG : # sauvegarde de la figure
             if Visu_UpwellArt :
