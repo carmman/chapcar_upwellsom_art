@@ -575,7 +575,7 @@ def initialisation(case_label_base,tseed=0):
     # *** Cela change alors la couleur des NAN dans les fichiers EPS ***
     #cmap.set_bad('w',1.)
     #======================================================================
-    plt.rcParams.update({'figure.max_open_warning': 0})
+    #plt.rcParams.update({'figure.max_open_warning': 0})
     #======================================================================
     casetime=datetime.now()
     casetimelabel = casetime.strftime("%d %b %Y @ %H:%M:%S")
@@ -1712,7 +1712,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
             if pgqm_ >= MaxPerfglob_Qm :
                 MaxPerfglob_Qm = pgqm_; # Utilisé pour savoir les quels premiers modèles
                 IMaxPerfglob_Qm = imodel+1;   # prendre dans la stratégie du "meilleur cumul moyen"
-                print(" New best cumul perf for {:d} models : {:.0f}% ...".format(imodel+1,pgqm_))
+                print(" New best cumul perf for {:d} models : {:.0f}% ...\n ".format(imodel+1,pgqm_),end="")
             else :
                 print(".",end="")
          #

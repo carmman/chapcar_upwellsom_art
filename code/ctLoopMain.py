@@ -30,6 +30,9 @@ from ParamCas import *
 #import ParamCas
 
 obs_data_path = '../Datas'
+#
+blockshow = True   # Bloque ou pas l'execution du programme apres chaque figure
+#blockshow = False
 
 #======================================================================
 # Pour initialiser le generateur de nombres aleatoires utilise 
@@ -107,6 +110,7 @@ else : # On suppose qu'il s'agit du brute ...
 #
 #%%
 if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
+    print(u"-- Visu (et sauvegarde éventuelle de la figure) des données ...")
     if SIZE_REDUCTION == 'All' :
         lolast = 4
     else :
@@ -141,9 +145,13 @@ if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
         ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     del localcmap
+    #
+    plt.show(block=blockshow)
+#
 #%%
 if 0 :
-    if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
+    if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données (BIS)
+        print(u"-- Visu (et sauvegarde éventuelle de la figure) des données (BIS) ...")
         if SIZE_REDUCTION == 'All' :
             lolast = 4
         else :
@@ -170,6 +178,8 @@ if 0 :
             # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
             # eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT)
+        #
+        plt.show(block=blockshow)
 #
 if STOP_BEFORE_CT :
     plt.show(); sys.exit(0);
@@ -287,6 +297,7 @@ else :
 # C.T. Visualisation ______________________________________________________
 # #########################################################################
 if Visu_CTStuff : #==>> la U_matrix
+    print(u"-- Visualisation de la Carte Topologique: U-matrix ...")
     fig = plt.figure(figsize=(6,8));
     fignum = fig.number
     #wspace=0.02; hspace=0.14; top=0.80; bottom=0.02; left=0.01; right=0.95;
@@ -294,8 +305,11 @@ if Visu_CTStuff : #==>> la U_matrix
     a=sMapO.view_U_matrix(fignum=fignum, distance2=2, row_normalized='No', show_data='Yes', \
                       contooor='Yes', blob='No', save='No', save_dir='');
     plt.suptitle("Obs, The U-MATRIX", fontsize=16,y=1.0);
+    #
+    plt.show(block=blockshow)
 #
 if Visu_CTStuff : #==>> La carte
+    print(u"-- Visualisation de la Carte : Les Composantes de la carte (showmap) ...")
     fig = plt.figure(figsize=(8,8));
     fignum = fig.number
     wspace=0.02; hspace=0.14; top=0.925; bottom=0.02; left=0.01; right=0.95;
@@ -307,6 +321,8 @@ if Visu_CTStuff : #==>> La carte
                 nolabels=True,
                 );
     plt.suptitle("Obs, Les Composantes de la carte", fontsize=16);
+    #
+    plt.show(block=blockshow)
 #
 # Other stuffs ______________________________________
 # C.T. Dendrogram _________________________________________________________
@@ -318,7 +334,8 @@ ctZ_ = linkage(sMapO.codebook, method=method_cah, metric=dist_cah);
 # Forms flat clusters from the hierarchical clustering defined by the linkage matrix Z.
 class_ref = fcluster(ctZ_,nb_class,criterion='maxclust'); # Classes des referents
 
-if Visu_Dendro :
+if Visu_Dendro : # Visualisation du Dendrogramme des codebooks
+    print(u"-- Visualisation du Dendrogramme des codebooks (SOM Maps) ...")
     figsize=(14,6);
     wspace=0.0; hspace=0.2; top=0.92; bottom=0.12; left=0.05; right=0.99;
     stitre = "SOM Codebook Dendrogram for HAC (map size={:d}x{:d})".format(nbl,nbc);
@@ -327,6 +344,8 @@ if Visu_Dendro :
                           figsize=figsize,
                           wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right
                           )
+    #
+    plt.show(block=blockshow)
 #
 # Transcodage des indices des classes
 if TRANSCOCLASSE is not '' :
@@ -348,7 +367,8 @@ for c in np.arange(nb_class)+1 :
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Figure 1 pour Article 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
+if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs: Representation geographique des classes
+    print(u"-- Visualisation de truc liés au Obs: Representation geographique des classes ...")
     if SIZE_REDUCTION == 'All' :
         figsize = (9,6)
         wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.08; right=0.98;
@@ -376,8 +396,11 @@ if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
             dpi = FIGDPI
         figfile += "ObsGeo{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
         ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+    #
+    plt.show(block=blockshow)
 #
-if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
+if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs: moyennes par classe
+    print(u"-- Visualisation de truc liés au Obs: moyennes par classe ...")
     stitre = "Observations, Monthly Mean by Class (method: {:s})".format(method_cah)
     ctloop.plot_mean_curve_by_class(sst_obs_coded,nb_class,classe_Dobs,varnames=varnames,
                                     title=stitre,
@@ -394,8 +417,11 @@ if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
             dpi = FIGDPI
         figfile += "MeanByClass_{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
         ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+    #
+    plt.show(block=blockshow)
 #
 if Visu_CTStuff : # Visu des profils des référents de la carte
+    print(u"-- Visu des profils des référents de la carte ...")
     if SIZE_REDUCTION == 'All' :
         figsize = (7.5,12)
         wspace=0.01; hspace=0.05; top=0.945; bottom=0.04; left=0.15; right=0.86;
@@ -407,7 +433,8 @@ if Visu_CTStuff : # Visu des profils des référents de la carte
                            figsize=figsize,
                            wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
                            )
-
+    plt.show(block=blockshow)
+#
 if STOP_BEFORE_MDLSTUFF :
     plt.show(); sys.exit(0)
 #
