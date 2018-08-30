@@ -3,7 +3,7 @@
 """
 Created on Wed Aug 22 15:38:49 2018
 
-Version sur branche 'temp'
+Version sur 'Master'
 @author: carlos
 """
     
@@ -31,6 +31,10 @@ from ParamCas import *
 #import ParamCas
 
 obs_data_path = '../Datas'
+
+# flag pour bloquer ou pas apres chaque figure creee (apres un plt.show()
+blockshow = False
+#blockshow = True
 
 #======================================================================
 # Pour initialiser le generateur de nombres aleatoires utilise 
@@ -142,6 +146,8 @@ if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
         ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     del localcmap
+    #
+    plt.show(block=blockshow)
 #%%
 if 0 :
     if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
@@ -171,6 +177,8 @@ if 0 :
             # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
             # eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT)
+        #
+        plt.show(block=blockshow)
 #
 if STOP_BEFORE_CT :
     plt.show(); sys.exit(0);
@@ -295,6 +303,8 @@ if Visu_CTStuff : #==>> la U_matrix
     a=sMapO.view_U_matrix(fignum=fignum, distance2=2, row_normalized='No', show_data='Yes', \
                       contooor='Yes', blob='No', save='No', save_dir='');
     plt.suptitle("Obs, The U-MATRIX", fontsize=16,y=1.0);
+    #
+    plt.show(block=blockshow)
 #
 if Visu_CTStuff : #==>> La carte
     fig = plt.figure(figsize=(8,8));
@@ -308,6 +318,8 @@ if Visu_CTStuff : #==>> La carte
                 nolabels=True,
                 );
     plt.suptitle("Obs, Les Composantes de la carte", fontsize=16);
+    #
+    plt.show(block=blockshow)
 #
 # Other stuffs ______________________________________
 # C.T. Dendrogram _________________________________________________________
@@ -328,6 +340,8 @@ if Visu_Dendro :
                           figsize=figsize,
                           wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right
                           )
+    #
+    plt.show(block=blockshow)
 #
 # Transcodage des indices des classes
 if TRANSCOCLASSE is not '' :
@@ -344,7 +358,6 @@ Nobsc = np.zeros(nb_class)
 for c in np.arange(nb_class)+1 :
     iobsc = np.where(classe_Dobs==c)[0]; # Indices des classes c des obs
     Nobsc[c-1] = len(iobsc);
-
 #
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # Figure 1 pour Article 
@@ -377,6 +390,8 @@ if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
             dpi = FIGDPI
         figfile += "ObsGeo{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
         ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+    #
+    plt.show(block=blockshow)
 #
 if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
     stitre = "Observations, Monthly Mean by Class (method: {:s})".format(method_cah)
@@ -395,6 +410,8 @@ if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
             dpi = FIGDPI
         figfile += "MeanByClass_{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
         ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+    #
+    plt.show(block=blockshow)
 #
 if Visu_CTStuff : # Visu des profils des référents de la carte
     if SIZE_REDUCTION == 'All' :
@@ -408,12 +425,13 @@ if Visu_CTStuff : # Visu des profils des référents de la carte
                            figsize=figsize,
                            wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
                            )
-    plt.show(block=blockshow)
     if SAVEFIG : # sauvegarde de la figure
         figfile = "Fig_"
         dpi = FIGDPI
         figfile += "Fig_SOM-Map-Profils_{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
         ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT)
+    #
+    plt.show(block=blockshow)
 #
 if STOP_BEFORE_MDLSTUFF :
     plt.show(); sys.exit(0)
