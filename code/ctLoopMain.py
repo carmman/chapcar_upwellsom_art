@@ -434,6 +434,11 @@ if Visu_CTStuff : # Visu des profils des référents de la carte
                            wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
                            )
     plt.show(block=blockshow)
+    if SAVEFIG : # sauvegarde de la figure
+        figfile = "Fig_"
+        dpi = FIGDPI
+        figfile += "Fig_SOM-Map-Profils_{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
+        ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT)
 #
 if STOP_BEFORE_MDLSTUFF :
     plt.show(); sys.exit(0)
