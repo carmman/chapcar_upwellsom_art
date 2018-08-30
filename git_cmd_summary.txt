@@ -134,10 +134,17 @@ git add ctLoopMain.py ctLoopTools.py models_def_tb.py
 git commit -am "Traveaux de rendre fontionnel toutes les actions dans ctLoopAnyS.py. Version preliminaire non fonctionnelle"
 
 # commit
-git commit -am "Traveaux de rendre fontionnel toutes les actions dans ctLoopAnyS.py. Ok jusqu'au traitement des Modeles - Il manque l'AFC"
+git commit -am "Traveaux de rendre fontionnel toutes les actions dans ctLoopAnyS.py. Ok jusqu'au traitement des Modeles - Il manque l'commit"
 
 # ...
 
 
-# commit
+# AFC
 git commit -am "Travaux pour rendre fontionnel les actions dans ctLoopAnyS.py. AFC Ok"
+
+
+# Corriger le commentaire d'un commmit (pas exactement une correction
+# mais un nouvel commit pointant sur le precedent):
+git revert HEAD
+# Un editeur est lance pour permettre la correction
+# Un nouveau commit sera créé, ce commit contiendra les modifications inverses de HEAD.
