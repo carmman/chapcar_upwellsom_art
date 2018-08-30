@@ -624,15 +624,11 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
         fig = plt.figure(figsize=figsize);
         fignum = fig.number # numero de figure en cours ...
     #
-    if visu==1 or visu==2 or visu==3 :
-        fig, axarr = plt.subplots(nrows=nbl, ncols=nbc, num=fignum, facecolor='w')
-    #
     if visu==2 or visu==3 : # Les données
         inode =  0;
         for l in np.arange(nbl) :     # en supposant les référents
             for c in np.arange(nbc) : # numerotés de gauche à droite
-                #ax = plt.subplot(nbl,nbc,inode+1);
-                ax = axarr[l,c]
+                ax = plt.subplot(nbl,nbc,inode+1);
                 idx = np.where(bmus==inode);
                 if np.size(idx) > 0 :
                     plt.plot(Data[idx[0],:].T,'-b',linewidth=2);
@@ -646,8 +642,7 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
         inode =  0;
         for l in np.arange(nbl) :     # en supposant qu'ils sont
             for c in np.arange(nbc) : # numerotés de gauche à droite
-                #ax = plt.subplot(nbl,nbc,inode+1);
-                ax = axarr[l,c]
+                ax = plt.subplot(nbl,nbc,inode+1);
                 axx = plt.gca();
                 #
                 plt.plot(sm.codebook[inode,:],'-',color=pltcolor,linewidth=0.5);
