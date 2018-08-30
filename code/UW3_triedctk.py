@@ -617,41 +617,56 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
     if visu<1 or visu>3 :
        print("showprofils : bad visu value -> turn to 1 (referents only)");
        visu=1;
-    #        
+    #
     if fignum is not None :
         fig = plt.figure(fignum);
     else:
         fig = plt.figure(figsize=figsize);
         fignum = fig.number # numero de figure en cours ...
     #
+    # Creationdes SUBPLOTS ....
+    if visu==1 or visu==2 or visu==3 :
+        # Utilisation de 'subplots' en une fois a la place de 'subplot' a chaque iteration.
+        # Cela evite de recreer un axe (ax) sur la place d'un ancien lors de la deuxieme boucle
+        # et a eviter le warning :
+        #   /Applications/Anaconda/anaconda3-5.2.0/envs/python3/lib/python3.6/site-packages/
+        #    matplotlib/cbook/deprecation.py:107: MatplotlibDeprecationWarning: Adding an axes
+        #       using the same arguments as a previous axes currently reuses the earlier instance.
+        #       In a future version, a new instance will always be created and returned.  Meanwhile,
+        #       this warning can be suppressed, and the future behavior ensured, by passing a unique
+        #       label to each axes instance.
+        fig, axarr = plt.subplots(nrows=nbl, ncols=nbc, num=fignum, facecolor='w')
+    #
     if visu==2 or visu==3 : # Les données
         inode =  0;
         for l in np.arange(nbl) :     # en supposant les référents
             for c in np.arange(nbc) : # numerotés de gauche à droite
-                ax = plt.subplot(nbl,nbc,inode+1);
+                #ax = plt.subplot(nbl,nbc,inode+1); # NON, utiliser subplots (a faire avant la boucle. Voir ci-dessus)
+                ax = axarr[l,c]
                 idx = np.where(bmus==inode);
                 if np.size(idx) > 0 :
-                    plt.plot(Data[idx[0],:].T,'-b',linewidth=2);
+                    ax.plot(Data[idx[0],:].T,'-b',linewidth=2);
                 #
                 inode +=1;
                 # To have Neurone indice number (if required)
                 if showcellid :
-                    plt.title("Cell N° %d" %(inode),fontsize=sztext); 
+                    ax.title("Cell N° %d" %(inode),fontsize=sztext); 
     #
     if visu==1 or visu==3 : # Les référents   
         inode =  0;
         for l in np.arange(nbl) :     # en supposant qu'ils sont
             for c in np.arange(nbc) : # numerotés de gauche à droite
-                ax = plt.subplot(nbl,nbc,inode+1);
-                axx = plt.gca();
+                #ax = plt.subplot(nbl,nbc,inode+1);
+                ax = axarr[l,c]
+                #axx = ax.gca();
                 #
-                plt.plot(sm.codebook[inode,:],'-',color=pltcolor,linewidth=0.5);
-                plt.plot(sm.codebook[inode,:],marker=marker,markersize=markrsz,color=pltcolor);
+                ax.plot(sm.codebook[inode,:],'-',color=pltcolor,linewidth=0.5);
+                ax.plot(sm.codebook[inode,:],marker=marker,markersize=markrsz,color=pltcolor);
                 #
                 if scale==1 :
-                    plt.axis("tight");
+                    ax.axis("tight");
                 elif scale==2 :
-                    plt.axis([0,sm.dim-1,minX,maxX]);
+                    ax.axis([0,sm.dim-1,minX,maxX]);
                 if 1 : # Couleur de fond qu'il faut faire correspondre à la celle de la classe
                     from matplotlib import __version__ as plt_version
                     if plt_version < '2.0.' :
@@ -664,7 +679,7 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
                     ax.tick_params(labelbottom=False)
                 elif ticklabels is not None :
                     if xticks is None :
-                        xticks = plt.xticks()[0];
+                        xticks = ax.xticks()[0];
                     if verbose:
                         print(xticks)
                         print(ticklabels)
