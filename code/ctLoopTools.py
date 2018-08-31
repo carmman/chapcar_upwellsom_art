@@ -562,6 +562,48 @@ def clearall():
         print(var)
         del globals()[var]
 #
+def build_pcmap(nb_class,ccmap=None,factor=0.95,N=320) :
+    if ccmap is None :
+        ccmap = cm.jet
+    pcmap = ccmap(np.arange(0,N,round(N/nb_class))); #ok?
+    pcmap *= factor # fonce les legerement tous les couleurs ...
+    # Cas particuliers:
+    # si ccmap = jet et si nb_class = 4 ALORS
+    #     fonce la couleur de la troisieme classe car elle est trop claire
+    if ccmap.name == 'jet' and nb_class == 4:
+        pcmap[2] *= 0.9
+    #
+    return pcmap
+#
+def build_fcode_and_short(climato=None, 
+                          INDSC=False, TRENDLESS=False, WITHANO=False,
+                          UISST=False, NORMMAX=False, CENTRED=False,
+                          ) :
+    fcodage="";
+    fshortcode="";
+    if climato=="GRAD" :
+        fcodage = fcodage+"GRAD";
+        fshortcode = fshortcode+"Grad"
+    if INDSC :
+        fcodage = fcodage+"INDSC";
+        fshortcode = fshortcode+"Indsc"
+    if TRENDLESS :
+        fcodage = fcodage+"TRENDLESS";
+        fshortcode = fshortcode+"Tless"
+    if WITHANO :
+        fcodage = fcodage+"ANOMALY";
+        fshortcode = fshortcode+"Ano"
+    if UISST :
+        fcodage = fcodage+"UI";
+        fshortcode = fshortcode+"Ui"
+    if NORMMAX :
+        fcodage = fcodage+"NORMMAX";
+        fshortcode = fshortcode+"Nmax"
+    if CENTRED :
+        fcodage = fcodage+"CENTRED";
+        fshortcode = fshortcode+"Ctred"
+    return fcodage,fshortcode
+#
 # #####################################################################
 # INITIALISATION
 # Des trucs qui pourront servir
@@ -895,11 +937,20 @@ def do_ct_map_process(Dobs,name=None,mapsize=None,tseed=0,norm_method=None,
     #
     return sMapO,eqO,etO
 #
-def plot_ct_dendro(data, datalinkg, nclass, method='ward', metric='euclidean', criterion='maxclust',
-                   title="dendrogram",
+def do_plot_dendrogram(data,nclass=None,datalinkg=None, indnames=None,
+                   method='ward', metric='euclidean',
+                   truncate_mode=None,
+                   title="dendrogram",titlefnsize=14, ytitle=0.98,
+                   xlabel=None, ylabel=None, labelfnsize=10,
+                   labelrotation=0,labelsize=10,
+                   dendro_linewidth=2,
                    figsize=(14,6),
                    wspace=0.0, hspace=0.2, top=0.92, bottom=0.12, left=0.05, right=0.99,
-                   ):
+                   ) :
+    if datalinkg is None :
+        # Performs hierarchical/agglomerative clustering on the condensed distance matrix data
+        datalinkg = linkage(sMapO.codebook, method=method, metric=metric);
+    #
     Ncell = data.shape[0]
     minref = np.min(data);
     maxref = np.max(data);
@@ -908,30 +959,80 @@ def plot_ct_dendro(data, datalinkg, nclass, method='ward', metric='euclidean', c
     fignum = fig.number # numero de figure en cours ...
     plt.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
     #
-    # calcule la limite de decoupage selon le nombre de classes ou clusters
-    max_d = np.sum(datalinkg[[-nclass+1,-nclass],2])/2
-    color_threshold = max_d
-    #
-    R_ = dendrogram(datalinkg,p=Ncell,truncate_mode=None,color_threshold=color_threshold,
-                    orientation='top',leaf_font_size=6) #,labels=lignames
-    #               leaf_rotation=45);
-    #
-    plt.axhline(y=max_d, c='k')
+    if nclass is None :
+        # dendrogramme sans controle de color_threshold (on laisse par defaut ...)
+        R_ = dendrogram(datalinkg,p=Ncell,truncate_mode=truncate_mode,
+                        orientation='top',leaf_font_size=6) #,labels=lignames
+        #               leaf_rotation=labelrotation);
+    else :
+        # calcule la limite de decoupage selon le nombre de classes ou clusters
+        max_d = np.sum(datalinkg[[-nclass+1,-nclass],2])/2
+        color_threshold = max_d
+        #
+        with plt.rc_context({'lines.linewidth': dendro_linewidth}): # Temporarily override the default line width
+            R_ = dendrogram(datalinkg,p=Ncell,truncate_mode=truncate_mode,
+                            color_threshold=color_threshold,
+                            orientation='top',leaf_font_size=6,labels=indnames)
+            #               leaf_rotation=labelrotation);
+        #
+        plt.axhline(y=max_d, c='k')
     #L_ = np.array(lignames)
     #plt.xticks((np.arange(len(TmdlnameArr)+1)*10)+7,L_[R_['leaves']], fontsize=8,
-    #       rotation=45,horizontalalignment='right', verticalalignment='baseline')
+    #       rotation=labelrotation,horizontalalignment='right', verticalalignment='baseline')
     #xtickslocs, xtickslabels = plt.xticks()
     #plt.xticks(xtickslocs, xtickslabels)
+        #R_ = dendrogram(Z_,nmod,'lastp');
+        #L_ = np.array(NoCAHindnames) # when AFCWITHOBS, "Obs" à déjà été rajouté à la fin
+        #plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
+        #            rotation=45,horizontalalignment='right', verticalalignment='baseline')
+        
     plt.tick_params(axis='x',reset=True)
-    plt.tick_params(axis='x',which='major',direction='out',length=3,pad=1,top=False,   #otation_mode='anchor',
-                    labelrotation=-80,labelsize=8)
+    #plt.tick_params(axis='x',which='major',direction='out',length=3,pad=1,top=False,   #otation_mode='anchor',
+    #                labelrotation=labelrotation,labelsize=labelsize)
+    plt.tick_params(axis='x',which='major',direction='inout',length=7,width=dendro_linewidth,
+                    pad=5,top=False,bottom=True,   #rotation_mode='anchor',
+                    labelrotation=labelrotation,labelsize=labelsize)
+    #
+    if indnames is not None :
+        L_ = np.array(indnames) # when AFCWITHOBS, "Obs" à déjà été rajouté à la fin
+        plt.xticks((np.arange(Ncell)*10)+5,L_[R_['leaves']],
+                   horizontalalignment='right', verticalalignment='baseline')
+        #plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
+        #            rotation=45,horizontalalignment='right', verticalalignment='baseline')
+    #
     plt.grid(axis='y')
-    plt.xlabel('codebook number', labelpad=15, fontsize=12)
-    plt.ylabel("inter class distance ({})".format(method), fontsize=12)
+    if xlabel is not None :
+        plt.xlabel(xlabel, labelpad=15, fontsize=labelfnsize)
+    if ylabel is not None :
+        plt.ylabel(ylabel, fontsize=labelfnsize)
     lax=plt.axis(); daxy=(lax[3]-lax[2])/400
     plt.axis([lax[0],lax[1],lax[2]-daxy,lax[3]])
-    plt.title("{:s} - ({:s}), nclass={:d}".format(title,method,nclass));
-
+    plt.title(title,fontsize=titlefnsize,y=ytitle);
+    #
+    return R_
+#
+def plot_ct_dendro(sMapO, nb_class, datalinkg=None, method='ward', metric='euclidean',
+                   truncate_mode=None,
+                   title="SOM MAP dendrogram", titlefnsize=14, ytitle=0.98, 
+                   xlabel="elements", ylabel="inter class distance", labelfnsize=10,
+                   labelrotation=0,labelsize=10,
+                   figsize=(14,6),
+                   wspace=0.0, hspace=0.2, top=0.92, bottom=0.12, left=0.05, right=0.99,
+                   ):
+    ncodbk = sMapO.codebook.shape[0]
+    do_plot_dendrogram(sMapO.codebook, nclass=nb_class, datalinkg=datalinkg,
+                       indnames=np.arange(ncodbk)+1,
+                       method=method, metric=metric,
+                       truncate_mode=truncate_mode,
+                       title=title, ytitle=ytitle, titlefnsize=titlefnsize, 
+                       xlabel=xlabel, ylabel=ylabel, labelfnsize=labelfnsize,
+                       labelrotation=labelrotation, labelsize=labelsize,
+                       figsize=figsize,
+                       wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
+                       )
+    #
+    return
+#
 #%%
 def plot_fig01_article(xc_ogeo,lon,lat,nb_class,classe_Dobs,title="observations",
                        cmap=None,
@@ -1712,7 +1813,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
             if pgqm_ >= MaxPerfglob_Qm :
                 MaxPerfglob_Qm = pgqm_; # Utilisé pour savoir les quels premiers modèles
                 IMaxPerfglob_Qm = imodel+1;   # prendre dans la stratégie du "meilleur cumul moyen"
-                print(" New best cumul perf for {:d} models : {:.0f}% ...".format(imodel+1,pgqm_))
+                print(" New best cumul perf for {:d} models : {:.0f}% ...\n ".format(imodel+1,pgqm_),end="")
             else :
                 print(".",end="")
          #
@@ -1898,6 +1999,7 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
       Nmdlok, Lobs, Cobs, NDmdl, Nobsc,
       NBCOORDAFC4CAH, nb_clust,
       isnumobs, isnanobs, nb_class, class_ref, classe_Dobs,
+      afc_method='ward', afc_metric='euclidean',
       ccmap='jet', sztitle=10, ysstitre=0.98,
       AFC_Visu_Classif_Mdl_Clust  = [], AFC_Visu_Clust_Mdl_Moy_4CT  = [],
       TypePerf = ["MeanClassAccuracy"],
@@ -1991,21 +2093,19 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
             nticks = 5; # 4
         elif SIZE_REDUCTION == 'sel' :
             nticks = 2; # 4
-        metho_ = 'ward'; #'complete' 'single' 'average' 'ward'; #<><><><><><<><><>
-        dist_  = 'euclidean';
         coord2take = np.arange(NBCOORDAFC4CAH); # Coordonnées de l'AFC àprendre pour la CAH
         if AFCWITHOBS :
             if CAHWITHOBS : # Garder les Obs pour la CAH
-                Z_ = linkage(F1U[:,coord2take], metho_, dist_);
+                Z_ = linkage(F1U[:,coord2take], afc_method, afc_metric);
             else : # Ne pas prendre les Obs dans la CAH (ne prendre que les modèles)
-                Z_ = linkage(F1U[0:Nmdlok,coord2take], metho_, dist_);
+                Z_ = linkage(F1U[0:Nmdlok,coord2take], afc_method, afc_metric);
             #
         else : # Cas AFC sans les Obs
             if CAHWITHOBS : # Alors rajouter les Obs en Supplémentaire
                 F1U_ = np.concatenate((F1U, F1sU));
-                Z_   = linkage(F1U_[:,coord2take], metho_, dist_);
+                Z_   = linkage(F1U_[:,coord2take], afc_method, afc_metric);
             else : # Ne pas rajouter les obs pour la CAH
-                Z_   = linkage(F1U[:,coord2take], metho_, dist_);
+                Z_   = linkage(F1U[:,coord2take], afc_method, afc_metric);
         #
         ## dendrogramme --------------------------------------------------------
         #fig_dendro = Null
@@ -2020,7 +2120,7 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
         #    plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
         #                rotation=45,horizontalalignment='right', verticalalignment='baseline')
         #    plt.title("AFC: Coord(%s), dendro. Métho=%s, dist=%s, nb_clust=%d"
-        #              %((coord2take+1).astype(str),metho_,dist_,nb_clust))
+        #              %((coord2take+1).astype(str),afc_method,afc_metric,nb_clust))
         # ---------------------------------------------------------------------
         #
         if nb_clust < 0 :
@@ -2146,7 +2246,7 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
             plt.title("Nombre de modèles dans le meilleur cluster de la découpe");
             plt.suptitle("best cluster depending nb cluster");
         #
-        del metho_, dist_, Z_
+        del Z_
         if MultiLevel == True :
             plt.show(); sys.exit(0)
     # reprend la figure de performanes par cluster
@@ -2331,42 +2431,56 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlo
 #        plt.title("%s SST (%s). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
 #                 %(fcodage,DATAMDL,method_cah,nb_class,NIJ));
 #       
-def do_plot_afc_dendro(F1U,F1sU,nb_clust,CAHindnames,NoCAHindnames,
-                       NBCOORDAFC4CAH,Nmdlok,
+def plot_afc_dendro(F1U,F1sU,nb_clust,NBCOORDAFC4CAH,Nmdlok,
+                       indnames=None,
                        AFCWITHOBS = True,CAHWITHOBS = True,
+                       afc_method='ward', afc_metric='euclidean',
+                       truncate_mode=None,
+                       titlefnsize=14, ytitle=0.98, 
+                       xlabel="elements", ylabel="inter cluster distance",
+                       labelfnsize=10, labelrotation=0, labelsize=10,
                        figsize=(14,6),
                        wspace=0.0, hspace=0.2, top=0.92, bottom=0.12, left=0.05, right=0.99,
                        ):
-    Nleaves_ = len(CAHindnames);
-    metho_ = 'ward'; #'complete' 'single' 'average' 'ward'; #<><><><><><<><><>
-    dist_  = 'euclidean';
+    #Nleaves_ = len(CAHindnames);
     coord2take = np.arange(NBCOORDAFC4CAH); # Coordonnées de l'AFC àprendre pour la CAH
     if AFCWITHOBS :
         if CAHWITHOBS : # Garder les Obs pour la CAH
-            Z_ = linkage(F1U[:,coord2take], metho_, dist_);
+            data = F1U[:,coord2take]
         else : # Ne pas prendre les Obs dans la CAH (ne prendre que les modèles)
-            Z_ = linkage(F1U[0:Nmdlok,coord2take], metho_, dist_);
-        #
+            data = F1U[0:Nmdlok,coord2take]
     else : # Cas AFC sans les Obs
         if CAHWITHOBS : # Alors rajouter les Obs en Supplémentaire
-            F1U_ = np.concatenate((F1U, F1sU));
-            Z_   = linkage(F1U_[:,coord2take], metho_, dist_);
+            data = np.concatenate((F1U, F1sU))[:,coord2take];
         else : # Ne pas rajouter les obs pour la CAH
-            Z_   = linkage(F1U[:,coord2take], metho_, dist_);
+            data = F1U[:,coord2take]
+    #
+    Z_ = linkage(data, afc_method, afc_metric);
     #
     fig = plt.figure(figsize=figsize);
     fignum = fig.number # numero de figure en cours ...
     plt.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
     #
     if CAHWITHOBS :
-        R_ = dendrogram(Z_,Nmdlok+1,'lastp');
+        nmod = Nmdlok+1
     else :
-        R_ = dendrogram(Z_,Nmdlok,'lastp');           
-    L_ = np.array(NoCAHindnames) # when AFCWITHOBS, "Obs" à déjà été rajouté à la fin
-    plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
-                rotation=45,horizontalalignment='right', verticalalignment='baseline')
-    plt.title("AFC: Coord(%s), dendro. Métho=%s, dist=%s, nb_clust=%d"
-              %((coord2take+1).astype(str),metho_,dist_,nb_clust))
+        nmod = Nmdlok+1
+    #R_ = dendrogram(Z_,nmod,'lastp');
+    #L_ = np.array(NoCAHindnames) # when AFCWITHOBS, "Obs" à déjà été rajouté à la fin
+    #plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
+    #            rotation=45,horizontalalignment='right', verticalalignment='baseline')
+    title = "AFC Dendrogram : Coord(%s), dendro. Métho=%s, dist=%s, nb_clust=%d"%((coord2take+1).astype(str),
+                       afc_method,afc_metric,nb_clust)
+    #
+    do_plot_dendrogram(data, nclass=nb_clust, datalinkg=Z_, indnames=indnames,
+                       method=afc_method, metric=afc_metric,
+                       truncate_mode='lastp',
+                       title=title, ytitle=ytitle, titlefnsize=titlefnsize, 
+                       xlabel=xlabel, ylabel=ylabel, labelfnsize=labelfnsize,
+                       labelrotation=labelrotation, labelsize=labelsize,
+                       figsize=figsize,
+                       wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
+                       )
     #
     return
 #

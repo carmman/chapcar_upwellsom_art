@@ -95,7 +95,7 @@ Tnmodel = np.array(Tnmodel)
 #   # à utiliser pour faire la CAH (limité à nb_class-1).
 #   # AFC.NBCOORDAFC4CAH; par exemple AFC.6
 #
-if 1 : # conditions Code Charles: GRANDE ZONE
+if 0 : # conditions Code Charles: GRANDE ZONE
     SIZE_REDUCTION = 'All';
     # A - Grande zone de l’upwelling (25x36) :
     #    Longitude : 45W à 9W (-44.5 à -9.5)
@@ -116,7 +116,7 @@ if 1 : # conditions Code Charles: GRANDE ZONE
     #NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
     #NBCOORDAFC4CAH = nb_class; # n premières coordonnées de l'afc à
                     # utiliser pour faire la CAH (limité à nb_class-1).
-elif 1 : # conditions Code Charles: PETITE ZONE
+elif 0 : # conditions Code Charles: PETITE ZONE
     SIZE_REDUCTION = 'sel';
     # B - Sous-zone ciblant l’upwelling (13x12) :
     #    LON:  28W à 16W (-27.5 to -16.5)
@@ -166,8 +166,6 @@ else : # Autres cas, valeurs par defaut
 # -----------------------------------------------------------------------------
 
 #______________________________
-# For the Carte Topo (see also ctObsMdl)
-epoch1,radini1,radfin1,epoch2,radini2,radfin2 = Parm_app
 #______________________________
 # Complémentation des nan pour les modèles
 MDLCOMPLETION = True; # True=>Cas1
@@ -230,15 +228,15 @@ MAPSDIR    = 'maps'
 # -----------------------------------------------------------------------------
 mapfileext = ".pkl" # exten,sion du fichier des MAP
 # -----------------------------------------------------------------------------
-if SIZE_REDUCTION == 'All' :
-    fprefixe  = 'Zall_'
-elif SIZE_REDUCTION == 'sel' :
-    fprefixe  = 'Zsel_'
-elif SIZE_REDUCTION == 'RED' :
-    fprefixe  = 'Zred_'
-else :
-    print(" *** unknown SIZE_REDUCTION <{}> ***".format(SIZE_REDUCTION))
-    raise
+#if SIZE_REDUCTION == 'All' :
+#    fprefixe  = 'Zall_'
+#elif SIZE_REDUCTION == 'sel' :
+#    fprefixe  = 'Zsel_'
+#elif SIZE_REDUCTION == 'RED' :
+#    fprefixe  = 'Zred_'
+#else :
+#    print(" *** unknown SIZE_REDUCTION <{}> ***".format(SIZE_REDUCTION))
+#    raise
 #______________________________
 #if DATARUN=="rmean" : caduc ; # Les moyennes des runs des modèles que j'avais calculées
 #    Nda  =30; #!!! Prendre que les Nda dernières années (All Mdls Compatibles)
@@ -278,49 +276,29 @@ climato   = None;   # None  : climato "normale" : moyenne mensuelle par pixel et
 UISST     = False;  # "after", "before" (Som(Diff) = Diff(Som))
 NORMMAX   = False;  # Dobs =  Dobs / Max(Dobs)
 CENTRED   = False ;
-fcodage=""; fshortcode="";
-if climato=="GRAD" :
-    fcodage=fcodage+"GRAD";        fshortcode=fshortcode+"Grad"
-if INDSC :
-    fcodage=fcodage+"INDSC";       fshortcode=fshortcode+"Indsc"
-if TRENDLESS :
-    fcodage=fcodage+"TRENDLESS";   fshortcode=fshortcode+"Tless"
-if WITHANO :
-    fcodage=fcodage+"ANOMALY";    fshortcode=fshortcode+"Ano"
-#if CENTREE : fcodage=fcodage+"CENTREE(";
-#-> Climatologie (Moyenne mensuelle par pixel)
-if UISST :
-    fcodage=fcodage+"UI";          fshortcode=fshortcode+"Ui"
-if NORMMAX :
-    fcodage=fcodage+"NORMMAX";     fshortcode=fshortcode+"Nmax"
-if CENTRED :
-    fcodage=fcodage+"CENTRED";     fshortcode=fshortcode+"Ctred"
-#print(fcodage); sys.exit(0);
 #______________________________
 # for CAH for classif with CT (see ctObsMdl for more)
 method_cah = 'ward'; # 'average', 'ward', 'complete','weighted'    #KKKKKKK
 dist_cah   = 'euclidean'; #
 #nb_class ... DECLAREE CI-DESSUS  # Nombre de classes retenu #KKKKKKK   ##@@
+#______________________________
+# for AFC ... (see ctObsMdl for more)
+method_afc = 'ward'; # 'average', 'ward', 'complete','weighted'    #KKKKKKK
+dist_afc   = 'euclidean'; #
 # -------------------------
 # map de couleur pour les classes
 ccmap      = cm.jet;       # Accent, Set1, Set1_r, gist_ncar; jet, ...
-# pour avoir des couleurs à peu près equivalente pour les plots
-#pcmap     = ccmap(np.arange(1,256,round(256/nb_class)));ko 512ko, 384ko
-pcmap      = ccmap(np.arange(0,320,round(320/nb_class))); #ok?
-pcmap *= 0.95 # fonce les legerement tous les couleurs ...
-if ccmap.name == 'jet' and nb_class == 4:
-    pcmap[2] *= 0.9 # fonce la couleur de la classe qui est trop claire(si ccmap = jet)
 # -------------------------
 # map de couleur par defaut
 dcmap      = cm.gist_ncar; 
 # -------------------------
 # map de couleur pour donnes negative/positives
+eqcmap = cm.RdYlBu
 #eqcmap = cm.coolwarm
 #eqcmap = cm.bwr
 #eqcmap = cm.seismic
 #eqcmap = cm.RdGy
 #eqcmap = cm.RdBu
-eqcmap = cm.RdYlBu
 #eqcmap = cm.RdYlGn
 #eqcmap = cm.Spectral
 #eqcmap = cm.BrBG
@@ -367,12 +345,6 @@ Visu_preACFperf = False;    # performances avant l'AFC: MeanClassAccuracy, Globa
 Visu_AFC_in_one = False;    # plot afc en une seule image
 Visu_afcnu_det  = False;    # Sylvie: plot afc etape par étape
 Visu_Inertie    = False;    # Flag de visualisation de l'Inertie
-#Flag visu classif des modèles des cluster
-AFC_Visu_Classif_Mdl_Clust  = []; # liste des cluster a afficher (à partir de 1)
-#AFC_Visu_Classif_Mdl_Clust = [1,2,3,4,5,6,7]; 
-#Flag visu Modèles Moyen 4CT des cluster
-AFC_Visu_Clust_Mdl_Moy_4CT  = []; # liste des cluster a afficher (à partir de 1)
-#AFC_Visu_Clust_Mdl_Moy_4CT = [1,2,3,4,5,6,7];
 #
 # FLAGS en vue de l'article
 Visu_UpwellArt  = True;     # Flag de visu des figures pour article avec Juliette et Adama
@@ -380,17 +352,14 @@ FIGARTDPI     = 300  # DPI pour les figures bitmap de l'article
 if Visu_UpwellArt :
     OK101 = False; # Pour produire la Moyenne d'un modèle moyen par ...
     OK102 = False; # Pour produire les Ecarts types d'un modèle moyen 
-    #OK101=OK102=OK104=OK105=OK106=OK107=OK108=OK109=True;
 ysstitre        = 0.96   # position vertical des soustitres dans figures de groupe
 same_minmax_ok     = True;  # MIN = -MAX
 mdlnamewnumber_ok  = True; # fait apparaitre le numero de modele dans fogures 10X (104, 105, ...)
 onlymdlumberAFC_ok = True; # identifie les modeles uniquement par leur numero dans la projection AFC
 #
 # POUT TEST:
-OK104=OK105=OK106=OK107=OK108=OK109=True;
+#OK101=OK102=OK104=OK105=OK106=OK107=OK108=OK109=True;
+#OK104=OK105=OK106=OK107=OK108=OK109=True;
 Visu_ObsStuff=Visu_CTStuff=Visu_Dendro=Visu_preACFperf=Visu_AFC_in_one=Visu_afcnu_det=Visu_Inertie=True;
 
-#######################################################################
-TM_label_base = "TM{}x{}_Ep1-{}_Ep2-{}".format(nbl, nbc, epoch1, epoch2)
-case_label_base="Case_{}{}_NIJ{:d}".format(fprefixe,TM_label_base,NIJ)
 #######################################################################
