@@ -1021,14 +1021,14 @@ def do_plot_dendrogram(data,nclass=None,datalinkg=None, indnames=None,
     #
     return R_
 #
-def plot_ct_dendro(sMapO, nb_class, datalinkg=None, method='ward', metric='euclidean',
-                   truncate_mode=None,
-                   title="SOM MAP dendrogram", titlefnsize=14, ytitle=0.98, 
-                   xlabel="elements", ylabel="inter class distance", labelfnsize=10,
-                   labelrotation=0,labelsize=10,
-                   figsize=(14,6),
-                   wspace=0.0, hspace=0.2, top=0.92, bottom=0.12, left=0.05, right=0.99,
-                   ):
+def do_plot_ct_dendrogram(sMapO, nb_class, datalinkg=None, method='ward', metric='euclidean',
+                          truncate_mode=None,
+                          title="SOM MAP dendrogram", titlefnsize=14, ytitle=0.98, 
+                          xlabel="elements", ylabel="inter class distance", labelfnsize=10,
+                          labelrotation=0,labelsize=10,
+                          figsize=(14,6),
+                          wspace=0.0, hspace=0.2, top=0.92, bottom=0.12, left=0.05, right=0.99,
+                          ):
     ncodbk = sMapO.codebook.shape[0]
     do_plot_dendrogram(sMapO.codebook, nclass=nb_class, datalinkg=datalinkg,
                        indnames=np.arange(ncodbk)+1,
@@ -1130,12 +1130,12 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
     #plt.show(); sys.exit(0)
 #
 
-def plot_ct_profils(sMapO,Dobs,class_ref,
-                    varnames=None,
-                    pcmap=None,
-                    figsize=(7.5,12),
-                    wspace=0.01, hspace=0.05, top=0.95, bottom=0.04, left=0.15, right=0.86,
-                    ):
+def do_plot_ct_profils(sMapO,Dobs,class_ref,
+                       varnames=None,
+                       pcmap=None,
+                       figsize=(7.5,12),
+                       wspace=0.01, hspace=0.05, top=0.95, bottom=0.04, left=0.15, right=0.86,
+                       ):
         fig = plt.figure(figsize=figsize)
         fignum = fig.number
         fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
