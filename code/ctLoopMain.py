@@ -301,10 +301,10 @@ def plot_obs4ct(sst_obs,Dobs,lon,lat,isnanobs=None,isnumobs=None,varnames=None,w
     #
     return
 #%%
-def ctloop_topol_map (Dobs,Parm_app=(5,5.,1.,10,1.,0.1),mapsize=[7, 3],tseed=0,
-                     mapfile="Map",mappath=".",
-                     varnames=None,case_label="case",
-                     casetime=None,casetimelabel=None) :
+def ctloop_topol_map_traitement (Dobs,Parm_app=(5,5.,1.,10,1.,0.1),mapsize=[7, 3],tseed=0,
+                                 mapfile="Map",mappath=".",
+                                 varnames=None,case_label="case",
+                                 casetime=None,casetimelabel=None) :
     #
     # Variables declarees dans ParamCas traitees comme globales !
     global SAVEMAP, REWRITEMAP
@@ -1276,7 +1276,7 @@ def main(argv):
     # Carte Topologique
     mapfile = "Map_{:s}{:s}Clim-{:d}-{:d}_{:s}_ts-{}{}".format(fprefixe,fshortcode,
                andeb,anfin,data_label_base,tseed,mapfileext)
-    sMapO,q_err,t_err = ctloop_topol_map (Dobs, Parm_app=Parm_app, mapsize=[nbl, nbc], tseed=tseed,
+    sMapO,q_err,t_err = ctloop_topol_map_traitement (Dobs, Parm_app=Parm_app, mapsize=[nbl, nbc], tseed=tseed,
                               mapfile=mapfile,
                               mappath=case_maps_dir, varnames=varnames, case_label=case_label,
                               casetime=casetime,casetimelabel=casetimelabel)
