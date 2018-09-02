@@ -31,10 +31,25 @@ from ParamCas import *
 
 #%%
 
-def ctloop_main(case='All',verbose=False):
+def ctloop_main(case='None',verbose=False):
     print(case)
     print(verbose)
     
+    if case is None or not isinstance(case, str) or case.upper() not in ('ALL', 'SEL') :
+        if case is None or not isinstance(case, str) :
+            ctloop.printwarning(["","INITIALISATION ERROR".center(75),""],
+                    "   Undefined or invalid parameter value {}={}".format('case',case).center(75),
+                    "You should give one in {} set.".format(('All','sel')).center(75))
+        elif case.upper() not in ('ALL', 'SEL')  :
+            ctloop.printwarning(["","INITIALISATION ERROR".center(75),""],
+                    "   Undefined or invalid parameter value {}='{}''".format('case',case).center(75),
+                    "You should give one in {} set.".format(('All','sel')).center(75))
+        else :
+            ctloop.printwarning(["","INITIALISATION ERROR".center(75),""],
+                    "   bizarre, not expected error !  Testing parameter value {}={}".format('case',case).center(75),
+                    "You should give one in {} set.".format(('All','sel')).center(75))
+        raise
+
     #import ParamCas
     if case.upper() == 'ALL' :
         SIZE_REDUCTION = 'All';
@@ -73,37 +88,11 @@ def ctloop_main(case='All',verbose=False):
         NIJ            = 2;
         nb_clust       = 5; # Nombre de cluster
         NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
-    else : # Autres cas, valeurs par defaut
-        #SIZE_REDUCTION = 'All';
-        SIZE_REDUCTION = 'sel'; # selectionne une zone reduite  
-        #SIZE_REDUCTION = 'RED'; # Ne pas utiliser
-        # -------------------------------------------------------------------------
-        # Définition d'une la sous-zone :
-        # Once upon a time
-        #frlat=20.5; tolat=11.5; frlon=-20.5; tolon=-11.5   #(once upon a time)
-        #LON 16W a 28W  (donc -28 a -16) LAT 10N a 23N
-        #frlat=23.5; tolat=10.5; frlon=-28.5; tolon=-15.5;  #(¤:13x13)
-        frlat=22.5; tolat= 9.5; frlon=-27.5; tolon=-15.5;   #(§:13x12)
-        # J'essaye d'équilibrer les classes
-        #frlat=22.5; tolat=10.5; frlon=-24.5; tolon=-15.5   #(a)
-        #frlat=21.5; tolat=10.5; frlon=-23.5; tolon=-15.5   #(b)
-        # -------------------------------------------------------------------------
-        #nbl      = 6;  nbc =  6;  # Taille de la carte
-        #nbl      = 30;  nbc =  4;  # Taille de la carte
-        nbl       = 36;  nbc =  6;  # Taille de la carte
-        #nbl      = 52;  nbc =  8;  # Taille de la carte
-        # -------------------------------------------------------------------------
-        #Parm_app = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
-        Parm_app = ( 50, 5., 1.,  100, 1., 0.1); # Température ini, fin, nb_it
-        #Parm_app = ( 500, 5., 1.,  1000, 1., 0.1); # Température ini, fin, nb_it
-        #Parm_app = ( 2000, 5., 1.,  5000, 1., 0.1); # Température ini, fin, nb_it
-        # -------------------------------------------------------------------------
-        nb_class   = 7; #6, 7, 8  # Nombre de classes retenu
-        # -------------------------------------------------------------------------
-        NIJ        = 2; # cas de
-        # -------------------------------------------------------------------------
-        nb_clust   = 7; # Nombre de cluster
-        NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
+    else :
+        ctloop.printwarning(["","INITIALISATION ERROR".center(75),""],
+                        "   Invalid parameter value {}='{}''".format('case',case).center(75),
+                        "You should give one in {} set.".format(('All','sel')).center(75))
+        raise
     #
     print(("\n{} '{}',\n{} {} to {},\n{} {} to {},\n{} {}x{},\n{} {}\n").format(
                "SIZE_REDUCTION ".ljust(18,'.'),SIZE_REDUCTION,
@@ -114,7 +103,7 @@ def ctloop_main(case='All',verbose=False):
                "nb_class ".ljust(18,'.'),nb_class,
                "nb_clust ".ljust(18,'.'),nb_clust,
                "NIJ ".ljust(18,'.'),NIJ))
-
+    #
     ###########################################################################
     # For the Carte Topo (see also ctObsMdl)
     epoch1,radini1,radfin1,epoch2,radini2,radfin2 = Parm_app
@@ -1214,7 +1203,7 @@ def ctloop_main(case='All',verbose=False):
     return
 #    
 def main(argv):
-    caseconfig = 'All'
+    caseconfig = None
     verbose = False
     try:
         opts, args = getopt.getopt(argv,"hvc:",["case=","verbose"])
@@ -1237,8 +1226,8 @@ def main(argv):
             verbose = True
         elif opt in ("-c", "--case"):
             caseconfig = arg
-    print("Case config is '{:s}'".format(caseconfig))
-    print("Verbose is '{}'".format(verbose))
+    #print("Case config is '{:s}'".format(caseconfig))
+    #print("Verbose is '{}'".format(verbose))
     #
     ctloop_main(case=caseconfig,verbose=verbose)
     #

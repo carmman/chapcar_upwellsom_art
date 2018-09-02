@@ -138,8 +138,9 @@ elif 0 : # conditions Code Charles: PETITE ZONE
     nb_clust       = 5; # Nombre de cluster
     NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
 else : # Autres cas, valeurs par defaut
+    SIZE_REDUCTION = '<nil>'; # selectionne une zone reduite  
     #SIZE_REDUCTION = 'All';
-    SIZE_REDUCTION = 'sel'; # selectionne une zone reduite  
+    #SIZE_REDUCTION = 'sel'; # selectionne une zone reduite  
     #SIZE_REDUCTION = 'RED'; # Ne pas utiliser
     # -------------------------------------------------------------------------
     # Définition d'une la sous-zone :
