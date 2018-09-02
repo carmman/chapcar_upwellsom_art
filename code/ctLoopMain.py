@@ -4,6 +4,12 @@
 Created on Wed Aug 22 15:38:49 2018
 
 Version sur 'Master'
+
+Exemple d'appel depuis python:
+      runfile('/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code/ctLoopMain.py',
+              wdir='/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code',
+              args="--case=sel -v")         
+
 @author: carlos
 """
     
@@ -449,26 +455,34 @@ def ctloop_main(case='All',verbose=False):
         wspace=0.0; hspace=0.2; top=0.92; bottom=0.12; left=0.05; right=0.99;
         stitre = ("SOM Codebook Dendrogram for HAC (map size={:d}x{:d})"+\
                   " - {:d} classes").format(nbl,nbc,nb_class);
+        if sMapO.codebook.shape[0] > 200 :
+            labelsize = 4
+        elif sMapO.codebook.shape[0] > 120 :
+            labelsize = 6
+        elif sMapO.codebook.shape[0] > 80 :
+            labelsize = 8
+        else:
+            labelsize = 10
         ctloop.plot_ct_dendro(sMapO, nb_class,
                               datalinkg=ctZ_,
                               title=stitre, ytitle=1.02,
                               xlabel="codebook number",
                               ylabel="inter class distance ({}/{})".format(method_cah,dist_cah),
                               titlefnsize=18, labelfnsize=10,
-                              labelrotation=75, labelsize=8,
+                              labelrotation=-90, labelsize=labelsize,
                               figsize=figsize,
                               wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right
                               )
         #
         if SAVEFIG : # sauvegarde de la figure
             figfile = "Fig_"
-            dpi = FIGDPI
+            dpi = FIGDPI*2
             figfile += "SOMCodebookDendro-{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
             ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT)
         #
         plt.show(block=blockshow)
         #
-    return
+    #return
     #
     # Transcodage des indices des classes
     if TRANSCOCLASSE is not '' :
@@ -827,6 +841,8 @@ def ctloop_main(case='All',verbose=False):
                               )
         print("--CAHindnames: {}".format(CAHindnames))
         print("--NoCAHindnames: {}".format(NoCAHindnames))
+        print("--Tmdlname: {}".format(Tmdlname))
+        print("--Tmdlnamewnb: {}".format(Tmdlnamewnb))
         if SAVEFIG : # sauvegarde de la figure de performanes par cluster
             plt.figure(figclustmoynum)
             if Visu_UpwellArt :
@@ -835,8 +851,12 @@ def ctloop_main(case='All',verbose=False):
             else :
                 figfile = "Fig_"
                 dpi = FIGDPI
-            figfile += "{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(nb_clust,
+            figfile += "AFCClustersPerf-{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(nb_clust,
                         nb_class,fprefixe,fshortcode,andeb,anfin,Nmodels)
+            #if onlymdlumberAFC_ok :
+            #    figfile += "-OnlyNo"
+            #else :
+            #    figfile += "-NoAndName"
             # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
             # eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -866,10 +886,28 @@ def ctloop_main(case='All',verbose=False):
         #
 
         if Visu_Dendro :
-            figsize=(14,6);
-            wspace=0.0; hspace=0.2; top=0.92; bottom=0.12; left=0.05; right=0.99;
-            indnames = CAHindnames; bottom=0.24;
-            #indnames = NoCAHindnames; bottom=0.12;
+            axeshiftfactor=150 # decalage des axes deu dendrogramme pour poivoir voir les modeles qui sont identiques et qui se melangent a l'axe sinon
+            ispace=0.0; hspace=0.2; top=0.92; bottom=0.12; left=0.05; right=0.99;
+            mdlnameok = False
+            if mdlnameok :
+                prtlbl="MldName"
+                figsize=(14,7);
+                indnames = CAHindnames;
+                bottom=0.27; labelsize=10
+                axeshiftfactor=100 # decalage des axes deu dendrogramme pour poivoir voir les modeles qui sont identiques et qui se melangent a l'axe sinon
+            else:
+                if onlymdlumberAFC_ok :
+                    prtlbl="MdlNo"
+                    figsize=(14,6);
+                    indnames = NoCAHindnames;
+                    bottom=0.13; labelsize=12
+                    axeshiftfactor=150 # decalage des axes deu dendrogramme pour poivoir voir les modeles qui sont identiques et qui se melangent a l'axe sinon
+                else :
+                    prtlbl="MdlNoAndName"
+                    figsize=(14,7);
+                    indnames = NoCAHindnames;
+                    bottom=0.31; labelsize=10
+                    axeshiftfactor=100 # decalage des axes deu dendrogramme pour poivoir voir les modeles qui sont identiques et qui se melangent a l'axe sinon
             ctloop.plot_afc_dendro(F1U,F1sU,nb_clust,NBCOORDAFC4CAH,Nmdlok,
                           indnames=indnames,
                           AFCWITHOBS = AFCWITHOBS,CAHWITHOBS = CAHWITHOBS,
@@ -877,8 +915,9 @@ def ctloop_main(case='All',verbose=False):
                           truncate_mode=None,
                           xlabel="model",
                           ylabel="AFC inter cluster distance ({}/{})".format(method_afc,dist_afc),
-                          titlefnsize=18, ytitle=1.02, labelfnsize=10,
-                          labelrotation=45, labelsize=12,
+                          titlefnsize=18, ytitle=1.02, labelfnsize=12,
+                          labelrotation=-90, labelsize=labelsize,
+                          axeshiftfactor=axeshiftfactor,
                           figsize=figsize,
                           wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right
                           )
@@ -886,7 +925,8 @@ def ctloop_main(case='All',verbose=False):
             if SAVEFIG : # sauvegarde de la figure
                 figfile = "Fig_"
                 dpi = FIGDPI
-                figfile += "AFCDendro-{:d}Clust_{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
+                figfile += "AFCDendro-{:s}-{:d}Clust_{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(prtlbl,
+                        nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
                 ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT)
         #
         plt.show(block=blockshow)
@@ -1174,7 +1214,7 @@ def ctloop_main(case='All',verbose=False):
     return
 #    
 def main(argv):
-    caseconfig = ''
+    caseconfig = 'All'
     verbose = False
     try:
         opts, args = getopt.getopt(argv,"hvc:",["case=","verbose"])

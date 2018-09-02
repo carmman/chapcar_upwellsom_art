@@ -95,6 +95,11 @@ Tnmodel = np.array(Tnmodel)
 #   # à utiliser pour faire la CAH (limité à nb_class-1).
 #   # AFC.NBCOORDAFC4CAH; par exemple AFC.6
 #
+# ATTENTION, ne changez plus ici les conditions pour 'ALL' ou 'sel', ...
+#            utilisez les arguments d'appel au programme: p. exemple=
+#      runfile('/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code/ctLoopMain.py',
+#              wdir='/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code',
+#              args="--case=sel -v")         
 if 0 : # conditions Code Charles: GRANDE ZONE
     SIZE_REDUCTION = 'All';
     # A - Grande zone de l’upwelling (25x36) :
@@ -104,7 +109,7 @@ if 0 : # conditions Code Charles: GRANDE ZONE
     frlon = -44.5;  tolon = -8.5; #(excluded)   #(§:25x35)
     #   * Carte topologique et CAH : 30x4 (5, 5, 1, - 16, 1, 0.1) : TE=0.6824 ; QE=0.153757
     #   Nb_classe = 7
-    nbl            = 30;  nbc =  4;  # Taille de la carte
+    nbl            = 30;  nbc =  4;  # Taille de la carte 30x4=120
     Parm_app       = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
     #Parm_app       = ( 50, 5., 1.,  160, 1., 0.1); # Température ini, fin, nb_it
     nb_class       = 7; #6, 7, 8  # Nombre de classes retenu
@@ -125,7 +130,7 @@ elif 0 : # conditions Code Charles: PETITE ZONE
     frlon = -27.5;  tolon = -15.5; #(excluded)   #(§:13x12)
     #   * Carte topologique et CAH : 17x6 (4, 4, 1, - 16, 1, 0.1) : TE=0.6067 ; QE=0.082044
     #   Nb_classe = 4
-    nbl            = 17;  nbc =  6;  # Taille de la carte
+    nbl            = 17;  nbc =  6;  # Taille de la carte 17x6=102
     Parm_app       = ( 4, 4., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
     nb_class       = 4; #6, 7, 8  # Nombre de classes retenu
     # et CAH for cluster with AFC
@@ -149,7 +154,7 @@ else : # Autres cas, valeurs par defaut
     # -------------------------------------------------------------------------
     #nbl      = 6;  nbc =  6;  # Taille de la carte
     #nbl      = 30;  nbc =  4;  # Taille de la carte
-    nbl       = 36;  nbc =  6;  # Taille de la carte
+    nbl       = 36;  nbc =  6;  # Taille de la carte 36x6=216
     #nbl      = 52;  nbc =  8;  # Taille de la carte
     # -------------------------------------------------------------------------
     #Parm_app = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it

@@ -542,8 +542,8 @@ def do_save_figure(figfile,path=None,ext=None,dpi=100,fig2ok=False,ext2=None):
     #
     figurefilelname = path+os.sep+figfile+ext;
     print("-- {:->88s}".format(''))
-    print("-- saving current figure in path/file: '{}/\n     '{}'".format(
-            os.path.dirname(figurefilelname),os.path.basename(figurefilelname)))
+    print("-- saving current figure in file: '{}/\n     path: '{}'".format(
+            os.path.basename(figurefilelname), os.path.dirname(figurefilelname)))
     # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg))
     plt.savefig(figurefilelname, dpi=dpi)
     # format2, sauvegarde en fotmat vectoriel, PDF ou Postscript Encapsule
@@ -941,15 +941,20 @@ def do_plot_dendrogram(data,nclass=None,datalinkg=None, indnames=None,
                    method='ward', metric='euclidean',
                    truncate_mode=None,
                    title="dendrogram",titlefnsize=14, ytitle=0.98,
-                   xlabel=None, ylabel=None, labelfnsize=10,
+                   xlabel=None, xlabelpad=10, xlabelrotation=0,
+                   ylabel=None, ylabelpad=10, ylabelrotation=90,
+                   labelfnsize=10,
                    labelrotation=0,labelsize=10,
+                   labelha='center', labelva='top',
                    dendro_linewidth=2,
+                   tickpad=2,
+                   axeshiftfactor=150,
                    figsize=(14,6),
                    wspace=0.0, hspace=0.2, top=0.92, bottom=0.12, left=0.05, right=0.99,
                    ) :
     if datalinkg is None :
         # Performs hierarchical/agglomerative clustering on the condensed distance matrix data
-        datalinkg = linkage(sMapO.codebook, method=method, metric=metric);
+        datalinkg = linkage(data, method=method, metric=metric);
     #
     Ncell = data.shape[0]
     minref = np.min(data);
@@ -962,8 +967,8 @@ def do_plot_dendrogram(data,nclass=None,datalinkg=None, indnames=None,
     if nclass is None :
         # dendrogramme sans controle de color_threshold (on laisse par defaut ...)
         R_ = dendrogram(datalinkg,p=Ncell,truncate_mode=truncate_mode,
-                        orientation='top',leaf_font_size=6) #,labels=lignames
-        #               leaf_rotation=labelrotation);
+                        orientation='top',leaf_font_size=6,labels=indnames,
+                        leaf_rotation=labelrotation);
     else :
         # calcule la limite de decoupage selon le nombre de classes ou clusters
         max_d = np.sum(datalinkg[[-nclass+1,-nclass],2])/2
@@ -972,8 +977,8 @@ def do_plot_dendrogram(data,nclass=None,datalinkg=None, indnames=None,
         with plt.rc_context({'lines.linewidth': dendro_linewidth}): # Temporarily override the default line width
             R_ = dendrogram(datalinkg,p=Ncell,truncate_mode=truncate_mode,
                             color_threshold=color_threshold,
-                            orientation='top',leaf_font_size=6,labels=indnames)
-            #               leaf_rotation=labelrotation);
+                            orientation='top',leaf_font_size=6,labels=indnames,
+                            leaf_rotation=labelrotation);
         #
         plt.axhline(y=max_d, c='k')
     #L_ = np.array(lignames)
@@ -985,28 +990,33 @@ def do_plot_dendrogram(data,nclass=None,datalinkg=None, indnames=None,
         #L_ = np.array(NoCAHindnames) # when AFCWITHOBS, "Obs" à déjà été rajouté à la fin
         #plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
         #            rotation=45,horizontalalignment='right', verticalalignment='baseline')
-        
-    plt.tick_params(axis='x',reset=True)
-    #plt.tick_params(axis='x',which='major',direction='out',length=3,pad=1,top=False,   #otation_mode='anchor',
-    #                labelrotation=labelrotation,labelsize=labelsize)
-    plt.tick_params(axis='x',which='major',direction='inout',length=7,width=dendro_linewidth,
-                    pad=5,top=False,bottom=True,   #rotation_mode='anchor',
-                    labelrotation=labelrotation,labelsize=labelsize)
-    #
-    if indnames is not None :
-        L_ = np.array(indnames) # when AFCWITHOBS, "Obs" à déjà été rajouté à la fin
-        plt.xticks((np.arange(Ncell)*10)+5,L_[R_['leaves']],
-                   horizontalalignment='right', verticalalignment='baseline')
-        #plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
-        #            rotation=45,horizontalalignment='right', verticalalignment='baseline')
+    if 1 :
+        plt.tick_params(axis='x',reset=True)
+        #plt.tick_params(axis='x',which='major',direction='out',length=3,pad=1,top=False,   #otation_mode='anchor',
+        #                labelrotation=labelrotation,labelsize=labelsize)
+        plt.tick_params(axis='x',which='major',direction='inout',length=7,width=dendro_linewidth,
+                        pad=tickpad,top=False,bottom=True,   #rotation_mode='anchor',
+                        labelrotation=labelrotation,labelsize=labelsize)
+        #
+        if 1 :
+            if indnames is None :
+                L = np.narange(Ncell)
+            else :
+                L_ = np.array(indnames) # when AFCWITHOBS, "Obs" à déjà été rajouté à la fin
+            plt.xticks((np.arange(Ncell)*10)+5,L_[R_['leaves']],
+                        horizontalalignment=labelha, verticalalignment=labelva)
+            #           horizontalalignment='right', verticalalignment='center')
+            #plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
+            #            rotation=45,horizontalalignment='right', verticalalignment='baseline')
     #
     plt.grid(axis='y')
     if xlabel is not None :
-        plt.xlabel(xlabel, labelpad=15, fontsize=labelfnsize)
+        plt.xlabel(xlabel, labelpad=xlabelpad, rotation=xlabelrotation, fontsize=labelfnsize)
     if ylabel is not None :
-        plt.ylabel(ylabel, fontsize=labelfnsize)
-    lax=plt.axis(); daxy=(lax[3]-lax[2])/400
-    plt.axis([lax[0],lax[1],lax[2]-daxy,lax[3]])
+        plt.ylabel(ylabel, labelpad=ylabelpad, rotation=ylabelrotation, fontsize=labelfnsize)
+    if axeshiftfactor is not None :
+        lax=plt.axis(); daxy=(lax[3]-lax[2])/axeshiftfactor
+        plt.axis([lax[0],lax[1],lax[2]-daxy,lax[3]])
     plt.title(title,fontsize=titlefnsize,y=ytitle);
     #
     return R_
@@ -2439,6 +2449,7 @@ def plot_afc_dendro(F1U,F1sU,nb_clust,NBCOORDAFC4CAH,Nmdlok,
                        titlefnsize=14, ytitle=0.98, 
                        xlabel="elements", ylabel="inter cluster distance",
                        labelfnsize=10, labelrotation=0, labelsize=10,
+                       axeshiftfactor=150,
                        figsize=(14,6),
                        wspace=0.0, hspace=0.2, top=0.92, bottom=0.12, left=0.05, right=0.99,
                        ):
@@ -2478,6 +2489,7 @@ def plot_afc_dendro(F1U,F1sU,nb_clust,NBCOORDAFC4CAH,Nmdlok,
                        title=title, ytitle=ytitle, titlefnsize=titlefnsize, 
                        xlabel=xlabel, ylabel=ylabel, labelfnsize=labelfnsize,
                        labelrotation=labelrotation, labelsize=labelsize,
+                       axeshiftfactor=axeshiftfactor,
                        figsize=figsize,
                        wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
                        )
