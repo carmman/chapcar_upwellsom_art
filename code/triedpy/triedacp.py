@@ -100,7 +100,7 @@ def dualacp(VAPU, VEPU) :   # Dualité
 
 #def cloud (NC,pa,po,names=0,shape='o',coul='b',markersize=5, fontsize=11) :
 def cloud (NC,pa,po,names=None,shape='o',coul='b',markersize=5, fontsize=11,
-           txtcoul='b', holdon='False') :
+           txtcoul='b', holdon=False) :
     '''cloud (NC,pa,po,names,shape,coul,markersize,fontsize)
     | Nuage des Nouvelles Coordonnées (NC), des individus ou variables sur le
     | plan des axes pa-po. Si la variables names (qui est facultative) est passée, elles doit contenir
@@ -115,7 +115,7 @@ def cloud (NC,pa,po,names=None,shape='o',coul='b',markersize=5, fontsize=11,
     '''
     N = np.size(NC,0);
     pa=pa-1;   po=po-1;
-    if holdon==False :
+    if not holdon :
         plt.figure();
     plt.plot(NC[:,pa], NC[:,po],shape,color=coul,markersize=markersize);
     # Tracer les axes

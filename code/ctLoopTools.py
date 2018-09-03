@@ -1185,9 +1185,9 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
                              MDLCOMPLETION=True,
                              SIZE_REDUCTION="All",
                              NIJ=0,
-                             OK101='False',
-                             OK102='False',
-                             OK106='False',
+                             OK101=False,
+                             OK102=False,
+                             OK106=False,
                              ) :
     #######################################################################
     #                        MODELS STUFFS START HERE
@@ -1412,8 +1412,8 @@ def do_models_plot101et102_past_fl(Nmdlok,Lobs,Cobs,isnumobs,isnanobs,
                               title102="EcrtType SST Mod",
                               Smoy_101=None,
                               Tsst_102=None,
-                              OK101='False',
-                              OK102='False',
+                              OK101=False,
+                              OK102=False,
                               ) :
     #
     if OK101 :
@@ -1462,7 +1462,7 @@ def do_models_plot101et102_past_fl(Nmdlok,Lobs,Cobs,isnumobs,isnanobs,
 def do_models_next_first_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,
                               Tclasse_DMdl,Tmoymensclass,
                               same_minmax_ok=True,
-                              OK106='False',
+                              OK106=False,
                               ) :
     #_____________________________________________________________________
     ######################################################################
@@ -1526,7 +1526,7 @@ def do_models_pior_second_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglo
                     Tclasse_DMdl,Tmoymensclass,
                     MCUM,
                     same_minmax_ok=True,
-                    OK106='False',
+                    OK106=False,
                     ):
     #*****************************************
     MaxPerfglob_Qm  = 0.0; # Utilisé pour savoir les quels premiers modèles
@@ -1591,9 +1591,9 @@ def do_models_pior_second_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglo
     #
     # -----------------------------------------------------------------------------
     #
-        return TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,\
-               Tmoymensclass,min_moymensclass,max_moymensclass,\
-               MaxPerfglob_Qm,IMaxPerfglob_Qm
+    return TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,\
+           Tmoymensclass,min_moymensclass,max_moymensclass,\
+           MaxPerfglob_Qm,IMaxPerfglob_Qm
 #Dmdl_TVar,DMdl_Q,DMdl_Qm,Dmdl_TVm
 def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                           Tmdlname,Tmdlnamewnb,Tmdlonlynb,
@@ -1610,7 +1610,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                           mdlnamewnumber_ok=False,
                           figsize=(7.5,12),
                           wspace=0.01, hspace=0.05, top=0.95, bottom=0.04, left=0.15, right=0.86,
-                          OK104='False', OK105='False', OK106='False', OK107='False', OK108='False', OK109='False',
+                          OK104=False, OK105=False, OK106=False, OK107=False, OK108=False, OK109=False,
                           suptitle104='fig104',
                           suptitle105='fig105',
                           suptitle106='fig106',
@@ -2265,7 +2265,8 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
     #
     # FIN du if 1 : MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
     #
-    return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,NoCAHindnames,figclustmoynum,class_afc,NoAFCindnames
+    return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,NoCAHindnames,figclustmoynum,class_afc,\
+           AFCindnames,NoAFCindnames
 #
 def do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
                     indnames=None,
@@ -2441,11 +2442,13 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlo
 #        plt.title("%s SST (%s). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
 #                 %(fcodage,DATAMDL,method_cah,nb_class,NIJ));
 #       
-def plot_afc_dendro(F1U,F1sU,nb_clust,NBCOORDAFC4CAH,Nmdlok,
+def do_plot_afc_dendro(F1U,F1sU,nb_clust,Nmdlok,
+                       afccoords=None,
                        indnames=None,
                        AFCWITHOBS = True,CAHWITHOBS = True,
                        afc_method='ward', afc_metric='euclidean',
                        truncate_mode=None,
+                       title="AFD Dendrogram",
                        titlefnsize=14, ytitle=0.98, 
                        xlabel="elements", ylabel="inter cluster distance",
                        labelfnsize=10, labelrotation=0, labelsize=10,
@@ -2454,17 +2457,19 @@ def plot_afc_dendro(F1U,F1sU,nb_clust,NBCOORDAFC4CAH,Nmdlok,
                        wspace=0.0, hspace=0.2, top=0.92, bottom=0.12, left=0.05, right=0.99,
                        ):
     #Nleaves_ = len(CAHindnames);
-    coord2take = np.arange(NBCOORDAFC4CAH); # Coordonnées de l'AFC àprendre pour la CAH
+    if afccoords is None :
+        afccoords = np.arange(data.shape[1]-1) # par defaut, n - 1 columns
+    #
     if AFCWITHOBS :
         if CAHWITHOBS : # Garder les Obs pour la CAH
-            data = F1U[:,coord2take]
+            data = F1U[:,afccoords]
         else : # Ne pas prendre les Obs dans la CAH (ne prendre que les modèles)
-            data = F1U[0:Nmdlok,coord2take]
+            data = F1U[0:Nmdlok,afccoords]
     else : # Cas AFC sans les Obs
         if CAHWITHOBS : # Alors rajouter les Obs en Supplémentaire
-            data = np.concatenate((F1U, F1sU))[:,coord2take];
+            data = np.concatenate((F1U, F1sU))[:,afccoords];
         else : # Ne pas rajouter les obs pour la CAH
-            data = F1U[:,coord2take]
+            data = F1U[:,afccoords]
     #
     Z_ = linkage(data, afc_method, afc_metric);
     #
@@ -2480,8 +2485,8 @@ def plot_afc_dendro(F1U,F1sU,nb_clust,NBCOORDAFC4CAH,Nmdlok,
     #L_ = np.array(NoCAHindnames) # when AFCWITHOBS, "Obs" à déjà été rajouté à la fin
     #plt.xticks((np.arange(Nleaves_)*10)+7,L_[R_['leaves']], fontsize=11,
     #            rotation=45,horizontalalignment='right', verticalalignment='baseline')
-    title = "AFC Dendrogram : Coord(%s), dendro. Métho=%s, dist=%s, nb_clust=%d"%((coord2take+1).astype(str),
-                       afc_method,afc_metric,nb_clust)
+    #title = "AFC Dendrogram : Coord(%s). Method=%s, Metric=%s, nb_clust=%d"%((afccoords+1).astype(str),
+    #                   afc_method,afc_metric,nb_clust)
     #
     do_plot_dendrogram(data, nclass=nb_clust, datalinkg=Z_, indnames=indnames,
                        method=afc_method, metric=afc_metric,

@@ -339,7 +339,7 @@ def transcoclass_algo1(classe_Dobs, classe_Dmdl, nb_class) :
         TM_cptr[IMmax]=0;
     return klasse_Dmdl
 #----------------------------------------------------------------------
-def transco_class(class_ref,codebook,crit='') :
+def transco_class(class_ref,codebook,crit='',indexok=False) :
     nb_class = max(class_ref)
     if isinstance(crit, str) :
         Tvalcrit = np.zeros(nb_class); 
@@ -375,12 +375,22 @@ def transco_class(class_ref,codebook,crit='') :
         Icnew = np.array(crit)-1;
     #    
     cref_new = np.zeros(len(class_ref)).astype(int);               
+    inew_cref = np.zeros(len(class_ref)).astype(int);
     cc = 1;
+    icum=0
     for c in Icnew :
         Ic = np.where(class_ref==c+1)[0];
         cref_new[Ic] = cc;
+        for ic in np.arange(len(Ic)) :
+            inew_cref[ic+icum]=Ic[ic];
+        icum += len(Ic)
         cc = cc+1; 
-    return cref_new
+    #
+    if indexok :
+        return cref_new,inew_cref
+    else :
+        return cref_new
+#
 def moymensclass (varN2D,isnum,classe_D,nb_class) :
     # Moyennes mensuelles par classe
     N,L,C   = np.shape(varN2D);
