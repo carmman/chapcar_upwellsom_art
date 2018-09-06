@@ -1207,10 +1207,10 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
         Tnmodel = np.array(Tnmodel)
     #
     # For (sub)plot by modele
-    nsub   = Nmodels + 1; # actuellement au plus 48 modèles + 1 pour les obs.      
+    #nsub   = Nmodels + 1; # actuellement au plus 48 modèles + 1 pour les obs.      
     #nsub  = 9;  # Pour MICHEL (8+1pour les obs)
     #nbsubc, nbsubl = lcsub(nsub);
-    nbsubl, nbsubc = ldef.nsublc(nsub);
+    #nbsubl, nbsubc = ldef.nsublc(nsub);
     isubplot=0;
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     min_moymensclass = 999999.999999; # sert pour avoir tous les ...
@@ -1594,6 +1594,7 @@ def do_models_pior_second_loop(TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglo
     return TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,\
            Tmoymensclass,min_moymensclass,max_moymensclass,\
            MaxPerfglob_Qm,IMaxPerfglob_Qm
+#
 #Dmdl_TVar,DMdl_Q,DMdl_Qm,Dmdl_TVm
 def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                           Tmdlname,Tmdlnamewnb,Tmdlonlynb,
@@ -1608,6 +1609,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                           FONDTRANS="Obs",
                           TypePerf = ["MeanClassAccuracy"],
                           mdlnamewnumber_ok=False,
+                          pair_nsublc=None,
                           figsize=(7.5,12),
                           wspace=0.01, hspace=0.05, top=0.95, bottom=0.04, left=0.15, right=0.86,
                           OK104=False, OK105=False, OK106=False, OK107=False, OK108=False, OK109=False,
@@ -1689,8 +1691,17 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
     ticks  = coches + 0.5;            # [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]
     bounds = np.arange(nb_class+1)+1; # pour bounds faut une frontière de plus [1, 2, 3, 4, 5, 6, 7]
-    nsub   = Nmodels + 1; # actuellement au plus 48 modèles + 1 pour les obs.      
-    nbsubl, nbsubc = ldef.nsublc(nsub);
+    if pair_nsublc is None :
+        nsub   = Nmodels + 1; # actuellement au plus 48 modèles + 1 pour les obs. 
+        nbsubl, nbsubc = ldef.nsublc(nsub);
+    else :
+        if np.prod(pair_nsublc) < (Nmodels + 1):
+            ctloop.printwarning(["** TOO SMALL Combination between number of lines and number of columns **".upper().center(75),
+                    "** specified in  pair_nsublc=[{0[0]},{0[1]}]  argument **".upper().format(pair_nsublc).center(75) ],
+                    "** You have {:d} models + 1 for Obs **".format((Nmodels)).center(75),
+                    "** try another pair_nsublc=[nbsubl, nbsubc] combination. **".center(75))
+            raise
+        nbsubl, nbsubc = pair_nsublc;
     nsubmax = nbsubl * nbsubc; # derniere casse subplot, pour les OBS
     if mdlnamewnumber_ok :
         Tmdlname10X = Tmdlnamewnb;
