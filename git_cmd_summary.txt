@@ -180,3 +180,7 @@ git commit -am "Version fontionnelle. Main dans ctLoopMain.py. Premier export su
 
 git remote add origin https://github.com/carmman/chapcar_upwellsom_art
 git push -u origin master
+
+# ...
+git push
+
