@@ -148,3 +148,35 @@ git commit -am "Travaux pour rendre fontionnel les actions dans ctLoopAnyS.py. A
 git revert HEAD
 # Un editeur est lance pour permettre la correction
 # Un nouveau commit sera créé, ce commit contiendra les modifications inverses de HEAD.
+
+
+# ------------------------------------------------------------------
+# pour déclarer un serveur avec un repository distant ou mon
+# repository local sera "pushed", c-a-d, ou je vais copier mon
+# répertoire local:
+#
+#   git remote add origin <remote repository URL>
+# Sets the new remote
+#
+#   git remote -v
+# Verifies the new remote URL
+#
+# Exemple:
+# 1) Le répertoire .../PourCarlos2_pour_Article/  contient un suivi
+#    avec git.
+# 2) Dans github.com j'ai cree le repository chapcar_upwellsom_art
+#    sans README !
+#
+# ==> Associer le répertoire a ce repository:
+
+cd .../PourCarlos2_pour_Article
+
+# Creation du README.md
+echo "# chapcar_upwellsom_art" >> README.md
+git add README.md
+
+# commit
+git commit -am "Version fontionnelle. Main dans ctLoopMain.py. Premier export sur GITHUB, repository 'chapcar_upwellsom_art'"
+
+git remote add origin https://github.com/carmman/chapcar_upwellsom_art
+git push -u origin master
