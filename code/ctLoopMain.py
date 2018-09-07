@@ -1194,13 +1194,29 @@ def main(argv):
     #
     global fprefixe, tpgm0, blockshow, fcodage, fshortcode
     #
-    caseconfig = None
+    caseconfig = ''
+    caseconfig_valid_set = ( 'All', 'sel' )   # toutes en minuscules svp !
     verbose = False
     manualmode = True
     #%% NE PAS EXECUTER CE BLOCK EN MODE MANUEL
     manualmode = False
     try:
         opts, args = getopt.getopt(argv,"hvc:",["case=","verbose"])
+        #
+        for opt, arg in opts:
+            if opt == '-h':
+                print('ctLoopMain.py -c all -v | --case=all --verbose /* cases are all or sel */')
+                sys.exit()
+            elif opt in ("-v", "--verbose"):
+                verbose = True
+            elif opt in ("-c", "--case"):
+                caseconfig = arg
+        if caseconfig.lower() not in [ x.lower() for x in caseconfig_valid_set ] :
+            ctloop.printwarning(["","Start error".center(75),""],
+                    "   Not CASE value '{}'".format(caseconfig).center(75),
+                    "You should give one in {} set.".format(caseconfig_valid_set).center(75))
+            raise
+
     except getopt.GetoptError:
         print(('\n {:s}\n'.format("".center(66,'*'))+\
                ' * {:s} *\n'.format("Invalid Call:".center(62))+\
@@ -1208,18 +1224,10 @@ def main(argv):
                ' * {:s} *\n'.format("Call:".ljust(62))+\
                ' * {:s} *\n'.format("  ctLoopMain.py <OPTIONS> -c CASE".ljust(62))+\
                ' * {:s} *\n'.format("".ljust(62))+\
-               ' * {:s} *\n'.format("  where CASE is one in < all, sel >".ljust(62))+\
+               ' * {:s} *\n'.format("  where CASE is one in < {} >".format(caseconfig_valid_set).ljust(62))+\
                ' * {:s} *\n'.format("      <OPTIONS> are -h, -v".ljust(62))+\
                ' {:s}\n'.format("".center(66,'*'))))
         sys.exit(2)
-    for opt, arg in opts:
-        if opt == '-h':
-            print('ctLoopMain.py -c all -v | --case=all --verbose /* cases are all or sel */')
-            sys.exit()
-        elif opt in ("-v", "--verbose"):
-            verbose = True
-        elif opt in ("-c", "--case"):
-            caseconfig = arg
     #print("Case config is '{:s}'".format(caseconfig))
     #print("Verbose is '{}'".format(verbose))
     #
@@ -1234,7 +1242,7 @@ def main(argv):
         TM_label_base, case_label_base, obs_data_path, generalisationok,\
         tseed, case_name_base, casetime, casetimelabel, casetimeTlabel, varnames,\
         list_of_plot_colors  =  ctloop_init(case=caseconfig,verbose=verbose)
-    #`
+    #
     print("fcodage,fshortcode ... {}".format((fcodage,fshortcode)))
     #
     #%% #######################################################################
@@ -1488,6 +1496,8 @@ def main(argv):
                           figdir=case_figs_dir,
                           wvmin=wvmin,wvmax=wvmax,
                           )
+        #
+    if generalisationok :
         #
         #%%  Generalisation d'une ensemble ou cluster precis
         for kclust in np.arange(1,nb_clust + 1) :
