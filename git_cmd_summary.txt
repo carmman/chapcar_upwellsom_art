@@ -10,7 +10,7 @@
 # Installer git ...
 
 # ------------------------------------------------------------------
-# Configurer Git
+# Configurer git
 #
 # git config --global VARIABLE  VALEUR
 # 
@@ -20,11 +20,11 @@ git config --global  user.name  Carlos Mejia
 
 git config --global  user.email  Carlos.Mejia@locean-ipsl.upmc.fr
 
-# pour lister les variables:
+# Pour lister les variables:
 
 git config --global --list
 
-# pour effacer une variable :
+# Pour effacer une variable :
 # p.ex, si l'on s'est trompé et mis  'user.emal' à la place de 
 # 'user.email' alors, pour l'effacer:
 
@@ -73,7 +73,7 @@ git status
 # ------------------------------------------------------------------
 
 # ------------------------------------------------------------------
-# ajouter des fichiers (PREMIER ADD) plus le fichier git_cmd_summary.txt, 
+# Ajouter des fichiers (PREMIER ADD) plus le fichier git_cmd_summary.txt, 
 # fichier de rappel de commandes git executes pour ce cas.
 
 git add code git_cmd_summary.txt
@@ -87,7 +87,7 @@ git add code git_cmd_summary.txt
 git commit -m "Code de Charles envoye sous le nom PourCarlos2 du 12/06/2018"
 
 
-# fichiers provenant de Windows, je converti les fin de ligne des
+# Fichiers provenant de Windows, je converti les fin de ligne des
 # fichiers texte au monde unix ...
 cd code/
 dos2unix *.py
@@ -127,7 +127,7 @@ git checkout master
 #   ctLoopTools.py
 # plus models_def_tb.py avec description des modeles (tableau) issu de ctObsMdldef.py
 
-# ajout des nouveaux fichiers
+# Ajout des nouveaux fichiers
 git add ctLoopMain.py ctLoopTools.py models_def_tb.py
 
 # commit
@@ -146,12 +146,13 @@ git commit -am "Travaux pour rendre fontionnel les actions dans ctLoopAnyS.py. A
 # Corriger le commentaire d'un commmit (pas exactement une correction
 # mais un nouvel commit pointant sur le precedent):
 git revert HEAD
-# Un editeur est lance pour permettre la correction
-# Un nouveau commit sera créé, ce commit contiendra les modifications inverses de HEAD.
+# Un editeur est lance pour permettre la correction.
+# Un nouveau commit sera créé, ce commit contiendra les modifications
+# inverses de HEAD.
 
 
 # ------------------------------------------------------------------
-# pour déclarer un serveur avec un repository distant ou mon
+# Pour déclarer un serveur avec un repository distant ou mon
 # repository local sera "pushed", c-a-d, ou je vais copier mon
 # répertoire local:
 #
