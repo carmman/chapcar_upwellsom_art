@@ -519,14 +519,15 @@ def set_lonlat_ticks(lon,lat,fontsize=12,lostep=1,lastep=1,step=None,londecal=No
     # set axis limits to previous value
     plt.axis(lax)
 #
-def do_save_figure(figfile,path=None,ext=None,dpi=100,fig2ok=False,ext2=None):
+def do_save_figure(figfile,path=None,ext=None,dpi=100,figpdf=False,fig2ok=False,ext2=None):
     ''' DO_SAVE_FIGURE
         sauvegarde de la figure en cours dans un fichier au format donne par 
         l'option 'ext' (PNG par defaut).
         En option, on peut sauver en un deuxieme format, par exemple un format
-        vectoriel: PDF ou Postscript Encapsule.? Choisir de peference PDF,
-        les NaN apparaissent en Noir en EPS. En PDF il suffit d'ajouter l'option
-        transparent=False pour eviter ce probleme.
+        vectoriel: PDF ou Postscript Encapsule.? C'est du PDF si vous passez par
+        le flag figpdf, sinon, pour du EPS ou autre, passer par fig2ok et ext2.
+        Choisir de peference PDF, les NaN apparaissent en Noir en EPS. En PDF il
+        suffit d'ajouter l'option transparent=False pour eviter ce probleme.
     '''
     if ext is None :
         ext = '.png'
@@ -534,7 +535,7 @@ def do_save_figure(figfile,path=None,ext=None,dpi=100,fig2ok=False,ext2=None):
         ext = '.'+ext
     if path is None :
         path = '.'
-    if fig2ok :
+    if fig2ok or figpdf :
         if ext2 is None :
             ext2 = '.pdf'
         elif ext2[0] != '.' :
@@ -542,14 +543,14 @@ def do_save_figure(figfile,path=None,ext=None,dpi=100,fig2ok=False,ext2=None):
     #
     figurefilelname = path+os.sep+figfile+ext;
     print("-- {:->88s}".format(''))
-    print("-- saving current figure in file: '{}/\n     path: '{}'".format(
+    print("-- saving current figure in file: '{}\n     path: '{}/'".format(
             os.path.basename(figurefilelname), os.path.dirname(figurefilelname)))
     # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg))
     plt.savefig(figurefilelname, dpi=dpi)
     # format2, sauvegarde en fotmat vectoriel, PDF ou Postscript Encapsule
     # de peference PDF, car les NaN apparaissent en Noir en EPS. En PDF il suffit
     # d'ajouter l'option transparent=False pour eviter ce probleme.
-    if fig2ok :
+    if fig2ok or figpdf :
         figurefilelname = path+os.sep+figfile+ext2;
         print("   saving also in {} format in file:\n     '{}'".format(ext2.upper(),
               os.path.basename(figurefilelname)))
@@ -1989,8 +1990,12 @@ def do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_col
     Tperfglob = Tperfglob[0:Nmodels];
     #
     # Edition des résultats
-    local_legend_labels = np.copy(TypePerf)
-    local_legend_labels = np.concatenate((local_legend_labels,["Cumulated MeanClassAccuracy"]))
+    #local_legend_labels = np.copy(TypePerf)
+    #local_legend_labels = np.concatenate((local_legend_labels,["Cumulated MeanClassAccuracy"]))
+    local_legend_labels = []
+    for clabel in TypePerf :
+        local_legend_labels.append(clabel+" Performance")
+    local_legend_labels.append("Cumulated MeanClassAccuracy"+" Performance")
     fig = plt.figure(figsize=(12,6),facecolor='w');
     if len(Tperfglob.shape) > 1 :
         for icol in np.arange(len(Tperfglob.shape)) :
@@ -2168,10 +2173,10 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
                 # Nouvelle figure:  performanes par cluster
                 if SIZE_REDUCTION == 'All' :
                     figsize = (4*subc_,2+2*subl_)
-                    wspace=0.25; hspace=0.02; top=0.94; bottom=0.01; left=0.02; right=0.94;
+                    wspace=0.35; hspace=0.02; top=0.94; bottom=0.01; left=0.02; right=0.94;
                 elif SIZE_REDUCTION == 'sel' :
                     figsize = (3.5*subc_,1+3*subl_)
-                    wspace=0.30; hspace=0.02; top=0.94; bottom=0.01; left=0.03; right=0.94;
+                    wspace=0.45; hspace=0.02; top=0.94; bottom=0.01; left=0.03; right=0.94;
                 figclustmoy = plt.figure(figsize=figsize,facecolor="w"); # pour les différents cluster induit par ce niveau.
                 figclustmoynum = figclustmoy.number
                 figclustmoy.subplots_adjust(wspace=wspace, hspace=hspace, top=top,

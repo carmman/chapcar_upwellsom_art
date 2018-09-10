@@ -1,4 +1,8 @@
+# ------------------------------------------------------------------
 # Gérer son code avec Git et GitHub
+#
+# Version pour projet ...... PourCarlos2_pour_Article
+# repository GitHub ........ chapcar_upwellsom
 #
 # mini tutoriel:
 #   http://www.inspyration.org/tutoriels/mini-tutoriel-sur-git

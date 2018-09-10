@@ -356,6 +356,7 @@ Visu_Inertie    = False;    # Flag de visualisation de l'Inertie
 Visu_UpwellArt  = True;     # Flag de visu des figures pour article avec Juliette et Adama
 FIGARTDPI     = 300  # DPI pour les figures bitmap de l'article
 if Visu_UpwellArt :
+    nFigArt = 0;
     OK101 = False; # Pour produire la Moyenne d'un modèle moyen par ...
     OK102 = False; # Pour produire les Ecarts types d'un modèle moyen 
 ysstitre        = 0.96   # position vertical des soustitres dans figures de groupe

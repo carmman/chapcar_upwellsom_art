@@ -76,7 +76,8 @@ def ctloop_init(case='None',verbose=False):
         #    Longitude : 45W à 9W (-44.5 à -9.5)
         #    Latitude :  30N à 5N ( 29.5 à  5.5)
         frlat =  29.5;  tolat =  4.5; #(excluded)
-        frlon = -44.5;  tolon = -8.5; #(excluded)   #(§:25x35)
+        #frlon = -44.5;  tolon = -8.5; #(excluded)   #(§:25x35)
+        frlon = -44.5;  tolon = -9.5; #(excluded)   #(§:25x35)
         #   * Carte topologique et CAH : 30x4 (5, 5, 1, - 16, 1, 0.1) : TE=0.6824 ; QE=0.153757
         #   Nb_classe = 7
         nbl            = 30;  nbc =  4;  # Taille de la carte
@@ -161,8 +162,6 @@ def ctloop_init(case='None',verbose=False):
     blockshow = False
     #blockshow = True
     
-    generalisationok = True
-    
     #======================================================================
     # Pour initialiser le generateur de nombres aleatoires utilise 
     # Reset effectué juste avant l'initialisation de la Carte Topologique:
@@ -179,7 +178,7 @@ def ctloop_init(case='None',verbose=False):
         tpgm0 = ctloop.initialisation(case_label_base,tseed=tseed)
     #
     return  pcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
-            TM_label_base, case_label_base, obs_data_path, generalisationok,\
+            TM_label_base, case_label_base, obs_data_path, \
             tseed, case_name_base, casetime, casetimelabel, casetimeTlabel, varnames,\
             list_of_plot_colors 
 #
@@ -193,10 +192,6 @@ def ctloop_load_obs(DATAOBS, path=".", case_name="case") :
     ctloop.printwarning([ "","ACQUISITION DES DONNEES D'OBSERVATION: '{:s}'".format(DATAOBS).center(75),""])
     data_label_base,sst_obs,lon,lat = ctloop.read_obs(path,DATAOBS)
     
-    # -----------------------------------------------------------------------------
-    # Complete le Nom du Cas
-    case_label = case_name+"_"+data_label_base
-    print("\n{:*>86s}\nCase label with data version: {}\n".format('',case_label))
     #
     ### ACQUISITION DES DONNEES D'OBSERVATION #####################################
     sst_obs,lon,lat,ilat,ilon = ctloop.get_zone_obs(sst_obs,lon,lat,
@@ -207,7 +202,12 @@ def ctloop_load_obs(DATAOBS, path=".", case_name="case") :
     print(" - Nouvelles dimensions of SST Obs : {}".format(sst_obs.shape))
     print(" - Lat : {} values from {} to {}".format(len(lat),lat[0],lat[-1]))
     print(" - Lon : {} values from {} to {}".format(len(lon),lon[0],lon[-1]))
-    
+    #
+    # -----------------------------------------------------------------------------
+    # Complete le Nom du Cas
+    case_label = "{}_ZG{:d}x{:d}px_{}".format(case_name,len(lat),len(lon),data_label_base)
+    print("\n{:*>86s}\nCase label with data version: {}\n".format('',case_label))
+    #
     Nobs,Lobs,Cobs = np.shape(sst_obs);
     print("obs.shape : ", Nobs,Lobs,Cobs);
     #
@@ -501,6 +501,7 @@ def plot_ct_dendro(sMapO, nb_class, datalinkg=None, title="SOM Map Dendrogram",
 #%%
 def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
                               title="figart1", fileext="", figdir=".",
+                              figfile=None, dpi=None, figpdf=False,
                               pcmap=None,
                               figsize=(12,6),
                               wspace=0.0, hspace=0.0, top=0.96, bottom=0.08, left=0.06, right=0.92,
@@ -519,14 +520,13 @@ def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
                                     wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
                                     )
     if SAVEFIG : # sauvegarde de la figure
-        if Visu_UpwellArt :
-            figfile = "FigArt_"
-            dpi = FIGARTDPI
-        else :
+        if figfile is None :
             figfile = "Fig_"
+        if dpi is None :
             dpi = FIGDPI
         figfile += "MeanByClass_{:d}Class{:s}".format(nb_class,fileext)
-        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        #
+        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
     #
     plt.show(block=blockshow)
     #
@@ -794,25 +794,8 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
-    # -------------------------------------------------------------------------
-    ctloop.printwarning([ "    MODELS: APRES SECOND LOOP" ])
-    # Figure a ploter apres le deuxieme loop
-    if Visu_preACFperf : # Tableau des performances en figure de courbes
-        stitre = "Perf Curves"
-        if subtitle is not None :
-            stitre += " -"+subtitle+"- "
-        stitre += " SST {:s} ({:d}-{:d}) - {:d} Classes -  Classification Indices of Completed Models (vs Obs) ({:d} models)".format(fcodage,andeb,anfin,nb_class,Nmdlok)
-        ctloop.do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_colors,
-                                           title=stitre,
-                                           TypePerf=TypePerf,fcodage=fcodage)
-        #
-        if SAVEFIG :
-            figfile = "Fig{:s}perf-curves-by_model_{:d}Mdl_{:d}-mod".format(commonfileext,nb_class,Nmdlok)
-            # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
-            # et eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
-    return TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb, TTperf, Nmdlok, NDmdl
+    return Tperfglob, Tperfglob_Qm, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb, TTperf, Nmdlok, NDmdl
 #
 #%%
 def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb, 
@@ -822,6 +805,7 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
                        AFC_Visu_Clust_Mdl_Moy_4CT=[],
                        ccmap=cm.jet, sztitle=10,
                        figdir=".",
+                       figfile=None, dpi=None, figpdf=False,
                        ) :
     #
     global SIZE_REDUCTION, DATAMDL, NIJ, NBCOORDAFC4CAH, AFCWITHOBS, CAHWITHOBS
@@ -853,23 +837,16 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
     #print("--NoCAHindnames: {}".format(NoCAHindnames))
     #print("--Tmdlname: {}".format(Tmdlname))
     print("\n--Tmdlnamewnb: {}".format(Tmdlnamewnb))
-    if SAVEFIG : # sauvegarde de la figure de performanes par cluster
+    if SAVEFIG : # sauvegarde de la figure
         plt.figure(figclustmoynum)
-        if Visu_UpwellArt :
-            figfile = "FigArt_"
-            dpi = FIGARTDPI
-        else :
+        if figfile is None :
             figfile = "Fig_"
+        if dpi is None :
             dpi = FIGDPI
         figfile += "AFCClustersPerf-{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(nb_clust,
                     nb_class,fprefixe,fshortcode,andeb,anfin,Nmdlafc)
-        #if onlymdlumberAFC_ok :
-        #    figfile += "-OnlyNo"
-        #else :
-        #    figfile += "-NoAndName"
-        # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
-        # eventuellement en PDF, si SAVEPDF active. 
-        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        #
+        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
     #
     #            if Visu_Dendro :
     #        figsize=(14,6);
@@ -954,89 +931,89 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
     #                              AFCWITHOBS = AFCWITHOBS,CAHWITHOBS = CAHWITHOBS,
     #                              )
     #
-    if Visu_AFC_in_one or Visu_UpwellArt: # plot afc en une seule image
-        ctloop.printwarning([ "    AFC: 2-D PROJECTION" ])
-        if Visu_UpwellArt :
-            lblfontsize=14;    mdlmarkersize=250;
-            lblfontsizeobs=16; obsmarkersize=320;
-            lblfontsizecls=16; clsmarkersize=280;
-            #
-            if SIZE_REDUCTION == 'All' :
-                zone_stitre = "Large"
-                figsize=(16,12)
-                top=0.93; bottom=0.05; left=0.05; right=0.95
-                xdeltapos      =0.025; ydeltapos     =-0.002; linewidths   =2.5
-                xdeltaposobs   =0.030; ydeltaposobs  =-0.003; linewidthsobs=3
-                xdeltaposcls   =0.001; ydeltaposcls  =-0.003; linewidthscls=2.5
-                xdeltaposlgnd  =0.03;  ydeltaposlgnd =-0.002
-                legendXstart   =-1.22; legendYstart  =0.88;   legendYstep  =0.06
-                legendXstartcls=legendXstart;
-                legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
-            elif SIZE_REDUCTION == 'sel' :
-                zone_stitre = "Selected"
-                figsize=(16,12)
-                top=0.93; bottom=0.05; left=0.05; right=0.95
-                xdeltapos      =0.035; ydeltapos     =-0.002; linewidths   =2.5
-                xdeltaposobs   =0.040; ydeltaposobs  =-0.003; linewidthsobs=3
-                xdeltaposcls   =0.001; ydeltaposcls  =-0.005; linewidthscls=2.5
-                xdeltaposlgnd  =0.040; ydeltaposlgnd =-0.002
-                legendXstart   =-0.79; legendYstart  =-0.85;  legendYstep  =0.072
-                legendXstartcls=legendXstart;
-                legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
-            #
-            stitre = ("SST {:s} -on zone \"{:s}\"- A.F.C Projection with Models, Observations and Classes ({:s})"+\
-                      "\n- {:s}, AFC on {:d} CAH Classes for {} models (in {} AFC clusters) + Obs -").format(fcodage,
-                           zone_stitre,DATAMDL,method_cah,nb_class,Nmdlafc,nb_clust)
-            #
-            ctloop.do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
-                        indnames=NoAFCindnames,
-                        title=stitre,
-                        Visu4Art=Visu_UpwellArt,
-                        AFCWITHOBS = AFCWITHOBS,
-                        figsize=figsize,
-                        top=top, bottom=bottom, left=left, right=right,
-                        lblfontsize=lblfontsize,       mdlmarkersize=mdlmarkersize,
-                        lblfontsizeobs=lblfontsizeobs, obsmarkersize=obsmarkersize,
-                        lblfontsizecls=lblfontsizecls, clsmarkersize=clsmarkersize,
-                        xdeltapos   =xdeltapos ,   ydeltapos   =ydeltapos,
-                        xdeltaposobs=xdeltaposobs, ydeltaposobs=ydeltaposobs,
-                        xdeltaposcls=xdeltaposcls, ydeltaposcls=ydeltaposcls,
-                        linewidths=linewidths, linewidthsobs=linewidthsobs, linewidthscls=linewidthscls,
-                        legendok=True,
-                        xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
-                        legendXstart=legendXstart,legendYstart=legendYstart,legendYstep=legendYstep,
-                        legendprefixlbl="AFC Cluster",
-                        legendprefixlblobs="Observations",
-                        legendokcls=True,
-                        legendXstartcls=legendXstartcls,legendYstartcls=legendYstartcls,
-                        legendprefixlblcls="CAH Classes",
-                        )
-        else :
-            stitre = ("AFC Projection - {:s} SST ({:s}). {:s}".format(fcodage,
-                      DATAMDL,method_cah));
-            lblfontsize=14; linewidths = 2.0
-            #
-            ctloop.do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
-                        indnames=NoAFCindnames,
-                        title=stitre,
-                        AFCWITHOBS = AFCWITHOBS,
-                        figsize=(16,12),
-                        top=0.93, bottom=0.05, left=0.05, right=0.95,
-                        lblfontsize=lblfontsize, linewidths=linewidths,
-                        )
-        #
-        if SAVEFIG : # sauvegarde de la figure
-            if Visu_UpwellArt :
-                figfile = "FigArt_"
-                dpi = FIGARTDPI
-            else :
-                figfile = "Fig_"
-                dpi = FIGDPI
-            figfile += "AFC2DProj-{:d}-{:d}_{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(
-                    pa,po,nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin,Nmdlafc)
-            # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
-            # eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+    #if Visu_AFC_in_one or Visu_UpwellArt: # plot afc en une seule image
+    #    ctloop.printwarning([ "    AFC: 2-D PROJECTION" ])
+    #    if Visu_UpwellArt :
+    #        lblfontsize=14;    mdlmarkersize=250;
+    #        lblfontsizeobs=16; obsmarkersize=320;
+    #        lblfontsizecls=16; clsmarkersize=280;
+    #        #
+    #        if SIZE_REDUCTION == 'All' :
+    #            zone_stitre = "Large"
+    #            figsize=(16,12)
+    #            top=0.93; bottom=0.05; left=0.05; right=0.95
+    #            xdeltapos      =0.025; ydeltapos     =-0.002; linewidths   =2.5
+    #            xdeltaposobs   =0.030; ydeltaposobs  =-0.003; linewidthsobs=3
+    #            xdeltaposcls   =0.001; ydeltaposcls  =-0.003; linewidthscls=2.5
+    #            xdeltaposlgnd  =0.03;  ydeltaposlgnd =-0.002
+    #            legendXstart   =-1.22; legendYstart  =0.88;   legendYstep  =0.06
+    #            legendXstartcls=legendXstart;
+    #            legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
+    #        elif SIZE_REDUCTION == 'sel' :
+    #            zone_stitre = "Selected"
+    #            figsize=(16,12)
+    #            top=0.93; bottom=0.05; left=0.05; right=0.95
+    #            xdeltapos      =0.035; ydeltapos     =-0.002; linewidths   =2.5
+    #            xdeltaposobs   =0.040; ydeltaposobs  =-0.003; linewidthsobs=3
+    #            xdeltaposcls   =0.001; ydeltaposcls  =-0.005; linewidthscls=2.5
+    #            xdeltaposlgnd  =0.040; ydeltaposlgnd =-0.002
+    #            legendXstart   =-0.79; legendYstart  =-0.85;  legendYstep  =0.072
+    #            legendXstartcls=legendXstart;
+    #            legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
+    #        #
+    #        stitre = ("SST {:s} -on zone \"{:s}\"- A.F.C Projection with Models, Observations and Classes ({:s})"+\
+    #                  "\n- {:s}, AFC on {:d} CAH Classes for {} models (in {} AFC clusters) + Obs -").format(fcodage,
+    #                       zone_stitre,DATAMDL,method_cah,nb_class,Nmdlafc,nb_clust)
+    #        #
+    #        ctloop.do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+    #                    indnames=NoAFCindnames,
+    #                    title=stitre,
+    #                    Visu4Art=Visu_UpwellArt,
+    #                    AFCWITHOBS = AFCWITHOBS,
+    #                    figsize=figsize,
+    #                    top=top, bottom=bottom, left=left, right=right,
+    #                    lblfontsize=lblfontsize,       mdlmarkersize=mdlmarkersize,
+    #                    lblfontsizeobs=lblfontsizeobs, obsmarkersize=obsmarkersize,
+    #                    lblfontsizecls=lblfontsizecls, clsmarkersize=clsmarkersize,
+    #                    xdeltapos   =xdeltapos ,   ydeltapos   =ydeltapos,
+    #                    xdeltaposobs=xdeltaposobs, ydeltaposobs=ydeltaposobs,
+    #                    xdeltaposcls=xdeltaposcls, ydeltaposcls=ydeltaposcls,
+    #                    linewidths=linewidths, linewidthsobs=linewidthsobs, linewidthscls=linewidthscls,
+    #                    legendok=True,
+    #                    xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
+    #                    legendXstart=legendXstart,legendYstart=legendYstart,legendYstep=legendYstep,
+    #                    legendprefixlbl="AFC Cluster",
+    #                    legendprefixlblobs="Observations",
+    #                    legendokcls=True,
+    #                    legendXstartcls=legendXstartcls,legendYstartcls=legendYstartcls,
+    #                    legendprefixlblcls="CAH Classes",
+    #                    )
+    #    else :
+    #        stitre = ("AFC Projection - {:s} SST ({:s}). {:s}".format(fcodage,
+    #                  DATAMDL,method_cah));
+    #        lblfontsize=14; linewidths = 2.0
+    #        #
+    #        ctloop.do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+    #                    indnames=NoAFCindnames,
+    #                    title=stitre,
+    #                    AFCWITHOBS = AFCWITHOBS,
+    #                    figsize=(16,12),
+    #                    top=0.93, bottom=0.05, left=0.05, right=0.95,
+    #                    lblfontsize=lblfontsize, linewidths=linewidths,
+    #                    )
+    #    #
+    #    if SAVEFIG : # sauvegarde de la figure
+    #        if Visu_UpwellArt :
+    #            figfile = "FigArt_"
+    #            dpi = FIGARTDPI
+    #        else :
+    #            figfile = "Fig_"
+    #            dpi = FIGDPI
+    #        figfile += "AFC2DProj-{:d}-{:d}_{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(
+    #                pa,po,nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin,Nmdlafc)
+    #        # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
+    #        # eventuellement en PDF, si SAVEPDF active. 
+    #        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
 
     if Visu_Inertie : # Inertie
         ctloop.printwarning([ "    AFC: INERTIE" ])
@@ -1065,10 +1042,100 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
     return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,NoCAHindnames,class_afc,AFCindnames,NoAFCindnames
 #
 #%%
+def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=None,
+                  figdir=".",
+                  figfile=None, dpi=None, figpdf=False,
+                  ) :
+    global SIZE_REDUCTION, AFCWITHOBS
+    global FIGDPI, FIGEXT, Visu_UpwellArt
+    #
+    Nmdlafc = CRi.shape[0]
+    ctloop.printwarning([ "    AFC: 2-D PROJECTION" ])
+    if Visu_UpwellArt :
+        lblfontsize=14;    mdlmarkersize=250;
+        lblfontsizeobs=16; obsmarkersize=320;
+        lblfontsizecls=16; clsmarkersize=280;
+        #
+        if SIZE_REDUCTION == 'All' :
+            zone_stitre = "Large"
+            figsize=(16,12)
+            top=0.93; bottom=0.05; left=0.05; right=0.95
+            xdeltapos      =0.025; ydeltapos     =-0.002; linewidths   =2.5
+            xdeltaposobs   =0.030; ydeltaposobs  =-0.003; linewidthsobs=3
+            xdeltaposcls   =0.001; ydeltaposcls  =-0.003; linewidthscls=2.5
+            xdeltaposlgnd  =0.03;  ydeltaposlgnd =-0.002
+            legendXstart   =-1.22; legendYstart  =0.88;   legendYstep  =0.06
+            legendXstartcls=legendXstart;
+            legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
+        elif SIZE_REDUCTION == 'sel' :
+            zone_stitre = "Selected"
+            figsize=(16,12)
+            top=0.93; bottom=0.05; left=0.05; right=0.95
+            xdeltapos      =0.035; ydeltapos     =-0.002; linewidths   =2.5
+            xdeltaposobs   =0.040; ydeltaposobs  =-0.003; linewidthsobs=3
+            xdeltaposcls   =0.001; ydeltaposcls  =-0.005; linewidthscls=2.5
+            xdeltaposlgnd  =0.040; ydeltaposlgnd =-0.002
+            legendXstart   =-0.79; legendYstart  =-0.85;  legendYstep  =0.072
+            legendXstartcls=legendXstart;
+            legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
+        #
+        stitre = ("SST {:s} -on zone \"{:s}\"- A.F.C Projection with Models, Observations and Classes ({:s})"+\
+                  "\n- {:s}, AFC on {:d} CAH Classes for {} models (in {} AFC clusters) + Obs -").format(fcodage,
+                       zone_stitre,DATAMDL,method_cah,nb_class,Nmdlafc,nb_clust)
+        #
+        ctloop.do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+                    indnames=indnames,
+                    title=stitre,
+                    Visu4Art=Visu_UpwellArt,
+                    AFCWITHOBS = AFCWITHOBS,
+                    figsize=figsize,
+                    top=top, bottom=bottom, left=left, right=right,
+                    lblfontsize=lblfontsize,       mdlmarkersize=mdlmarkersize,
+                    lblfontsizeobs=lblfontsizeobs, obsmarkersize=obsmarkersize,
+                    lblfontsizecls=lblfontsizecls, clsmarkersize=clsmarkersize,
+                    xdeltapos   =xdeltapos ,   ydeltapos   =ydeltapos,
+                    xdeltaposobs=xdeltaposobs, ydeltaposobs=ydeltaposobs,
+                    xdeltaposcls=xdeltaposcls, ydeltaposcls=ydeltaposcls,
+                    linewidths=linewidths, linewidthsobs=linewidthsobs, linewidthscls=linewidthscls,
+                    legendok=True,
+                    xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
+                    legendXstart=legendXstart,legendYstart=legendYstart,legendYstep=legendYstep,
+                    legendprefixlbl="AFC Cluster",
+                    legendprefixlblobs="Observations",
+                    legendokcls=True,
+                    legendXstartcls=legendXstartcls,legendYstartcls=legendYstartcls,
+                    legendprefixlblcls="CAH Classes",
+                    )
+    else :
+        stitre = ("AFC Projection - {:s} SST ({:s}). {:s}".format(fcodage,
+                  DATAMDL,method_cah));
+        lblfontsize=14; linewidths = 2.0
+        #
+        ctloop.do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+                    indnames=indnames,
+                    title=stitre,
+                    AFCWITHOBS = AFCWITHOBS,
+                    figsize=(16,12),
+                    top=0.93, bottom=0.05, left=0.05, right=0.95,
+                    lblfontsize=lblfontsize, linewidths=linewidths,
+                    )
+    #
+    if SAVEFIG : # sauvegarde de la figure
+        if figfile is None :
+            figfile = "Fig_"
+        if dpi is None :
+            dpi = FIGDPI
+        figfile += "AFC2DProj-{:d}-{:d}_{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(
+                pa,po,nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin,Nmdlafc)
+        #
+        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
+#
+#%%
 def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tmdlname,
                           nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs,
                           varnames=None,
                           figdir=".",
+                          figfile=None, dpi=None, figpdf=False,
                           wvmin=None,wvmax=None,
                           ) :
     #
@@ -1084,7 +1151,9 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
         misttitlelabel = TMixtMdlLabel+" (Big Zone)"
     elif SIZE_REDUCTION == 'sel' :
         misttitlelabel = TMixtMdlLabel+" (Small Zone)"
-    mistfilelabel = misttitlelabel.replace(' ','').replace('(','').replace(')','')
+    #print("misttitlelabel AVANT> {}".format(misttitlelabel))
+    mistfilelabel = misttitlelabel.replace(' ','').replace(':','-').replace('(','_').replace(')','')
+    #print("mistfilelabel APRES>  {}".format(mistfilelabel))
     #------------------------------------------------------------------------
     # PZ: BEST AFC CLUSTER:
     #TMixtMdl = []
@@ -1116,15 +1185,14 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
                                         fsizetitre=14, ytitre=1.01, nticks=nticks);
     #
     if SAVEFIG : # sauvegarde de la figure
-        if Visu_UpwellArt :
-            figfile = "FigArt_"
-            dpi = FIGARTDPI
-        else :
+        if figfile is None :
             figfile = "Fig_"
+        if dpi is None :
             dpi = FIGDPI
         figfile += "MeanModel_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
         figfile += "_{:s}{:s}_{:d}Class".format(fprefixe,fshortcode,nb_class)
-        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        #
+        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
 
     # Affichage du moyen for CT
     if SIZE_REDUCTION == 'All' :
@@ -1193,6 +1261,15 @@ def main(argv):
     global SAVEMAP, MAPSDIR, FIGSDIR, WITHANO
     #
     global fprefixe, tpgm0, blockshow, fcodage, fshortcode
+    global nFigArt
+    #
+    # Globals necessaires a la generalisation manuelle ...
+    global nb_class, eqcmap, ccmap
+    global sst_obs_coded, Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
+    global sMapO, lon, lat, ilon, ilat, varnames, wvmin, wvmax
+    global AFCindnames, NoAFCindnames, TDmdl4CT, Tmdlname
+    global isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir
+    global class_afc, list_of_plot_colors
     #
     caseconfig = ''
     caseconfig_valid_set = ( 'All', 'sel' )   # toutes en minuscules svp !
@@ -1235,11 +1312,11 @@ def main(argv):
     #                             INITIALISATION
     #%% DECOMPRESSER / COMPRESSER la ligne suivante selon si executione MANUELLE UN A UN des bloques du MAIN ou complete avec appel externe ... 
     if manualmode :
-        caseconfig='sel' # ou 'all'
+        caseconfig='all' # ou 'sel'
     #
     print("Case config is '{:s}'".format(caseconfig))
     pcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
-        TM_label_base, case_label_base, obs_data_path, generalisationok,\
+        TM_label_base, case_label_base, obs_data_path, \
         tseed, case_name_base, casetime, casetimelabel, casetimeTlabel, varnames,\
         list_of_plot_colors  =  ctloop_init(case=caseconfig,verbose=verbose)
     #
@@ -1357,9 +1434,18 @@ def main(argv):
         stitre = "Observations, Monthly Mean by Class (method: {:s})".format(method_cah)
         fileextbis = "_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(fprefixe,
                       fshortcode,andeb,anfin,data_label_base)
+        if Visu_UpwellArt :
+            figfile = "FigArt{:02d}_".format(nFigArt+1); nFigArt += 1;
+            dpi     = FIGARTDPI
+            figpdf  = True
+        else :
+            figfile = "Fig_"
+            dpi     = FIGDPI
+            figpdf  = False
         plot_mean_profil_by_class(sst_obs_coded,nb_class,classe_Dobs,varnames=varnames,
                                   title=stitre,
                                   fileext=fileextbis, figdir=case_figs_dir,
+                                  figfile=figfile, dpi=dpi, figpdf=figpdf,
                                   pcmap=pcmap,
                                   figsize=(12,6),
                                   wspace=0.0, hspace=0.0, top=0.95, bottom=0.08, left=0.06, right=0.92,
@@ -1405,8 +1491,10 @@ def main(argv):
 
     fileextIV = "_{:s}{:s}_{:s}{:s}".format(fprefixe,SIZE_REDUCTION,fshortcode,method_cah)
     fileextIV79 = "_{:s}{:s}_{:s}".format(fprefixe,SIZE_REDUCTION,fshortcode)
-    TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb, TTperf, Nmdlok, NDmdl = ctloop_model_traitement(
-                    sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
+    #
+    Tperfglob, Tperfglob_Qm, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb, TTperf, \
+        Nmdlok, NDmdl = ctloop_model_traitement(sst_obs_coded,Dobs,XC_Ogeo,sMapO,
+                    lon,lat,ilat,ilon,
                     nb_class,class_ref,classe_Dobs,NDobs,fond_C,
                     isnanobs,isnumobs,Lobs,Cobs,list_of_plot_colors,
                     Sfiltre=Sfiltre,
@@ -1423,12 +1511,37 @@ def main(argv):
                     OK108=OK108,
                     OK109=OK109,
                     )
-    #
+    #%%
+    # -------------------------------------------------------------------------
+    ctloop.printwarning([ "    MODELS: APRES SECOND LOOP" ])
+    # Figure a ploter apres le deuxieme loop
+    if Visu_preACFperf : # Tableau des performances en figure de courbes
+        stitre = "Perf Curves"
+        stitre += " SST {:s} ({:d}-{:d}) - {:d} Classes -  Classification Indices of Completed Models (vs Obs) ({:d} models)".format(fcodage,andeb,anfin,nb_class,Nmdlok)
+        ctloop.do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_colors,
+                                           title=stitre,
+                                           TypePerf=TypePerf,fcodage=fcodage)
+        #
+        if SAVEFIG :
+            figfile = "Fig{:s}_perf-curves-by_model_{:d}Mdl_{:d}-mod".format(fileextIV,nb_class,Nmdlok)
+            # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
+            # et eventuellement en PDF, si SAVEPDF active. 
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+    
     if STOP_BEFORE_AFC :
         plt.show(); sys.exit(0)
     #
     #%% #########################################################################
     # Traitement des modeles
+    if Visu_UpwellArt :
+        figfile = "FigArt{:02d}_".format(nFigArt+1); nFigArt += 1;
+        dpi     = FIGARTDPI
+        figpdf  = True
+    else :
+        figfile = "Fig_"
+        dpi     = FIGDPI
+        figpdf  = False
+    #
     VAPT, F1U, F1sU, F2V, CRi, CAj, CAHindnames, NoCAHindnames, class_afc,\
         AFCindnames,NoAFCindnames = ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb,
                            nb_class, nb_clust, isnumobs, isnanobs, class_ref, classe_Dobs,
@@ -1437,13 +1550,58 @@ def main(argv):
                            AFC_Visu_Clust_Mdl_Moy_4CT=AFC_Visu_Clust_Mdl_Moy_4CT,
                            ccmap=ccmap,
                            figdir=case_figs_dir,
+                           figfile=figfile, dpi=dpi, figpdf=figpdf,
                            )
+    #
+    #
+    #%% -------------------------------------------------------------------------
+    # PLOT DE PROJECTION AFC
+    if Visu_UpwellArt :
+        figfile = "FigArt{:02d}_".format(nFigArt+1); nFigArt += 1;
+        dpi     = FIGARTDPI
+        figpdf  = True
+    else :
+        figfile = "Fig_"
+        dpi     = FIGDPI
+        figpdf  = False
+    #
+    plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=NoAFCindnames,
+                  figdir=case_figs_dir,
+                  figfile=figfile, dpi=dpi, figpdf=figpdf,
+                  )
     #
     if STOP_BEFORE_GENERAL :
         plt.show(); sys.exit(0)
     #
+    #%%
+    #___________
+    print(("\n{} {},\n{} {},\n{} {},\n{} {},\n{} {}\n").format(
+                   "SIZE_REDUCTION ".ljust(18,'.'),SIZE_REDUCTION,
+                   "WITHANO ".ljust(18,'.'),WITHANO,
+                   "UISST ".ljust(18,'.'),UISST,
+                   "climato ".ljust(18,'.'),climato,
+                   "NIJ ".ljust(18,'.'),NIJ))
+
+    ctloop.printwarning([ "    END: WHOLE TIME CODE '{:s}' IN {:.2f} SECONDS".format(os.path.basename(sys.argv[0]),
+                         time()-tpgm0) ])
+    #
+    #======================================================================
+    #
+    return
+#
+def generalisation_tmp() :
     #%% #########################################################################
-    if generalisationok :
+    global nb_class, eqcmap, ccmap
+    global sst_obs_coded, Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
+    global sMapO, lon, lat, ilon, ilat, varnames, wvmin, wvmax
+    global AFCindnames, NoAFCindnames, TDmdl4CT, Tmdlname
+    global isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir
+    global class_afc, list_of_plot_colors
+
+    generalisation_ok = True
+    generalisafcclust_ok = True
+    #%%
+    if generalisation_ok :
         #**************************************************************************
         #.............................. GENERALISATION ............................
         #
@@ -1490,24 +1648,35 @@ def main(argv):
             #            'IPSL-CM5A-MR', 'HadCM3', 'CESM1-CAM5', 'CESM1-CAM5-1-FV2',
             #            'ACCESS1-0']
         #
+        if Visu_UpwellArt :
+            figfile = "FigArt{:02d}_".format(nFigArt+1); nFigArt += 1;
+            dpi     = FIGARTDPI
+            figpdf  = True
+        else :
+            figfile = "Fig_"
+            dpi     = FIGDPI
+            figpdf  = False
+        # global sst_obs_coded,Dobs,XC_Ogeo, NDobs,fond_C, pcmap, sMapO, lon,lat,ilat,ilon, TDmdl4CT, Tmdlname, nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, class_afc, varnames, case_figs_dir, wvmin, wvmax, list_of_plot_colors, obs_data_path
         ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tmdlname,
                           nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs,
                           varnames=varnames,
                           figdir=case_figs_dir,
+                          figfile=figfile, dpi=dpi, figpdf=figpdf,
                           wvmin=wvmin,wvmax=wvmax,
                           )
         #
-    if generalisationok :
+    #%%
+    if generalisafcclust_ok :
         #
-        #%%  Generalisation d'une ensemble ou cluster precis
+        #  Generalisation d'une ensemble ou cluster precis
         for kclust in np.arange(1,nb_clust + 1) :
             #kclust = 1
             SfiltredMod = AFCindnames[np.where(class_afc==kclust)[0]]
             print("--Generalizing for AFC Cluster: {:d} with models:\n  {}".format(kclust,SfiltredMod))
             stitre = "AFC Cluster: {:d}".format(kclust)
-            fileextIV = "_Clust{:d}-{:s}{:s}_{:s}{:s}".format(kclust,fprefixe,SIZE_REDUCTION,fshortcode,method_cah)
-            fileextIV79 = "_Clust{:d}-{:s}{:s}_{:s}".format(kclust,fprefixe,SIZE_REDUCTION,fshortcode)
-            xTDmdl4CT, xTmdlname, xTmdlnamewnb, xTmdlonlynb, xTTperf, xNmdlok,\
+            fileextIV = "_CLUST{:d}-{:s}{:s}_{:s}{:s}".format(kclust,fprefixe,SIZE_REDUCTION,fshortcode,method_cah)
+            fileextIV79 = "_CLUST{:d}-{:s}{:s}_{:s}".format(kclust,fprefixe,SIZE_REDUCTION,fshortcode)
+            xTperfglob, xTperfglob_Qm, xTDmdl4CT, xTmdlname, xTmdlnamewnb, xTmdlonlynb, xTTperf, xNmdlok,\
                 xNDmdl = ctloop_model_traitement(
                             sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
                             nb_class,class_ref,classe_Dobs,NDobs,fond_C,
@@ -1538,25 +1707,7 @@ def main(argv):
                               wvmin=wvmin,wvmax=wvmax,
                               )
     #
-    #%%
-    #___________
-    print(("\n{} {},\n{} {},\n{} {},\n{} {},\n{} {}\n").format(
-                   "SIZE_REDUCTION ".ljust(18,'.'),SIZE_REDUCTION,
-                   "WITHANO ".ljust(18,'.'),WITHANO,
-                   "UISST ".ljust(18,'.'),UISST,
-                   "climato ".ljust(18,'.'),climato,
-                   "NIJ ".ljust(18,'.'),NIJ))
 
-    ctloop.printwarning([ "    END: WHOLE TIME CODE '{:s}' IN {:.2f} SECONDS".format(os.path.basename(sys.argv[0]),
-                         time()-tpgm0) ])
-    #
-    #======================================================================
-    #
-    return
-
-    ctloop_main(case=caseconfig,verbose=verbose)
-    #
-    return
 #%%
 if __name__ == "__main__":
     main(sys.argv[1:])

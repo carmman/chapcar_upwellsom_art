@@ -2,10 +2,24 @@
 # =============================================================================
 # Programme ctLoopAnyS (Version pour Article)
 #
-#
-#
+#  ***************************************************************************
+# ( VIEILLE VERSION, NE PAS UTILISER                                          )
+# ( CE MODULE A ETE REMPLACE PAR CtLoopMain.py et CtLoopTools.py              )
+#  ***************************************************************************
 #
 # =============================================================================
+
+print("\n *** {} ***".format("".center(75,'*')))
+print(" *** {} ***".format("".center(75)))
+print(" *** {} ***".format("VIEILLE VERSION, NE PAS UTILISER".center(75)))
+print(" *** {} ***".format("CE PROGRAMME/FICHIER A ETE REMPLACE PAR".center(75)))
+print(" *** {} ***".format("ctLoopMain.py et ctLoopTools.py".center(75)))
+print(" *** {} ***".format("".center(75)))
+print(" *** {} ***\n".format("".center(75,'*')))
+raise
+
+
+
 import sys
 import os
 import time as time
