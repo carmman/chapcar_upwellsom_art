@@ -1261,7 +1261,6 @@ def main(argv):
     global SAVEMAP, MAPSDIR, FIGSDIR, WITHANO
     #
     global fprefixe, tpgm0, blockshow, fcodage, fshortcode
-    global nFigArt
     #
     # Globals necessaires a la generalisation manuelle ...
     global nb_class, eqcmap, ccmap, nFigArt
