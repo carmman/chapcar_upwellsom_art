@@ -1264,7 +1264,7 @@ def main(argv):
     global nFigArt
     #
     # Globals necessaires a la generalisation manuelle ...
-    global nb_class, eqcmap, ccmap
+    global nb_class, eqcmap, ccmap, nFigArt
     global sst_obs_coded, Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
     global sMapO, lon, lat, ilon, ilat, varnames, wvmin, wvmax
     global AFCindnames, NoAFCindnames, TDmdl4CT, Tmdlname
@@ -1587,11 +1587,18 @@ def main(argv):
     #
     #======================================================================
     #
+    #%%
+    generalisation_ok = True
+    #**************************************************************************
+    #.............................. GENERALISATION ............................
+    if generalisation_ok :
+        generalisation_tmp()
+    
     return
 #
 def generalisation_tmp() :
     #%% #########################################################################
-    global nb_class, eqcmap, ccmap
+    global nb_class, eqcmap, ccmap, nFigArt
     global sst_obs_coded, Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
     global sMapO, lon, lat, ilon, ilat, varnames, wvmin, wvmax
     global AFCindnames, NoAFCindnames, TDmdl4CT, Tmdlname
