@@ -18,6 +18,7 @@ import sys, getopt, os
 from   time  import time
 import matplotlib.pyplot as plt
 from   matplotlib import cm
+from   mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import pickle
 from   scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 
@@ -63,7 +64,7 @@ def ctloop_init(case='None',verbose=False):
            STOP_BEFORE_AFC, STOP_BEFORE_GENERAL
     global Show_ObsSTD, Show_ModSTD, Visu_ObsStuff, Visu_CTStuff, Visu_Dendro, Visu_preACFperf,\
            Visu_AFC_in_one, Visu_afcnu_det, Visu_Inertie
-    global Visu_UpwellArt, FIGARTDPI, ysstitre, same_minmax_ok, mdlnamewnumber_ok, onlymdlumberAFC_ok
+    global Visu_UpwellArt, FIGARTDPI, ysstitre, same_minmax_ok, mdlnamewnumber_ok, onlymdlumberAFC_ok, onlymdlumberAFCdendro_ok
     #
     # Variables globales declarees localement (les autres variables declarrees ici
     # seront retounees en argument de sortie (fonction return))
@@ -498,6 +499,70 @@ def plot_ct_dendro(sMapO, nb_class, datalinkg=None, title="SOM Map Dendrogram",
     plt.show(block=blockshow)
     #
     return
+
+#%%
+def plot_geo_classes(lon,lat,XC_ogeo,nb_class,
+                     nticks=2,
+                     title="Obs Class Geographical Representation", fileext="", figdir=".",
+                     figfile=None, dpi=None, figpdf=False,
+                     ccmap=cm.jet,
+                     figsize=(9,6),
+                     top=0.94, bottom=0.08, left=0.06, right=0.925,
+                     ) :
+    #
+    global SAVEFIG, FIGDPI, FIGEXT, FIGARTDPI, SAVEPDF, VFIGEXT, blockshow
+    #
+    coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
+    ticks  = coches + 0.5;            # [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]
+    bounds = np.arange(nb_class+1)+1; # pour bounds faut une frontière de plus [1, 2, 3, 4, 5, 6, 7]
+
+    fig = plt.figure(figsize=figsize)
+    fignum = fig.number # numero de figure en cours ...
+    fig.subplots_adjust(top=top, bottom=bottom, left=left, right=right)
+    if lat[0] < lat[1] :
+        origin = 'lower'
+    else :
+        origin = 'upper'
+    fig, ax = plt.subplots(nrows=1, ncols=1, num=fignum,facecolor='w')
+    ims = ax.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class,origin=origin);
+    if 0:
+        plt.xticks(np.arange(0,Cobs,nticks), lon[np.arange(0,Cobs,nticks)], rotation=45, fontsize=10)
+        plt.yticks(np.arange(0,Lobs,nticks), lat[np.arange(0,Lobs,nticks)], fontsize=10)
+    else :
+        #plt.xticks(np.arange(-0.5,Cobs,lolast), np.round(lon[np.arange(0,Cobs,lolast)]).astype(int), fontsize=12)
+        #plt.yticks(np.arange(0.5,Lobs,lolast), np.round(lat[np.arange(0,Lobs,lolast)]).astype(int), fontsize=12)
+        ctloop.set_lonlat_ticks(lon,lat,step=nticks,fontsize=10,verbose=False,lengthen=True)
+        #set_lonlat_ticks(lon,lat,fontsize=10,londecal=0,latdecal=0,roundlabelok=False,lengthen=False)
+    #plt.axis('tight')
+    plt.xlabel('Longitude', fontsize=12); plt.ylabel('Latitude', fontsize=12)
+    plt.title(title,fontsize=16); 
+    #grid(); # for easier check
+    # Colorbar
+    #cbar_ax,kw = cb.make_axes(ax,orientation="vertical",fraction=0.04,pad=0.03,aspect=20)
+    #fig.colorbar(ims, cax=cbar_ax, ticks=ticks,boundaries=bounds,values=bounds, **kw);
+    ax_divider = make_axes_locatable(ax)
+    cax = ax_divider.append_axes("right", size="4%", pad="3%")
+    hcb = plt.colorbar(ims,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
+    cax.set_yticklabels(coches);
+    cax.tick_params(labelsize=12)
+    cax.set_ylabel('Class',size=14)
+
+    #hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
+    #hcb.set_ticklabels(coches);
+    #hcb.ax.tick_params(labelsize=12)
+    #hcb.set_label('Class',size=14)
+    if SAVEFIG : # sauvegarde de la figure
+        if figfile is None :
+            figfile = "Fig_"
+        if dpi is None :
+            dpi = FIGDPI
+        figfile += "ObsGeo{:d}Class_{:s}".format(nb_class,fileext)
+        #
+        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
+    #
+    plt.show(block=blockshow)
+    #
+    return
 #%%
 def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
                               title="figart1", fileext="", figdir=".",
@@ -561,6 +626,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
                             nb_class,class_ref,classe_Dobs,NDobs,fond_C,
                             isnanobs,isnumobs,Lobs,Cobs,list_of_plot_colors,
                             varnames=None, figdir=".", commonfileext="", commonfileext79="", 
+                            data_period_ident="raverage_1975_2005",
                             pair_nsublc=None,
                             subtitle=None,
                             Sfiltre=None, eqcmap=cm.jet,ccmap=cm.jet,pcmap=None,
@@ -575,7 +641,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
                             OK109=False,
                             ) :
     #
-    global SIZE_REDUCTION, DATAMDL, MDLCOMPLETION, NIJ, FONDTRANS 
+    global SIZE_REDUCTION, MDLCOMPLETION, NIJ, FONDTRANS 
     #global OK101, OK102, OK104, OK105, OK106, OK107, OK108, OK109
     global Tinstit, Tmodels, Tnmodel, TypePerf, mdlnamewnumber_ok
     #
@@ -590,15 +656,16 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     #                        MODELS STUFFS START HERE
     #======================================================================
     ctloop.printwarning([ "    MODEL: INITIALIZATION AND FIRST LOOP" ])
+    #
     TDmdl4CT0,Tmdlname0,Tmdlnamewnb0,Tmdlonlynb0,Tperfglob4Sort0,Tclasse_DMdl0,\
-        Tmoymensclass0,Dmdl,NDmdl,Nmdlok,Smoy_101,Tsst_102 = ctloop.do_models_startnloop(sMapO,
+        Tmoymensclass0,NDmdl,Nmdlok,Smoy_101,Tsst_102 = ctloop.do_models_startnloop(sMapO,
                                 Tmodels,Tinstit,ilat,ilon,
                                 isnanobs,isnumobs,nb_class,class_ref,classe_Dobs,
                                 Tnmodel=Tnmodel,
                                 Sfiltre=Sfiltre,
                                 TypePerf=TypePerf,
                                 obs_data_path=obs_data_path,
-                                DATAMDL=DATAMDL,
+                                data_period_ident=data_period_ident,
                                 MDLCOMPLETION=MDLCOMPLETION,
                                 SIZE_REDUCTION=SIZE_REDUCTION,
                                 NIJ=NIJ,
@@ -621,7 +688,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     stitre = "Mdl_MOY{:}\n({:d} mod.)".format(Tnames_,len(Tnames_))
     if subtitle is not None :
         stitre += " -"+subtitle+"- "
-    stitre += " {:s}SST({:s})".format(fcodage,DATAMDL)
+    stitre += " {:s}SST({:s})".format(fcodage,data_period_ident)
     #
     ctloop.do_models_plot101et102_past_fl(Nmdlok,Lobs,Cobs,
                                           isnumobs,isnanobs,
@@ -637,7 +704,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     if OK101 :
         if SAVEFIG : # sauvegarde de la figure
             plt.figure(101);
-            figfile = "Fig-101{:s}{:d}Mdl_MOY_{:d}-mod".format(commonfileext,nb_class,Nmdlok)
+            figfile = "Fig-101{:s}{:d}Mdl_MOY-{:s}_{:d}-mod".format(commonfileext,nb_class,data_period_ident,Nmdlok)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -645,7 +712,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     if OK102 : 
         if SAVEFIG :
             plt.figure(102);
-            figfile = "Fig-102{:s}{:d}Mdl_ECRTYPE_{:d}-mod".format(commonfileext,nb_class,Nmdlok)
+            figfile = "Fig-102{:s}{:d}Mdl_ECRTYPE-{:s}_{:d}-mod".format(commonfileext,nb_class,data_period_ident,Nmdlok)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -681,38 +748,38 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
         if subtitle is not None :
             suptitle104 += " -"+subtitle+"- "
         suptitle104 += " (%sSST(%s)).  Classification of Completed Models (vs Obs) (%d models)" \
-                        %(fcodage,DATAMDL,Nmdlok);
+                        %(fcodage,data_period_ident,Nmdlok);
     if OK105 : 
         suptitle105 = "F105:"
         if subtitle is not None :
             suptitle105 += " -"+subtitle+"- "
         suptitle105 += " (%sSST(%s)).  Classification of Completed Models (vs Obs) (%d models)" \
-                        %(fcodage,DATAMDL,Nmdlok);
+                        %(fcodage,data_period_ident,Nmdlok);
     if OK106 :
         suptitle106 = "F106: MOY - MoyMensClass"
         if subtitle is not None :
             suptitle106 += " -"+subtitle+"- "
         suptitle106 += " (%sSST(%s)).  Classification of Completed Models (vs Obs) (%d models)" \
-                        %(fcodage,DATAMDL,Nmdlok);
+                        %(fcodage,data_period_ident,Nmdlok);
     if OK107 :
         suptitle107 = "F107: VARiance"
         if subtitle is not None :
             suptitle107 += " -"+subtitle+"- "
         suptitle107 += "VARiance(%sSST(%s)). Variance (by pixel) on Completed Models (%d models)" \
-                        %(fcodage,DATAMDL,Nmdlok);
+                        %(fcodage,data_period_ident,Nmdlok);
     if OK108 :
         suptitle108 = "F108: MCUM"
         if subtitle is not None :
             suptitle108 += " -"+subtitle+"- "
         suptitle108 += " (%sSST(%s)).  Classification of Completed Models (vs Obs) (%d models)" \
-                        %(fcodage,DATAMDL,Nmdlok);
+                        %(fcodage,data_period_ident,Nmdlok);
     #
     if OK109 :
         suptitle109 = "F109: VCUM"
         if subtitle is not None :
             suptitle109 += " -"+subtitle+"- "
         suptitle109 += " (%sSST(%s)). Variance sur la Moyenne Cumulée de Modeles complétés (%d models)" \
-                        %(fcodage,DATAMDL,Nmdlok);
+                        %(fcodage,data_period_ident,Nmdlok);
     if SIZE_REDUCTION == 'All' :
         figsize=(18,11);
         wspace=0.01; hspace=0.15; top=0.94; bottom=0.05; left=0.01; right=0.99;
@@ -749,7 +816,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     if OK104 :
         if SAVEFIG : # sauvegarde de la figure
             plt.figure(104);
-            figfile = "Fig-104{:s}{:d}MdlvsObstrans_{:d}-mod".format(commonfileext,nb_class,Nmdlok)
+            figfile = "Fig-104{:s}{:d}MdlvsObstrans-{:s}_{:d}-mod".format(commonfileext,nb_class,data_period_ident,Nmdlok)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -757,7 +824,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     if OK105 : 
         if SAVEFIG :
             plt.figure(105);
-            figfile = "Fig-105{:s}{:d}Mdl_{:d}-mod".format(commonfileext,nb_class,Nmdlok)
+            figfile = "Fig-105{:s}{:d}Mdl-{:s}_{:d}-mod".format(commonfileext,nb_class,data_period_ident,Nmdlok)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -765,7 +832,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     if OK106 :
         if SAVEFIG :
             plt.figure(106);
-            figfile = "Fig-106{:s}{:d}moymensclass_{:d}-mod".format(commonfileext,nb_class,Nmdlok)
+            figfile = "Fig-106{:s}{:d}moymensclass-{:s}_{:d}-mod".format(commonfileext,nb_class,data_period_ident,Nmdlok)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -773,7 +840,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     if OK107 :
         if SAVEFIG :
             plt.figure(107);
-            figfile = "Fig-107{:s}VAR_Mdl_{:d}-mod".format(commonfileext79,Nmdlok)
+            figfile = "Fig-107{:s}VAR_Mdl-{:s}_{:d}-mod".format(commonfileext,data_period_ident,Nmdlok)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -781,7 +848,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     if MCUM>0 and OK108 :
         if SAVEFIG :
             plt.figure(108);
-            figfile = "Fig-108{:s}MCUM_{:d}Mdl_{:d}-mod".format(commonfileext,nb_class,Nmdlok)
+            figfile = "Fig-108{:s}MCUM_{:d}Mdl-{:s}_{:d}-mod".format(commonfileext,nb_class,data_period_ident,Nmdlok)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -789,7 +856,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     if MCUM>0 and OK109 :
         if SAVEFIG :
             plt.figure(109);
-            figfile = "Fig-109{:s}VCUM_Mdl_{:d}-mod".format(commonfileext79,Nmdlok)
+            figfile = "Fig-109{:s}VCUM_Mdl-{:s}_{:d}-mod".format(commonfileext,data_period_ident,Nmdlok)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -807,9 +874,28 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
                        figdir=".",
                        figfile=None, dpi=None, figpdf=False,
                        ) :
+    '''
+    Analyse Factorielle des Correspondances (Correspondence Analysis)
+    
+    Correspondence analysis (CA) or reciprocal averaging is a multivariate
+    statistical technique proposed[1] by Herman Otto Hartley (Hirschfeld)
+    and later developed by Jean-Paul Benzécri. It is conceptually similar
+    to principal component analysis, but applies to categorical rather than
+    continuous data. In a similar manner to principal component analysis,
+    it provides a means of displaying or summarising a set of data in
+    two-dimensional graphical form.
+    
+    All data should be nonnegative and on the same scale for CA to be
+    applicable, keeping in mind that the method treats rows and columns
+    equivalently. It is traditionally applied to contingency tables — CA
+    decomposes the chi-squared statistic associated with this table into
+    orthogonal factors. Because CA is a descriptive technique, it can be
+    applied to tables whether or not the chi-2 statistic is appropriate.
+    
+    '''
     #
     global SIZE_REDUCTION, DATAMDL, NIJ, NBCOORDAFC4CAH, AFCWITHOBS, CAHWITHOBS
-    global TypePerf, ysstitre, mdlnamewnumber_ok, onlymdlumberAFC_ok
+    global TypePerf, ysstitre, mdlnamewnumber_ok, onlymdlumberAFC_ok, onlymdlumberAFCdendro_ok
     #
     global fshortcode, fprefixe, fcodage, blockshow
     global SAVEFIG, FIGDPI, FIGEXT
@@ -817,8 +903,10 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
     Nmdlafc = Tmdlname.shape[0]
     ctloop.printwarning([ "","CALCUL DE L'A.F.C".center(75),""])
     #
-    VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,NoCAHindnames,figclustmoynum,class_afc,\
-        AFCindnames,NoAFCindnames = ctloop.do_afc(NIJ,
+#
+    VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,CAHindnameswnb,NoCAHindnames,\
+        figclustmoynum,class_afc,AFCindnames,AFCindnameswnb,\
+        NoAFCindnames = ctloop.do_afc(NIJ,
                           sMapO, TDmdl4CT, lon, lat,
                           Tmdlname, Tmdlnamewnb, Tmdlonlynb, TTperf,
                           Nmdlok, Lobs, Cobs, NDmdl, Nobsc,
@@ -883,17 +971,23 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
             bottom=0.27; labelsize=10
             axeshiftfactor=100 # decalage des axes deu dendrogramme pour poivoir voir les modeles qui sont identiques et qui se melangent a l'axe sinon
         else:
-            if onlymdlumberAFC_ok :
+            if onlymdlumberAFCdendro_ok :
                 prtlbl="MdlNo"
                 figsize=(14,6);
                 indnames = NoCAHindnames;
                 bottom=0.13; labelsize=12
                 axeshiftfactor=150 # decalage des axes deu dendrogramme pour poivoir voir les modeles qui sont identiques et qui se melangent a l'axe sinon
-            else :
+            elif mdlnamewnumber_ok :
                 prtlbl="MdlNoAndName"
                 figsize=(14,7);
-                indnames = NoCAHindnames;
+                indnames = CAHindnameswnb;
                 bottom=0.31; labelsize=10
+                axeshiftfactor=100 # decalage des axes deu dendrogramme pour poivoir voir les modeles qui sont identiques et qui se melangent a l'axe sinon
+            else :
+                prtlbl="MdlName"
+                figsize=(14,7);
+                indnames = CAHindnames;
+                bottom=0.25; labelsize=10
                 axeshiftfactor=100 # decalage des axes deu dendrogramme pour poivoir voir les modeles qui sont identiques et qui se melangent a l'axe sinon
         coord2take = np.arange(NBCOORDAFC4CAH); # Coordonnées de l'AFC àprendre pour la CAH
         stitre = "AFC Dendrogram : Coord(%s). Method=%s, Metric=%s, nb_clust=%d"%\
@@ -909,7 +1003,7 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
                       ylabel="AFC inter cluster distance ({}/{})".format(method_afc,dist_afc),
                       title=stitre,
                       titlefnsize=18, ytitle=1.02, labelfnsize=12,
-                      labelrotation=-90, labelsize=labelsize,
+                      labelrotation=90, labelsize=labelsize,
                       axeshiftfactor=axeshiftfactor,
                       figsize=figsize,
                       wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right
@@ -923,97 +1017,6 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
             ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT)
     #
     plt.show(block=blockshow)
-    #
-    #    ctloop.printwarning([ "    AFC: DENDROGRAM" ])
-    #    # dendrogramme --------------------------------------------------------
-    #    ctloop.do_plot_afc_dendro(F1U,F1sU,nb_clust,CAHindnames,NoCAHindnames,
-    #                              NBCOORDAFC4CAH,Nmdlok,
-    #                              AFCWITHOBS = AFCWITHOBS,CAHWITHOBS = CAHWITHOBS,
-    #                              )
-    #
-    #if Visu_AFC_in_one or Visu_UpwellArt: # plot afc en une seule image
-    #    ctloop.printwarning([ "    AFC: 2-D PROJECTION" ])
-    #    if Visu_UpwellArt :
-    #        lblfontsize=14;    mdlmarkersize=250;
-    #        lblfontsizeobs=16; obsmarkersize=320;
-    #        lblfontsizecls=16; clsmarkersize=280;
-    #        #
-    #        if SIZE_REDUCTION == 'All' :
-    #            zone_stitre = "Large"
-    #            figsize=(16,12)
-    #            top=0.93; bottom=0.05; left=0.05; right=0.95
-    #            xdeltapos      =0.025; ydeltapos     =-0.002; linewidths   =2.5
-    #            xdeltaposobs   =0.030; ydeltaposobs  =-0.003; linewidthsobs=3
-    #            xdeltaposcls   =0.001; ydeltaposcls  =-0.003; linewidthscls=2.5
-    #            xdeltaposlgnd  =0.03;  ydeltaposlgnd =-0.002
-    #            legendXstart   =-1.22; legendYstart  =0.88;   legendYstep  =0.06
-    #            legendXstartcls=legendXstart;
-    #            legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
-    #        elif SIZE_REDUCTION == 'sel' :
-    #            zone_stitre = "Selected"
-    #            figsize=(16,12)
-    #            top=0.93; bottom=0.05; left=0.05; right=0.95
-    #            xdeltapos      =0.035; ydeltapos     =-0.002; linewidths   =2.5
-    #            xdeltaposobs   =0.040; ydeltaposobs  =-0.003; linewidthsobs=3
-    #            xdeltaposcls   =0.001; ydeltaposcls  =-0.005; linewidthscls=2.5
-    #            xdeltaposlgnd  =0.040; ydeltaposlgnd =-0.002
-    #            legendXstart   =-0.79; legendYstart  =-0.85;  legendYstep  =0.072
-    #            legendXstartcls=legendXstart;
-    #            legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
-    #        #
-    #        stitre = ("SST {:s} -on zone \"{:s}\"- A.F.C Projection with Models, Observations and Classes ({:s})"+\
-    #                  "\n- {:s}, AFC on {:d} CAH Classes for {} models (in {} AFC clusters) + Obs -").format(fcodage,
-    #                       zone_stitre,DATAMDL,method_cah,nb_class,Nmdlafc,nb_clust)
-    #        #
-    #        ctloop.do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
-    #                    indnames=NoAFCindnames,
-    #                    title=stitre,
-    #                    Visu4Art=Visu_UpwellArt,
-    #                    AFCWITHOBS = AFCWITHOBS,
-    #                    figsize=figsize,
-    #                    top=top, bottom=bottom, left=left, right=right,
-    #                    lblfontsize=lblfontsize,       mdlmarkersize=mdlmarkersize,
-    #                    lblfontsizeobs=lblfontsizeobs, obsmarkersize=obsmarkersize,
-    #                    lblfontsizecls=lblfontsizecls, clsmarkersize=clsmarkersize,
-    #                    xdeltapos   =xdeltapos ,   ydeltapos   =ydeltapos,
-    #                    xdeltaposobs=xdeltaposobs, ydeltaposobs=ydeltaposobs,
-    #                    xdeltaposcls=xdeltaposcls, ydeltaposcls=ydeltaposcls,
-    #                    linewidths=linewidths, linewidthsobs=linewidthsobs, linewidthscls=linewidthscls,
-    #                    legendok=True,
-    #                    xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
-    #                    legendXstart=legendXstart,legendYstart=legendYstart,legendYstep=legendYstep,
-    #                    legendprefixlbl="AFC Cluster",
-    #                    legendprefixlblobs="Observations",
-    #                    legendokcls=True,
-    #                    legendXstartcls=legendXstartcls,legendYstartcls=legendYstartcls,
-    #                    legendprefixlblcls="CAH Classes",
-    #                    )
-    #    else :
-    #        stitre = ("AFC Projection - {:s} SST ({:s}). {:s}".format(fcodage,
-    #                  DATAMDL,method_cah));
-    #        lblfontsize=14; linewidths = 2.0
-    #        #
-    #        ctloop.do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
-    #                    indnames=NoAFCindnames,
-    #                    title=stitre,
-    #                    AFCWITHOBS = AFCWITHOBS,
-    #                    figsize=(16,12),
-    #                    top=0.93, bottom=0.05, left=0.05, right=0.95,
-    #                    lblfontsize=lblfontsize, linewidths=linewidths,
-    #                    )
-    #    #
-    #    if SAVEFIG : # sauvegarde de la figure
-    #        if Visu_UpwellArt :
-    #            figfile = "FigArt_"
-    #            dpi = FIGARTDPI
-    #        else :
-    #            figfile = "Fig_"
-    #            dpi = FIGDPI
-    #        figfile += "AFC2DProj-{:d}-{:d}_{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:d}-{:d}_{:d}-mod".format(
-    #                pa,po,nb_clust,nb_class,fprefixe,fshortcode,andeb,anfin,Nmdlafc)
-    #        # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
-    #        # eventuellement en PDF, si SAVEPDF active. 
-    #        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
 
     if Visu_Inertie : # Inertie
         ctloop.printwarning([ "    AFC: INERTIE" ])
@@ -1039,7 +1042,8 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
             # eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
-    return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,NoCAHindnames,class_afc,AFCindnames,NoAFCindnames
+    return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,CAHindnameswnb,NoCAHindnames,\
+           class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames
 #
 #%%
 def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=None,
@@ -1134,8 +1138,10 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=N
 def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tmdlname,
                           nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs,
                           varnames=None,
+                          modstdflg=False,
+                          subtitle=None,
                           figdir=".",
-                          figfile=None, dpi=None, figpdf=False,
+                          figfile1=None, figfile2=None, figfileext1="", figfileext2="", dpi=None, figpdf=False,
                           wvmin=None,wvmax=None,
                           ) :
     #
@@ -1154,10 +1160,19 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
     #print("misttitlelabel AVANT> {}".format(misttitlelabel))
     mistfilelabel = misttitlelabel.replace(' ','').replace(':','-').replace('(','_').replace(')','')
     #print("mistfilelabel APRES>  {}".format(mistfilelabel))
+    if subtitle is not None :
+        misttitlelabel += " - {:s}".format(subtitle)
+    #
+    if type(Tmdlname) is list :
+        Tmdlname = np.array(Tmdlname)
+    if type(TDmdl4CT) is list :
+        TDmdl4CT = np.array(TDmdl4CT)
+    #
     #------------------------------------------------------------------------
     # PZ: BEST AFC CLUSTER:
     #TMixtMdl = []
     #
+    
     if TMixtMdl == [] :
         print("\nSopt non renseigné ; Ce Cas n'a pas encore été prévu")
         return
@@ -1184,16 +1199,20 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
                                         fignum=fignum,
                                         fsizetitre=14, ytitre=1.01, nticks=nticks);
     #
-    if SAVEFIG : # sauvegarde de la figure
-        if figfile is None :
-            figfile = "Fig_"
-        if dpi is None :
-            dpi = FIGDPI
-        figfile += "MeanModel_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
-        figfile += "_{:s}{:s}_{:d}Class".format(fprefixe,fshortcode,nb_class)
-        #
-        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
-
+    if len(IMixtMdl) == 0 :
+        print("\n *** PAS DE MODELES POUR GENERALISATION !!! ***\n" )
+        return
+    else :
+        if SAVEFIG : # sauvegarde de la figure
+            if figfile1 is None :
+                figfile1 = "Fig_"
+            if dpi is None :
+                dpi = FIGDPI
+            figfile1 += "MeanModel_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
+            figfile1 += figfileext1
+            #
+            ctloop.do_save_figure(figfile1,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
+    
     # Affichage du moyen for CT
     if SIZE_REDUCTION == 'All' :
         lolast = 4
@@ -1202,12 +1221,12 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
         nticks = 5; # 4
     elif SIZE_REDUCTION == 'sel' :
         lolast = 2
-        figsize=(10,8.5)
+        figsize=(11.5,8.5)
         wspace=0.04; hspace=0.12; top=0.925; bottom=0.035; left=0.035; right=0.965;
         nticks = 2; # 4
     fig = plt.figure(figsize=figsize)
     fignum = fig.number # numero de figure en cours ...
-    if Show_ModSTD and len(Tmdlname[IMixtMdl]) > 2:
+    if modstdflg and len(Tmdlname[IMixtMdl]) > 2:
         std_ = np.std(TDmdl4CT[IMixtMdl],axis=0);
         print(np.min(std_),np.max(std_),np.mean(std_),np.std(std_))
         ctobs.aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,
@@ -1227,7 +1246,7 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
               lolast=lolast,lonlat=(lon,lat),
               ); #...
     sptitre = "{}".format(misttitlelabel)
-    if Show_ModSTD :
+    if modstdflg :
         if len(Tmdlname[IMixtMdl]) > 2 :
             sptitre += " and inter-model STD in contours"
         else:
@@ -1239,23 +1258,31 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
     plt.suptitle(sptitre,fontsize=14,y=0.995);
     #
     if SAVEFIG : # sauvegarde de la figure
-        figfile = "Fig_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
-        if Show_ModSTD :
-            figfile += "+{:d}ySTD".format(Nda)
-        figfile += "_Lim{:+.1f}-{:+.1f}_{:s}{:s}Clim-{:d}-{:d}".format(wvmin,wvmax,
-                        fprefixe,fshortcode,andeb,anfin)
+        if figfile2 is None :
+            figfile2 = "Fig_"
+        if dpi is None :
+            dpi = FIGDPI
+        figfile2 += "{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
+        figfile2 += figfileext2
         # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
         # eventuellement en PDF, si SAVEPDF active. 
-        ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        ctloop.do_save_figure(figfile2,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
     #
     #
     #**********************************************************************
     return
 #%%
 # #############################################################################
+#
 # Fin de declaration des fonctions locales 
+#
 # #############################################################################
 #%% 
+# #############################################################################
+#
+#  MAIN 
+#
+# #############################################################################
 def main(argv):
     #%%
     global SAVEMAP, MAPSDIR, FIGSDIR, WITHANO
@@ -1308,7 +1335,9 @@ def main(argv):
     #print("Verbose is '{}'".format(verbose))
     #
     # #########################################################################
+    #
     #                             INITIALISATION
+    #
     #%% DECOMPRESSER / COMPRESSER la ligne suivante selon si executione MANUELLE UN A UN des bloques du MAIN ou complete avec appel externe ... 
     if manualmode :
         caseconfig='all' # ou 'sel'
@@ -1322,7 +1351,9 @@ def main(argv):
     print("fcodage,fshortcode ... {}".format((fcodage,fshortcode)))
     #
     #%% #######################################################################
-    #      ACQUISITION DES DONNEES D'OBSERVATION: 'raverage_1975_2005' ou autre
+    #
+    #      LECTURE DES DONNEES D'OBSERVATION: 'raverage_1975_2005' ou autre
+    #
     sst_obs, sst_obs_coded, Dobs, NDobs, lon, lat, ilat, ilon, isnanobs, isnumobs, case_label,\
         data_label_base, Nobs, Lobs, Cobs = ctloop_load_obs(DATAOBS, path=obs_data_path,
                                                             case_name=case_name_base)
@@ -1335,7 +1366,7 @@ def main(argv):
         case_maps_dir = os.path.join(MAPSDIR,case_label)
         if not os.path.exists(case_maps_dir) :
             os.makedirs(case_maps_dir)
-    # -----------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # Repertoire principal des figures et sous-repertoire por le cas en cours 
     if SAVEFIG :
         if not os.path.exists(FIGSDIR) :
@@ -1355,7 +1386,7 @@ def main(argv):
     else : # On suppose qu'il s'agit du brute ...
         wvmin =16.0; wvmax =30.0; # ok pour obs 1975-2005 : SST 4CT: min=16.8666; max=29.029
     #
-    #%% -------------------------------------------------------------------------
+    #%% -----------------------------------------------------------------------
     # Figure Obs4CT
     if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
         fileext1 = "_Lim{:+.1f}-{:+.1f}".format(wvmin,wvmax)
@@ -1364,31 +1395,35 @@ def main(argv):
 
         plot_obs4ct(sst_obs_coded,Dobs,lon,lat,isnanobs=isnanobs,isnumobs=isnumobs,
                     varnames=varnames,wvmin=wvmin,wvmax=wvmax,
-                    eqcmap=eqcmap,Show_ObsSTD=Show_ObsSTD,filecomp=fileext1,fileext=fileext2,
+                    eqcmap=eqcmap,Show_ObsSTD=Show_ObsSTD,
+                    filecomp=fileext1, fileext=fileext2,
                     figpath=case_figs_dir,fcodage=fcodage,
                     freelimststoo=False)
     #
     if STOP_BEFORE_CT :
         plt.show(); sys.exit(0);
     #
-    #%% #########################################################################
-    # Carte Topologique
+    #%% #######################################################################
+    #
+    #                             CARTE TOPOLOGIQUE
+    #
     mapfile = "Map_{:s}{:s}Clim-{:d}-{:d}_{:s}_ts-{}{}".format(fprefixe,fshortcode,
                andeb,anfin,data_label_base,tseed,mapfileext)
-    sMapO,q_err,t_err = ctloop_topol_map_traitement (Dobs, Parm_app=Parm_app, mapsize=[nbl, nbc], tseed=tseed,
+    sMapO,q_err,t_err = ctloop_topol_map_traitement (Dobs, Parm_app=Parm_app,
+                              mapsize=[nbl, nbc], tseed=tseed,
                               mapfile=mapfile,
-                              mappath=case_maps_dir, varnames=varnames, case_label=case_label,
+                              mappath=case_maps_dir, varnames=varnames,
+                              case_label=case_label,
                               casetime=casetime,casetimelabel=casetimelabel)
     #
     # -------------------------------------------------------------------------
     # Figure dec CT
-    if Visu_CTStuff or Visu_Dendro : # Visu (et sauvegarde éventuelle de la figure) des données
+    if Visu_CTStuff : # Visu (et sauvegarde éventuelle de la figure) des données
         plot_ct_Umatrix(sMapO)
         plot_ct_map_wei(sMapO)
     #
-    # #########################################################################
-    # Other stuffs ______________________________________
-    # C.T. Dendrogram _________________________________________________________
+    #%% -----------------------------------------------------------------------
+    # Computing C.T. Linkage for Dendrogram ___________________________________
     bmusO     = ctk.mbmus (sMapO, Data=Dobs); # déjà vu ? conditionnellement ?
     #
     # Performs hierarchical/agglomerative clustering on the condensed distance matrix data
@@ -1397,7 +1432,7 @@ def main(argv):
     # Forms flat clusters from the hierarchical clustering defined by the linkage matrix Z.
     class_ref = fcluster(cblnkg,nb_class,criterion='maxclust'); # Classes des referents
     #
-    #%% -------------------------------------------------------------------------
+    #%% -----------------------------------------------------------------------
     if Visu_Dendro :
         stitre = ("SOM Codebook Dendrogram for HAC (map size={:d}x{:d})"+\
                   " - {:d} classes").format(nbl,nbc,nb_class);
@@ -1408,7 +1443,7 @@ def main(argv):
         plot_ct_dendro(sMapO, nb_class, datalinkg=cblnkg, title=stitre, xlabel=xlabel, ylabel=ylabel,
                        figdir=case_figs_dir, fileext=fileextdendro)
     #
-    #%% #########################################################################
+    #%% #######################################################################
     # Transcodage des indices des classes
     # (trie les classes pour avoir un certain ordre a l'affichage ...)
     if TRANSCOCLASSE is not '' :
@@ -1426,8 +1461,42 @@ def main(argv):
         iobsc = np.where(classe_Dobs==c)[0]; # Indices des classes c des obs
         Nobsc[c-1] = len(iobsc);
     #
-    #%% -------------------------------------------------------------------------
+    #%% -----------------------------------------------------------------------
     # Figure 1 pour Article : profils moyens par classe
+    # -------------------------------------------------------------------------
+    if Visu_ObsStuff or Visu_UpwellArt :
+        stitre = "Observations ({:d}-{:d}), {} Class Geographical Representation".format(andeb,anfin,nb_class)
+        fileextbis = "_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(fprefixe,
+                      fshortcode,andeb,anfin,data_label_base)
+        if SIZE_REDUCTION == 'All' :
+            figsize = (9,6)
+            top=0.94; bottom=0.08; left=0.06; right=0.925;
+            nticks = 5; # 4
+        elif SIZE_REDUCTION == 'sel' :
+            figsize=(9,9)
+            top=0.94; bottom=0.08; left=0.05; right=0.96;
+            nticks = 2; # 4
+        #
+        if Visu_UpwellArt :
+            figfile = "FigArt{:02d}_".format(nFigArt+1); nFigArt += 1;
+            dpi     = FIGARTDPI
+            figpdf  = True
+        else :
+            figfile = "Fig_"
+            dpi     = FIGDPI
+            figpdf  = False
+
+        plot_geo_classes(lon,lat,XC_Ogeo,nb_class,
+                         nticks=nticks,
+                         title=stitre,
+                         fileext=fileextbis, figdir=case_figs_dir,
+                         figfile=figfile, dpi=dpi, figpdf=figpdf,
+                         ccmap=ccmap,
+                         figsize=figsize,
+                         top=top, bottom=bottom, left=left, right=right,
+                         )
+    #%% -----------------------------------------------------------------------
+    # Figure 2 pour Article : profils moyens par classe
     # -------------------------------------------------------------------------
     if Visu_ObsStuff or Visu_UpwellArt :
         stitre = "Observations, Monthly Mean by Class (method: {:s})".format(method_cah)
@@ -1450,7 +1519,7 @@ def main(argv):
                                   wspace=0.0, hspace=0.0, top=0.95, bottom=0.08, left=0.06, right=0.92,
                                   )
     #
-    #%% -------------------------------------------------------------------------
+    #%% -----------------------------------------------------------------------
     if Visu_CTStuff : # Visu des profils des référents de la carte SOM
         fileextter = "_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(fprefixe,
                       fshortcode,andeb,anfin,data_label_base)
@@ -1461,8 +1530,10 @@ def main(argv):
     if STOP_BEFORE_MDLSTUFF :
         plt.show(); sys.exit(0)
     #
-    #%% #########################################################################
-    # Traitement des modeles
+    #%% #######################################################################
+    #
+    #                           TRAITEMENT DES MODELES
+    #
     # >>>> Pour selectionner (filtrer) uniquement certains modèles (par exemple
     # ceux d'un cluster ou un Sopt quelconque) et pour éviter de le faire par
     # le biais de la table des modèles ou par le déplacement des fichier dans
@@ -1515,14 +1586,30 @@ def main(argv):
     ctloop.printwarning([ "    MODELS: APRES SECOND LOOP" ])
     # Figure a ploter apres le deuxieme loop
     if Visu_preACFperf : # Tableau des performances en figure de courbes
-        stitre = "Perf Curves"
-        stitre += " SST {:s} ({:d}-{:d}) - {:d} Classes -  Classification Indices of Completed Models (vs Obs) ({:d} models)".format(fcodage,andeb,anfin,nb_class,Nmdlok)
-        ctloop.do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_colors,
+        stitre = "Performance Curves"
+        stitre += (" - SST {:s} ({:d}-{:d}) - {:d} Classes -  Classification Indices"+\
+                   " of Completed Models (vs Obs) ({:d} models)").format(fcodage,
+                                         andeb,anfin,nb_class,Nmdlok)
+        if mdlnamewnumber_ok :
+            TmdlnameX = Tmdlnamewnb
+            figsize=(12,6)
+            top=0.93; bottom=0.18; left=0.06; right=0.98
+        else :
+            TmdlnameX = Tmdlname
+            figsize=(12,6)
+            top=0.93; bottom=0.15; left=0.06; right=0.98
+        #
+        fignum = ctloop.do_models_after_second_loop(Tperfglob,Tperfglob_Qm,TmdlnameX,
+                                           list_of_plot_colors,
                                            title=stitre,
-                                           TypePerf=TypePerf,fcodage=fcodage)
+                                           TypePerf=TypePerf,fcodage=fcodage,
+                                           figsize=figsize,
+                                           top=top, bottom=bottom, left=left, right=right)
         #
         if SAVEFIG :
-            figfile = "Fig{:s}_perf-curves-by_model_{:d}Mdl_{:d}-mod".format(fileextIV,nb_class,Nmdlok)
+            plt.figure(fignum)
+            figfile = "Fig{:s}_perf-curves-by_model_{:d}Mdl_{:d}-mod".format(
+                    fileextIV,nb_class,Nmdlok)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=case_figs_dir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
@@ -1530,8 +1617,10 @@ def main(argv):
     if STOP_BEFORE_AFC :
         plt.show(); sys.exit(0)
     #
-    #%% #########################################################################
-    # Traitement des modeles
+    #%% #######################################################################
+    #
+    #     ANALYSE FACTORIELLE DES CORRESPONDANCES (CORRESPONDENCE ANALYSIS)
+    #
     if Visu_UpwellArt :
         figfile = "FigArt{:02d}_".format(nFigArt+1); nFigArt += 1;
         dpi     = FIGARTDPI
@@ -1541,8 +1630,10 @@ def main(argv):
         dpi     = FIGDPI
         figpdf  = False
     #
-    VAPT, F1U, F1sU, F2V, CRi, CAj, CAHindnames, NoCAHindnames, class_afc,\
-        AFCindnames,NoAFCindnames = ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb,
+    VAPT, F1U, F1sU, F2V, CRi, CAj, CAHindnames, CAHindnameswnb, NoCAHindnames,\
+        class_afc,AFCindnames,AFCindnameswnb,\
+        NoAFCindnames = ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT,
+                           Tmdlname, Tmdlnamewnb, Tmdlonlynb,
                            nb_class, nb_clust, isnumobs, isnanobs, class_ref, classe_Dobs,
                            TTperf, Nmdlok, Lobs, Cobs, NDmdl, Nobsc, data_label_base,
                            AFC_Visu_Classif_Mdl_Clust=AFC_Visu_Classif_Mdl_Clust,
@@ -1564,7 +1655,8 @@ def main(argv):
         dpi     = FIGDPI
         figpdf  = False
     #
-    plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=NoAFCindnames,
+    plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+                  indnames=NoAFCindnames,
                   figdir=case_figs_dir,
                   figfile=figfile, dpi=dpi, figpdf=figpdf,
                   )
@@ -1581,139 +1673,224 @@ def main(argv):
                    "climato ".ljust(18,'.'),climato,
                    "NIJ ".ljust(18,'.'),NIJ))
 
-    ctloop.printwarning([ "    END: WHOLE TIME CODE '{:s}' IN {:.2f} SECONDS".format(os.path.basename(sys.argv[0]),
-                         time()-tpgm0) ])
+    ctloop.printwarning([ "    END: WHOLE TIME CODE '{:s}' IN {:.2f} SECONDS".format(
+            os.path.basename(sys.argv[0]),time()-tpgm0) ])
     #
     #======================================================================
     #
     #%%
     generalisation_ok = True
+    generalisafcclust_ok = False
     #**************************************************************************
     #.............................. GENERALISATION ............................
     if generalisation_ok :
-        generalisation_tmp()
+        generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
+                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                    TDmdl4CT,Tmdlname,
+                    data_period_ident=DATAMDL,
+                    )
+    if generalisafcclust_ok :
+        generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, varnames, wvmin, wvmax, nb_class,
+                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                        TDmdl4CT, Tmdlname,
+                        )
+
+        #generalisation_proc(generalisation_ok=generalisation_ok, generalisafcclust_ok=generalisafcclust_ok)
+        # generalisation_proc(generalisation_ok=True, generalisafcclust_ok=True)
+    #%%
+    if 0 :
+    #%%
+        #data_period_ident = "raverage_1975_2005";   #<><><><><><><>
+        data_period_ident = "raverage_1930_1960";   #<><><><><><><>
+        #data_period_ident = "raverage_1944_1974";   #<><><><><><><>
+        #data_period_ident = "rcp_2006_2017";        #<><><><><><><>
+        #data_period_ident = "rcp_2070_2100";        #<><><><><><><>
     
+        ctloop.printwarning([ "    MODEL: INITIALIZATION AND FIRST LOOP - NEW SET '{}' ".format(data_period_ident)])
+        #
+        Sfiltre=None
+        #
+        TDmdl4CTx,Tmdlnamex,Tmdlnamewnbx,Tmdlonlynbx,Tperfglob4Sortx,Tclasse_DMdlx,\
+            Tmoymensclassx,NDmdlx,Nmdlokx,Smoy_101x,Tsst_102x = ctloop.do_models_startnloop(sMapO,
+                                Tmodels,Tinstit,ilat,ilon,
+                                isnanobs,isnumobs,nb_class,class_ref,classe_Dobs,
+                                Tnmodel=Tnmodel,
+                                Sfiltre=Sfiltre,
+                                TypePerf=TypePerf,
+                                obs_data_path=obs_data_path,
+                                data_period_ident=data_period_ident,
+                                MDLCOMPLETION=MDLCOMPLETION,
+                                SIZE_REDUCTION=SIZE_REDUCTION,
+                                NIJ=NIJ,
+                                )
+        generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
+                            isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                            TDmdl4CTx,Tmdlnamex,
+                            )
+
+    #%%
+    return
+#%%
+def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
+                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                        TDmdl4CT, Tmdlname,
+                        data_period_ident=None,
+                        ) :
+    #%% #########################################################################
+#    global , eqcmap, ccmap, nFigArt
+#    global , Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
+#    global , ilon, ilat, 
+#    global AFCindnames, NoAFCindnames, 
+#    global 
+#    global class_afc, list_of_plot_colors
+
+    #%%
+    global nFigArt
+    #**************************************************************************
+    #.............................. GENERALISATION ............................
+    #
+    #--------------------------------------------------------------------------
+    # Modèles Optimaux (Sopt) ;  Avec "NEW Obs - v3b " 1975-2005
+    # Je commence par le plus simple : Une ligne de modèle sans classe en une phase
+    # et une seule codification à la fois
+    # Sopt-1975-2005 : Les meilleurs modèles de la période "de référence" 1975-2005
+    #TMixtMdl= [];
+    #TMixtMdl =['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']; 
+    #TMixtMdl = Sfiltre;
+    if 1 : # Best AFC Clusters
+        if SIZE_REDUCTION == 'All' :
+            # Grande Zone (All): BEST AFC CLUSTER:
+            TMixtMdlLabel = 'Best AFC Cluster'
+            TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
+                        'CNRM-CM5-2', 'CanESM2', 'CanCM4', 'GFDL-CM3', 'CNRM-CM5', 'FGOALS-s2', 
+                        'CSIRO-Mk3-6-0', 'CMCC-CESM']
+        elif SIZE_REDUCTION == 'sel' :
+            # Petite Zone (sel): BEST AFC CLUSTER:
+            TMixtMdlLabel = 'Best AFC Cluster'
+            TMixtMdl = ['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']
+    elif 1 : # Best Cum Clusters Mopr
+        if SIZE_REDUCTION == 'All' :
+            # Grande Zone (All): BEST CUM GROUP OF MODELS:
+            TMixtMdlLabel = 'Best Cumulated Models Group'
+            TMixtMdl = ['CMCC-CM']
+        elif SIZE_REDUCTION == 'sel' :
+            # Petite Zone (sel): BEST CUM GROUP OF MODELS:
+            TMixtMdlLabel = 'Best Cumulated Models Group'
+            TMixtMdl = ['CanCM4', 'CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'CanESM2', 'NorESM1-ME']
+    else :
+        # ALL MODELS (but 'FGOALS-s2', there is no 1975-2005 data for it):
+        TMixtMdlLabel = 'All Models'
+        TMixtMdl = Tmdlname
+        #TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
+        #            'FGOALS-g2', 'IPSL-CM5B-LR', 'CNRM-CM5-2', 'CanESM2', 'CanCM4',
+        #            'GFDL-CM3', 'CNRM-CM5', 'CSIRO-Mk3-6-0', 'MPI-ESM-MR', 'MRI-CGCM3',
+        #            'MRI-ESM1', 'CMCC-CESM', 'inmcm4', 'bcc-csm1-1', 'MPI-ESM-LR',
+        #            'CESM1-BGC', 'MPI-ESM-P', 'IPSL-CM5A-LR', 'GISS-E2-R',
+        #            'GISS-E2-R-CC', 'NorESM1-M', 'CCSM4', 'NorESM1-ME', 'bcc-csm1-1-m',
+        #            'GFDL-CM2p1', 'GISS-E2-H', 'ACCESS1-3', 'MIROC5', 'GFDL-ESM2G',
+        #            'MIROC-ESM-CHEM', 'GFDL-ESM2M', 'GISS-E2-H-CC', 'MIROC-ESM',
+        #            'IPSL-CM5A-MR', 'HadCM3', 'CESM1-CAM5', 'CESM1-CAM5-1-FV2',
+        #            'ACCESS1-0']
+    #
+    if Visu_UpwellArt :
+        figfile = "FigArt{:02d}_".format(nFigArt+1); nFigArt += 1;
+        dpi     = FIGARTDPI
+        figpdf  = True
+    else :
+        figfile = "Fig_"
+        dpi     = FIGDPI
+        figpdf  = False
+    #
+    figfileext1 = "_{:s}{:s}_{:d}Class".format(fprefixe,fshortcode,nb_class)
+    figfileext2 = ""
+    #if Show_ModSTD :
+    #    figfileext2 += "+{:d}ySTD".format(Nda)
+    figfileext2 += "_Lim{:+.1f}-{:+.1f}_{:s}{:s}Clim".format(wvmin,wvmax,
+                        fprefixe,fshortcode)
+    #
+    if data_period_ident is not None :
+        stitre = "({:s})".format(data_period_ident)
+    else :
+        stitre = None
+    ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tmdlname,
+                      nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs,
+                      varnames=varnames,
+                      modstdflg=Show_ModSTD,
+                      figdir=case_figs_dir,
+                      figfile1=figfile, figfile2=figfile, figfileext1=figfileext1, figfileext2=figfileext2,
+                      dpi=dpi, figpdf=figpdf,
+                      wvmin=wvmin,wvmax=wvmax,
+                      subtitle=stitre,
+                      )
+        #
+    #%%
     return
 #
-def generalisation_tmp() :
+def generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, varnames, wvmin, wvmax, nb_class,
+                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                        TDmdl4CT, Tmdlname,
+                        ) :
     #%% #########################################################################
-    global nb_class, eqcmap, ccmap, nFigArt
-    global sst_obs_coded, Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
-    global sMapO, lon, lat, ilon, ilat, varnames, wvmin, wvmax
-    global AFCindnames, NoAFCindnames, TDmdl4CT, Tmdlname
-    global isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir
-    global class_afc, list_of_plot_colors
+#    global , eqcmap, ccmap, nFigArt
+#    global , Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
+#    global , ilon, ilat, 
+#    global AFCindnames, NoAFCindnames, 
+#    global 
+#    global class_afc, list_of_plot_colors
 
-    generalisation_ok = True
-    generalisafcclust_ok = True
     #%%
-    if generalisation_ok :
-        #**************************************************************************
-        #.............................. GENERALISATION ............................
+    
+    global nFigArt
+    #**************************************************************************
+    #.............................. GENERALISATION ............................
+    #
+    #
+    #  Generalisation d'une ensemble ou cluster precis
+    for kclust in np.arange(1,nb_clust + 1) :
+        #kclust = 1
+        SfiltredMod = AFCindnames[np.where(class_afc==kclust)[0]]
+        print("--Generalizing for AFC Cluster: {:d} with models:\n  {}".format(
+                kclust,SfiltredMod))
+        stitre = "AFC Cluster: {:d}".format(kclust)
+        fileextIV = "_AFCclust{:d}-{:s}{:s}_{:s}{:s}".format(kclust,fprefixe,
+                           SIZE_REDUCTION,fshortcode,method_cah)
+        fileextIV79 = "_AFCclust{:d}-{:s}{:s}_{:s}".format(kclust,fprefixe,
+                             SIZE_REDUCTION,fshortcode)
+        xTperfglob, xTperfglob_Qm, xTDmdl4CT, xTmdlname, xTmdlnamewnb, \
+            xTmdlonlynb, xTTperf, xNmdlok, \
+            xNDmdl = ctloop_model_traitement(
+                        sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
+                        nb_class,class_ref,classe_Dobs,NDobs,fond_C,
+                        isnanobs,isnumobs,Lobs,Cobs,list_of_plot_colors,
+                        Sfiltre=SfiltredMod,
+                        varnames=varnames, figdir=case_figs_dir,
+                        commonfileext=fileextIV, commonfileext79=fileextIV79,
+                        pair_nsublc=[7,7],
+                        subtitle=stitre,
+                        eqcmap=eqcmap, ccmap=ccmap,pcmap=pcmap,
+                        obs_data_path=obs_data_path,
+                        OK101=False,
+                        OK102=False,
+                        OK104=OK104,
+                        OK105=OK105,
+                        OK106=False,
+                        OK107=False,
+                        OK108=OK108,
+                        OK109=False,
+                        )
         #
-        #--------------------------------------------------------------------------
-        # Modèles Optimaux (Sopt) ;  Avec "NEW Obs - v3b " 1975-2005
-        # Je commence par le plus simple : Une ligne de modèle sans classe en une phase
-        # et une seule codification à la fois
-        # Sopt-1975-2005 : Les meilleurs modèles de la période "de référence" 1975-2005
-        #TMixtMdl= [];
-        #TMixtMdl =['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']; 
-        #TMixtMdl = Sfiltre;
-        if 1 : # Best AFC Clusters
-            if SIZE_REDUCTION == 'All' :
-                # Grande Zone (All): BEST AFC CLUSTER:
-                TMixtMdlLabel = 'Best AFC Cluster'
-                TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
-                            'CNRM-CM5-2', 'CanESM2', 'CanCM4', 'GFDL-CM3', 'CNRM-CM5', 'FGOALS-s2(2004)', 
-                            'CSIRO-Mk3-6-0', 'CMCC-CESM']
-            elif SIZE_REDUCTION == 'sel' :
-                # Petite Zone (sel): BEST AFC CLUSTER:
-                TMixtMdlLabel = 'Best AFC Cluster'
-                TMixtMdl = ['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2(2004)']
-        elif 1 : # Best Cum Clusters Mopr
-            if SIZE_REDUCTION == 'All' :
-                # Grande Zone (All): BEST CUM GROUP OF MODELS:
-                TMixtMdlLabel = 'Best Cumulated Models Group'
-                TMixtMdl = ['CMCC-CM']
-            elif SIZE_REDUCTION == 'sel' :
-                # Petite Zone (sel): BEST CUM GROUP OF MODELS:
-                TMixtMdlLabel = 'Best Cumulated Models Group'
-                TMixtMdl = ['CanCM4', 'CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'CanESM2', 'NorESM1-ME']
-        else :
-            # ALL MODELS (but 'FGOALS-s2', there is no 1975-2005 data for it):
-            TMixtMdlLabel = 'All Models'
-            TMixtMdl = Tmdlname
-            #TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
-            #            'FGOALS-g2', 'IPSL-CM5B-LR', 'CNRM-CM5-2', 'CanESM2', 'CanCM4',
-            #            'GFDL-CM3', 'CNRM-CM5', 'CSIRO-Mk3-6-0', 'MPI-ESM-MR', 'MRI-CGCM3',
-            #            'MRI-ESM1', 'CMCC-CESM', 'inmcm4', 'bcc-csm1-1', 'MPI-ESM-LR',
-            #            'CESM1-BGC', 'MPI-ESM-P', 'IPSL-CM5A-LR', 'GISS-E2-R',
-            #            'GISS-E2-R-CC', 'NorESM1-M', 'CCSM4', 'NorESM1-ME', 'bcc-csm1-1-m',
-            #            'GFDL-CM2p1', 'GISS-E2-H', 'ACCESS1-3', 'MIROC5', 'GFDL-ESM2G',
-            #            'MIROC-ESM-CHEM', 'GFDL-ESM2M', 'GISS-E2-H-CC', 'MIROC-ESM',
-            #            'IPSL-CM5A-MR', 'HadCM3', 'CESM1-CAM5', 'CESM1-CAM5-1-FV2',
-            #            'ACCESS1-0']
-        #
-        if Visu_UpwellArt :
-            figfile = "FigArt{:02d}_".format(nFigArt+1); nFigArt += 1;
-            dpi     = FIGARTDPI
-            figpdf  = True
-        else :
-            figfile = "Fig_"
-            dpi     = FIGDPI
-            figpdf  = False
-        # global sst_obs_coded,Dobs,XC_Ogeo, NDobs,fond_C, pcmap, sMapO, lon,lat,ilat,ilon, TDmdl4CT, Tmdlname, nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, class_afc, varnames, case_figs_dir, wvmin, wvmax, list_of_plot_colors, obs_data_path
-        ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tmdlname,
-                          nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs,
+        TMixtMdlLabel = "Cumulated for AFC Cluster {:d}".format(kclust)
+        TMixtMdl = AFCindnames[np.where(class_afc==kclust)[0]]
+        ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel,
+                          TDmdl4CT, Tmdlname,
+                          nb_class, isnumobs, isnanobs, Lobs, Cobs,
+                          class_ref, classe_Dobs,
                           varnames=varnames,
                           figdir=case_figs_dir,
-                          figfile=figfile, dpi=dpi, figpdf=figpdf,
                           wvmin=wvmin,wvmax=wvmax,
                           )
-        #
     #%%
-    if generalisafcclust_ok :
-        #
-        #  Generalisation d'une ensemble ou cluster precis
-        for kclust in np.arange(1,nb_clust + 1) :
-            #kclust = 1
-            SfiltredMod = AFCindnames[np.where(class_afc==kclust)[0]]
-            print("--Generalizing for AFC Cluster: {:d} with models:\n  {}".format(kclust,SfiltredMod))
-            stitre = "AFC Cluster: {:d}".format(kclust)
-            fileextIV = "_CLUST{:d}-{:s}{:s}_{:s}{:s}".format(kclust,fprefixe,SIZE_REDUCTION,fshortcode,method_cah)
-            fileextIV79 = "_CLUST{:d}-{:s}{:s}_{:s}".format(kclust,fprefixe,SIZE_REDUCTION,fshortcode)
-            xTperfglob, xTperfglob_Qm, xTDmdl4CT, xTmdlname, xTmdlnamewnb, xTmdlonlynb, xTTperf, xNmdlok,\
-                xNDmdl = ctloop_model_traitement(
-                            sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
-                            nb_class,class_ref,classe_Dobs,NDobs,fond_C,
-                            isnanobs,isnumobs,Lobs,Cobs,list_of_plot_colors,
-                            Sfiltre=SfiltredMod,
-                            varnames=varnames, figdir=case_figs_dir,
-                            commonfileext=fileextIV, commonfileext79=fileextIV79,
-                            pair_nsublc=[7,7],
-                            subtitle=stitre,
-                            eqcmap=eqcmap, ccmap=ccmap,pcmap=pcmap,
-                            obs_data_path=obs_data_path,
-                            OK101=False,
-                            OK102=False,
-                            OK104=OK104,
-                            OK105=OK105,
-                            OK106=False,
-                            OK107=False,
-                            OK108=OK108,
-                            OK109=False,
-                            )
-            #
-            TMixtMdlLabel = "Cumulated for AFC Cluster: {:d}".format(kclust)
-            TMixtMdl = AFCindnames[np.where(class_afc==kclust)[0]]
-            ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tmdlname,
-                              nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs,
-                              varnames=varnames,
-                              figdir=case_figs_dir,
-                              wvmin=wvmin,wvmax=wvmax,
-                              )
-    #
-
+    return
 #%%
 if __name__ == "__main__":
     main(sys.argv[1:])
@@ -1742,7 +1919,7 @@ if 0:
      'CESM1-CAM5-1-FV2' 'CESM1-WACCM' 'bcc-csm1-1-m']
     
     -> Cluster 2, 5 Models, performance: 66.0 :
-     ['CNRM-CM5' 'CMCC-CMS' 'CNRM-CM5-2' 'GFDL-CM3' 'FGOALS-s2(2004)']
+     ['CNRM-CM5' 'CMCC-CMS' 'CNRM-CM5-2' 'GFDL-CM3' 'FGOALS-s2']
     
     -> Cluster 3, 9 Models, performance: 47.5 :
      ['CanCM4' 'CanESM2' 'NorESM1-ME' 'NorESM1-M' 'CMCC-CM' 'FGOALS-g2'
@@ -1757,8 +1934,10 @@ if 0:
      '''
     kclust = 1
     SfiltredMod = AFCindnames[np.where(class_afc==kclust)[0]]
-    fileextIV = "_Clust{:d}-{:s}{:s}_{:s}{:s}".format(kclust,fprefixe,SIZE_REDUCTION,fshortcode,method_cah)
-    fileextIV79 = "_Clust{:d}-{:s}{:s}_{:s}".format(kclust,fprefixe,SIZE_REDUCTION,fshortcode)
+    fileextIV = "_Clust{:d}-{:s}{:s}_{:s}{:s}".format(kclust,fprefixe,
+                       SIZE_REDUCTION,fshortcode,method_cah)
+    fileextIV79 = "_Clust{:d}-{:s}{:s}_{:s}".format(kclust,fprefixe,
+                         SIZE_REDUCTION,fshortcode)
     xTDmdl4CT, xTmdlname, xTmdlnamewnb, xTmdlonlynb, xTTperf, xNmdlok,\
         xNDmdl = ctloop_model_traitement(
                     sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,

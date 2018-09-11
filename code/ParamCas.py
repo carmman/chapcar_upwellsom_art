@@ -361,11 +361,12 @@ if Visu_UpwellArt :
     OK102 = False; # Pour produire les Ecarts types d'un modèle moyen 
 ysstitre        = 0.96   # position vertical des soustitres dans figures de groupe
 same_minmax_ok     = True;  # MIN = -MAX
-mdlnamewnumber_ok  = True; # fait apparaitre le numero de modele dans fogures 10X (104, 105, ...)
+mdlnamewnumber_ok  = True; # fait apparaitre le numero de modele dans figures 10X: (104, 105, ...), dans performance curves et dans AFC dendro
 onlymdlumberAFC_ok = True; # identifie les modeles uniquement par leur numero dans la projection AFC
+onlymdlumberAFCdendro_ok = False; # identifie les modeles uniquement par leur numero dans la projection AFC
 #
 # POUT TEST:
-#OK101=OK102=OK104=OK105=OK106=OK107=OK108=OK109=True;
+OK101=OK102=OK104=OK105=OK106=OK107=OK108=OK109=True;
 #OK104=OK105=OK106=OK107=OK108=OK109=True;
 Visu_ObsStuff=Visu_CTStuff=Visu_Dendro=Visu_preACFperf=Visu_AFC_in_one=Visu_afcnu_det=Visu_Inertie=True;
 

@@ -973,7 +973,7 @@ isnumobs = np.where(~np.isnan(X_))[0];
 del X_;
 #!!!!!!<
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-# Figure 1 pour Article 
+# Fig1 pour Article 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
     # Classification
@@ -1026,10 +1026,10 @@ if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
         else :
             figfile = "Fig_"
         figfile += "ObsGeo{:d}Class_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(nb_class,fprefixe,fshortcode,andeb,anfin,data_label_base)
-        do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        ctloop.do_save_figure(figfile,path=case_figs_dir,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
 #
-if Visu_ObsStuff or Visu_UpwellArt : # Visualisation de truc liés au Obs
+if Visu_ObsStuff or Visu_UpwellArt : # ure Visualisation de truc liés au Obs
     # Courbes des Moyennes Mensuelles par Classe
     fig = plt.figure(figsize=(12,6));
     fignum = fig.number # numero de figure en cours ...

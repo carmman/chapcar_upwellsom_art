@@ -1182,7 +1182,7 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
                              Tnmodel=None,Nmodels=None,Sfiltre=None,
                              TypePerf = ["MeanClassAccuracy"],
                              obs_data_path=".",
-                             DATAMDL="raverage_1975_2005",
+                             data_period_ident="raverage_1975_2005",
                              MDLCOMPLETION=True,
                              SIZE_REDUCTION="All",
                              NIJ=0,
@@ -1217,17 +1217,21 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
     min_moymensclass = 999999.999999; # sert pour avoir tous les ...
     max_moymensclass = 000000.000000; # ... subplots à la même échelles
     #
-    TDmdl4CT         = []; # Stockage des modèles 4CT pour AFC-CAH ...
-    #
+    NDmdl            = 0;
     Nmdlok           = 0;  # Pour si y'a cumul ainsi connaitre l'indice de modèle valide 
                            # courant, puis au final, le nombre de modèles valides
                            # quoique ca dependra aussi que SUMi(Ni.) soit > 0                   
+    #
+    TDmdl4CT         = []; # Stockage des modèles 4CT pour AFC-CAH ...
+    #
     Tperfglob4Sort   = [];
     Tclasse_DMdl     = [];
     Tmdlname         = []; # Table des modèles
     Tmdlnamewnb      = []; # Table des modèles avec numero
     Tmdlonlynb       = []; # Table des modèles avec seulement le numero
     Tmoymensclass    = [];
+    Smoy_101         = [];
+    Tsst_102         = [];
     #
     Smoy_101 = None
     Tsst_102 = None
@@ -1253,7 +1257,7 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
         # <<<<< 
         #______________________________________________________
         # Lecture des données (fichiers.mat générés par Carlos)
-        if  DATAMDL=="raverage_1975_2005" : 
+        if  data_period_ident=="raverage_1975_2005" : 
             subdatadir = "Donnees_1975-2005"
             # ###################################
             # EXCEPTION pour FGOALS-s2
@@ -1270,28 +1274,28 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
                                         'Data',
                                         instname+'_'+mdlname,
                                         "sst_"+mdlname+"_raverage_1975-2005.mat")
-        elif DATAMDL=="raverage_1930_1960" : 
+        elif data_period_ident=="raverage_1930_1960" : 
             subdatadir = "Donnees_1930-1960"
             mdl_filename = os.path.join(obs_data_path,subdatadir,
                                     "all_data_historical_raverage_1930-1960",
                                     'Data',
                                     instname+'_'+mdlname,
                                     "sst_"+mdlname+"_raverage_1930-1960.mat")
-        elif DATAMDL=="raverage_1944_1974" : 
+        elif data_period_ident=="raverage_1944_1974" : 
             subdatadir = "Donnees_1944-1974"
             mdl_filename = os.path.join(obs_data_path,subdatadir,
                                     "all_data_historical_raverage_1944-1974",
                                     'Data',
                                     instname+'_'+mdlname,
                                     "sst_"+mdlname+"_raverage_1944-1974.mat")
-        elif DATAMDL == "rcp_2006_2017":
+        elif data_period_ident == "rcp_2006_2017":
             subdatadir = "Donnees_2006-2017"
             mdl_filename = os.path.join(obs_data_path,subdatadir,
                                     "all_data_"+scenar+"_raverage_2006-2017",
                                     'Data',
                                     instname+'_'+mdlname,
                                     "sst_"+scenar+mdlname+"_raverage_2006-2017.mat")
-        elif DATAMDL == "rcp_2070_2100":
+        elif data_period_ident == "rcp_2070_2100":
             subdatadir = "Donnees_2070-2100"
             mdl_filename = os.path.join(obs_data_path,subdatadir,
                                     "all_data_"+scenar+"_raverage_2070-2100",
@@ -1299,10 +1303,10 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
                                     instname+'_'+mdlname,
                                     "sst_"+scenar+mdlname+"_raverage_2070-2100.mat")
         else :
-            print("*** unknown DATAMDL case <{}> for model '{}' ***".format(DATAMDL,mdlname))
+            print("*** unknown data_period_ident case <{}> for model '{}' ***".format(data_period_ident,mdlname))
             raise
         if imodel == 0:
-            print(" using model '{}' with data '{}' ...".format(mdlname,DATAMDL))
+            print(" using model '{}' with data '{}' ...".format(mdlname,data_period_ident))
         else :
             print(" using model '{}' ...".format(mdlname))
         
@@ -1335,8 +1339,8 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
             X_ = sst_mdl.reshape(Nmdl, Lmdl*Cmdl);
             X_[:,isnanobs] = np.nan;
             sst_mdl = X_.reshape(Nmdl,Lmdl,Cmdl);
-        if mdlname == "FGOALS-s2" and DATAMDL == "raverage_1975_2005" :
-            mdlname = "FGOALS-s2(2004)" # au passage
+        #if mdlname == "FGOALS-s2" and data_period_ident == "raverage_1975_2005" :
+        #    mdlname = "FGOALS-s2(2004)" # au passage
         #________________________________________________________
         # Codification du modèle (4CT)            
         sst_mdl_coded, Dmdl, NDmdl = ctobs.datacodification4CT(sst_mdl);
@@ -1360,7 +1364,7 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
             # de donnees que pour les autres modeles (c-a-d, le nombre d'annees, car
             # FGOALS-s2 n'as pas de donnees pour 2005, il n'a donc que 30 annees et
             # non 31 comme les autres.
-            if mdlname == "FGOALS-s2(2004)" and DATAMDL == "raverage_1975_2005" :
+            if ( mdlname == "FGOALS-s2" or mdlname == "FGOALS-s2(2004)") and data_period_ident == "raverage_1975_2005" :
                 sst_ = np.concatenate((sst_, sst_[360-12:360]))
             #
             if Nmdlok == 1 :
@@ -1387,7 +1391,7 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
     # Fin de la PREMIERE boucle sur les modèles
     #
     return TDmdl4CT,Tmdlname,Tmdlnamewnb,Tmdlonlynb,Tperfglob4Sort,Tclasse_DMdl,\
-           Tmoymensclass,Dmdl,NDmdl,Nmdlok,Smoy_101,Tsst_102
+           Tmoymensclass,NDmdl,Nmdlok,Smoy_101,Tsst_102
 #
 def print_tb_models(mdlname,mdlonlynb,ncol_prnt=1):
     Nmodels = len(mdlname)
@@ -1982,6 +1986,8 @@ def do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_col
                                 title="SST - Classification Indices of Completed Models",
                                 TypePerf = ["MeanClassAccuracy"],
                                 fcodage="",
+                                figsize=(12,6),
+                                top=0.93, bottom=0.15, left=0.05, right=0.98,
                                 ) :
     ##
     ##---------------------------------------------------------------------
@@ -1996,13 +2002,14 @@ def do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_col
     for clabel in TypePerf :
         local_legend_labels.append(clabel+" Performance")
     local_legend_labels.append("Cumulated MeanClassAccuracy"+" Performance")
-    fig = plt.figure(figsize=(12,6),facecolor='w');
+    fig = plt.figure(figsize=figsize,facecolor='w');
+    fignum = fig.number
+    plt.subplots_adjust(top=top, bottom=bottom, left=left, right=right)
     if len(Tperfglob.shape) > 1 :
         for icol in np.arange(len(Tperfglob.shape)) :
             plt.plot(100*Tperfglob[:,icol],'.-',color=list_of_plot_colors[icol]);
     kcol = len(Tperfglob.shape)
     plt.plot(100*Tperfglob_Qm,'.-',color=list_of_plot_colors[kcol]);
-    plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.15, left=0.05, right=0.98)
     fignum = fig.number
     #plt.plot(Tperfglob,'.-');
     if 1:
@@ -2017,7 +2024,7 @@ def do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_col
     plt.legend(local_legend_labels,numpoints=1,loc=3)
     plt.title(title);
     #
-    #
+    return fignum
     
 #%%
 def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
@@ -2052,8 +2059,8 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
     for i in np.arange(Nmdlok) :
         if onlymdlumberAFC_ok : 
             Tm_[i] = Tmdlonlynb[i];
-        elif mdlnamewnumber_ok :
-            Tm_[i] = Tmdlnamewnb[i];
+        #elif mdlnamewnumber_ok :
+        #    Tm_[i] = Tmdlnamewnb[i];
         else :
             Tm_[i] = str(i+1) + '-' +Tmdlname[i];
     #
@@ -2074,20 +2081,29 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
     #  
     # Tableau (ou liste) des Noms des individus (Modèles valides et Obs)
     if AFCWITHOBS :
-        AFCindnames   = np.concatenate((Tmdlname[Iok_],['Obs']));
-        NoAFCindnames = np.concatenate((Tm_[Iok_],['Obs']));
+        AFCindnames    = np.concatenate((Tmdlname[Iok_],['Obs']));
+        AFCindnameswnb = np.concatenate((Tmdlnamewnb[Iok_],['Obs']));
+        NoAFCindnames  = np.concatenate((Tm_[Iok_],['Obs']));
     else : 
-        AFCindnames   = Tmdlname[Iok_];
-        NoAFCindnames = Tm_[Iok_];
+        AFCindnames    = Tmdlname[Iok_];
+        AFCindnameswnb = Tmdlnamewnb[Iok_];
+        NoAFCindnames  = Tm_[Iok_];
     del som_;
     #
     if CAHWITHOBS :
-        CAHindnames   = np.concatenate((Tmdlname[Iok_],['Obs'])); 
-        NoCAHindnames = np.concatenate((Tm_[Iok_],['Obs'])); 
+        CAHindnames    = np.concatenate((Tmdlname[Iok_],['Obs'])); 
+        CAHindnameswnb = np.concatenate((Tmdlnamewnb[Iok_],['Obs'])); 
+        NoCAHindnames  = np.concatenate((Tm_[Iok_],['Obs'])); 
     else :
-        CAHindnames   = Tmdlname[Iok_]; 
-        NoCAHindnames = Tm_[Iok_]; 
-    Nleaves_ = len(CAHindnames);   
+        CAHindnames    = Tmdlname[Iok_]; 
+        CAHindnameswnb = Tmdlnamewnb[Iok_]; 
+        NoCAHindnames  = Tm_[Iok_]; 
+    Nleaves_ = len(CAHindnames);
+    #
+    if mdlnamewnumber_ok :
+        TmdlnameX = Tmdlnamewnb
+    else :
+        TmdlnameX = Tmdlname
     #
     if AFCWITHOBS : # On ajoute Obs (si required)
         if NIJ==1 :
@@ -2219,7 +2235,7 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
                                 wvmin=wvmin,wvmax=wvmax,
                                 figsize=(12,9),cmap=eqcmap, varnames=varnames);
                     plt.suptitle("MdlMoy[%s]\nclust%d %s(%d-%d) for CT\nmin=%f, max=%f, moy=%f, std=%f"
-                            %(Tmdlname[Iok_][iclust],ii+1,fcodage,andeb,anfin,np.min(CmdlMoy),
+                            %(TmdlnameX[Iok_][iclust],ii+1,fcodage,andeb,anfin,np.min(CmdlMoy),
                               np.max(CmdlMoy),np.mean(CmdlMoy),np.std(CmdlMoy)))    
                 #
                 # Classification du, des modèles moyen d'un cluster
@@ -2244,7 +2260,7 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
                 if MultiLevel :
                     if Perfglob_ > bestglob_ :
                         print("\n-> Cluster {:d}, {:d} Models, performance: {:.1f} :\n {}".format(
-                                ii+1,len(iclust),100*Perfglob_,Tmdlname[iclust]));
+                                ii+1,len(iclust),100*Perfglob_,TmdlnameX[iclust]));
                         print("      >>>>>>>> clust %d-%d : new best perf = %f <<<<<<<<"
                               %(nb_clust, ii+1, Perfglob_));
                         bestglob_ = Perfglob_
@@ -2281,8 +2297,8 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
     #
     # FIN du if 1 : MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
     #
-    return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,NoCAHindnames,figclustmoynum,class_afc,\
-           AFCindnames,NoAFCindnames
+    return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,CAHindnameswnb,NoCAHindnames,\
+           figclustmoynum,class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames
 #
 def do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
                     indnames=None,
@@ -2447,7 +2463,7 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlo
 #        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,indname=NoAFCindnames,
 #                 ax=ax);
 #        plt.title("%s SST (%s). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
-#                 %(fcodage,DATAMDL,method_cah,nb_class,NIJ));
+#                 %(fcodage,data_period_ident,method_cah,nb_class,NIJ));
 #        # Que les points colonnes (Classe)
 #        fig = plt.figure(figsize=(12,8));
 #        plt.subplots_adjust(top=0.93, bottom=0.05, left=0.05, right=0.95)
@@ -2456,7 +2472,7 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlo
 #                 linewidths=2,indname=colnames,holdon=True,
 #                 ax=ax, gridok=True)
 #        plt.title("%s SST (%s). \n%s%d AFC (nij=%d) of Completed Models (vs Obs)" \
-#                 %(fcodage,DATAMDL,method_cah,nb_class,NIJ));
+#                 %(fcodage,data_period_ident,method_cah,nb_class,NIJ));
 #       
 def do_plot_afc_dendro(F1U,F1sU,nb_clust,Nmdlok,
                        afccoords=None,
@@ -2572,6 +2588,14 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
     LObs     = Lobs
     CObs     = Cobs
     isnumObs = isnumobs
+    #
+    MdlMoy    = [];
+    Perfglob_ = [];
+    #
+    if type(Tmdlname) is list :
+        Tmdlname = np.array(Tmdlname)
+    if type(TDmdl4CT) is list :
+        TDmdl4CT = np.array(TDmdl4CT)
     # -------------------------------------------
     #
     # Je commence par le plus simple : Une ligne de modèle sans classe en une phase
@@ -2582,14 +2606,26 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
     #
     # déterminer l'indice des modèles de TMixtMdl dans Tmdlname
     IMixtMdl = [];
+    #print("Tmdlname: {}".format(Tmdlname))
     for mname in TMixtMdl :
-        im = np.where(Tmdlname == mname)[0];
-        if len(im) == 1 :
-            IMixtMdl.append(im[0])
+        if mname in Tmdlname :
+            im = np.where(Tmdlname == mname)[0];
+            if len(im) == 1 :
+                IMixtMdl.append(im[0])
+            else :
+                print("\n ** mixtgeneralisation: too many ({}), model '{}' repeted in list: {} **".format(len(im),mname,Tmdlname))
+        else:
+            print("\n ** mixtgeneralisation: model '{}' not found, in list: {} **".format(mname,Tmdlname))
+        #print("mname: {}".format(mname))
+        #im = np.where(Tmdlname == mname)[0];
+        #if len(im) == 1 :
+        #    IMixtMdl.append(im[0])
+        #else :
+        #    print("\n ** too many ({}) or model '{}' not found, in list: {} **".format(len(im),mname,Tmdlname))
     #
     if len(IMixtMdl) == 0 :
         print("\nGENERALISATION IMPOSSIBLE : AUCUN MODELE DISPONIBLE (sur %d)"%(len(TMixtMdl)))
-        return
+        return MdlMoy, IMixtMdl, Perfglob_
     else :
         print("\n%d modèles disponibles (sur %d) pour la generalisation : %s"
               %(len(IMixtMdl),len(TMixtMdl),Tmdlname[IMixtMdl]));
