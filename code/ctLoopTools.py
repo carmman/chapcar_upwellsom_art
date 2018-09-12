@@ -1134,6 +1134,8 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
 def do_plot_ct_profils(sMapO,Dobs,class_ref,
                        varnames=None,
                        pcmap=None,
+                       title="SOM Map Profils by Cell (background color represents classes)",
+                       titlefntsize=16,
                        figsize=(7.5,12),
                        wspace=0.01, hspace=0.05, top=0.95, bottom=0.04, left=0.15, right=0.86,
                        ):
@@ -1144,7 +1146,7 @@ def do_plot_ct_profils(sMapO,Dobs,class_ref,
                         visu=3, scale=2,Clevel=class_ref-1,Gscale=0.5,
                         axsztext=6,marker='.',markrsz=4,pltcolor='r',
                         ColorClass=pcmap,ticklabels=varnames,xticks=np.arange(0,len(varnames),2),verbose=False);
-        plt.suptitle("SOM Map Profils by Cell (background color represents classes)",fontsize=16); #,fontweigth='bold');
+        plt.suptitle(title,fontsize=titlefntsize); #,fontweigth='bold');
     #
     #######################################################################
     #
@@ -1183,6 +1185,7 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
                              TypePerf = ["MeanClassAccuracy"],
                              obs_data_path=".",
                              data_period_ident="raverage_1975_2005",
+                             scenario=None,
                              MDLCOMPLETION=True,
                              SIZE_REDUCTION="All",
                              NIJ=0,
@@ -1206,6 +1209,13 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
         for imodel in np.arange(Nmodels) :
             Tnmodel.append("{:d}".format(imodel+1))
         Tnmodel = np.array(Tnmodel)
+    #
+    # SI data period is for one of RCP* then scenario variable must be specified
+    if data_period_ident.lower().startswith('rcp_') and scenario is None :   
+        printwarning("** do_models_startnloop Warning **".upper().center(75),
+                     ["** data_period_ident is '{}', is a future scnenario data type **".format(data_period_ident).center(75),
+                      "** scenario argument must be specified for RCP_* data **".center(75)])
+        raise
     #
     # For (sub)plot by modele
     #nsub   = Nmodels + 1; # actuellement au plus 48 modèles + 1 pour les obs.      
@@ -1291,17 +1301,19 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
         elif data_period_ident == "rcp_2006_2017":
             subdatadir = "Donnees_2006-2017"
             mdl_filename = os.path.join(obs_data_path,subdatadir,
-                                    "all_data_"+scenar+"_raverage_2006-2017",
+                                    "all_data_"+scenario+"_raverage_2006-2017",
                                     'Data',
                                     instname+'_'+mdlname,
-                                    "sst_"+scenar+mdlname+"_raverage_2006-2017.mat")
+                                    "sst_"+mdlname+"_raverage_2006-2017.mat")
+                                    #"sst_"+scenario+mdlname+"_raverage_2006-2017.mat")
         elif data_period_ident == "rcp_2070_2100":
             subdatadir = "Donnees_2070-2100"
             mdl_filename = os.path.join(obs_data_path,subdatadir,
-                                    "all_data_"+scenar+"_raverage_2070-2100",
+                                    "all_data_"+scenario+"_raverage_2070-2100",
                                     'Data',
                                     instname+'_'+mdlname,
-                                    "sst_"+scenar+mdlname+"_raverage_2070-2100.mat")
+                                    "sst_"+mdlname+"_raverage_2070-2100.mat")
+                                    #"sst_"+scenario+mdlname+"_raverage_2070-2100.mat")
         else :
             print("*** unknown data_period_ident case <{}> for model '{}' ***".format(data_period_ident,mdlname))
             raise
@@ -1313,7 +1325,7 @@ def do_models_startnloop(sMapO,Tmodels,Tinstit,ilat,ilon,isnanobs,isnumobs,nb_cl
         try :
             sst_mat = scipy.io.loadmat(mdl_filename);
         except :
-            print(" ** model '{}' not found **".format(mdlname));
+            print(" ** model '{}' not found **\n   file name: {}".format(mdlname,mdl_filename));
             continue;
         sst_mdl = sst_mat['SST'];
         #
@@ -2291,9 +2303,6 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
         del Z_
         if MultiLevel == True :
             plt.show(); sys.exit(0)
-    # reprend la figure de performanes par cluster
-    plt.figure(figclustmoynum)
-    plt.suptitle("AFC Clusters Class Performance ({} models)".format(Nmodels),fontsize=18);
     #
     # FIN du if 1 : MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
     #
