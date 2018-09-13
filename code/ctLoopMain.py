@@ -1730,6 +1730,13 @@ def main(argv):
                     isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
                     TDmdl4CT,Tmdlname,
                     data_period_ident=DATAMDL,
+                    generalisation_type='bestclust',  # 'bestclust', 'bestcum'
+                    )
+        generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
+                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                    TDmdl4CT,Tmdlname,
+                    data_period_ident=DATAMDL,
+                    generalisation_type='bestcum',  # 'bestclust', 'bestcum'
                     )
     if generalisafcclust_ok :
         generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, varnames, wvmin, wvmax, nb_class,
@@ -1796,6 +1803,7 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
                         TDmdl4CT, Tmdlname,
                         data_period_ident=None,
                         scenario=None,
+                        generalisation_type=None,  # 'bestclust', 'bestcum'
                         ) :
     #%% #########################################################################
 #    global , eqcmap, ccmap, nFigArt
@@ -1818,7 +1826,16 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
     #TMixtMdl= [];
     #TMixtMdl =['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']; 
     #TMixtMdl = Sfiltre;
-    if 1 : # Best AFC Clusters
+    if generalisation_type is None:
+        generalisation_type = "bestclust"
+    elif generalisation_type != "bestclust" and generalisation_type != "bestcum" : # SI ni l'un ni l'autre ...
+        ctloop.printwarning(["","generalisation_proc ERROR".upper().center(75),""],
+                ["Bad generalisation_type: '{}'".format(generalisation_type).center(75),
+                 "chose one from {}".format(generalisation_type,['bestclust', 'bestcum']).center(75)])
+        raise
+    #
+    ctloop.printwarning(["","current generalisation '{}'".upper().format(generalisation_type).center(75),""])
+    if generalisation_type == "bestclust" : # Best AFC Clusters
         if SIZE_REDUCTION == 'All' :
             # Grande Zone (All): BEST AFC CLUSTER:
             TMixtMdlLabel = 'Best AFC Cluster'
@@ -1829,7 +1846,8 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
             # Petite Zone (sel): BEST AFC CLUSTER:
             TMixtMdlLabel = 'Best AFC Cluster'
             TMixtMdl = ['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']
-    elif 1 : # Best Cum Clusters Mopr
+        #
+    elif generalisation_type == "bestcum" : # Best Cum Clusters Mopr
         if SIZE_REDUCTION == 'All' :
             # Grande Zone (All): BEST CUM GROUP OF MODELS:
             TMixtMdlLabel = 'Best Cumulated Models Group'
@@ -1838,6 +1856,7 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
             # Petite Zone (sel): BEST CUM GROUP OF MODELS:
             TMixtMdlLabel = 'Best Cumulated Models Group'
             TMixtMdl = ['CanCM4', 'CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'CanESM2', 'NorESM1-ME']
+        #
     else :
         # ALL MODELS (but 'FGOALS-s2', there is no 1975-2005 data for it):
         TMixtMdlLabel = 'All Models'
