@@ -791,12 +791,42 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
             suptitle109 += " -"+subtitle+"- "
         suptitle109 += " (%sSST(%s)). Variance sur la Moyenne Cumulée de Modeles complétés (%d models)" \
                         %(fcodage,dataystartend,Nmdlok);
+    #
     if SIZE_REDUCTION == 'All' :
         figsize=(18,11);
         wspace=0.01; hspace=0.15; top=0.94; bottom=0.05; left=0.01; right=0.99;
     elif SIZE_REDUCTION == 'sel' :
         figsize=(18,12);
         wspace=0.01; hspace=0.14; top=0.94; bottom=0.04; left=0.01; right=0.99;
+    #
+    if pair_nsublc is None :
+        nsub   = Nmdlok + 1; # actuellement au plus 48 modèles + 1 pour les obs. 
+        nbsubl, nbsubc = ldef.nsublc(nsub);
+    else :
+        if np.prod(pair_nsublc) < (Nmdlok + 1):
+            ctloop.printwarning(["** TOO SMALL Combination between number of lines and number of columns **".upper().center(75),
+                    "** specified in  pair_nsublc=[{0[0]},{0[1]}]  argument **".upper().format(pair_nsublc).center(75) ],
+                    "** You have {:d} models + 1 for Obs **".format((Nmdlok)).center(75),
+                    "** try another pair_nsublc=[nbsubl, nbsubc] combination. **".center(75))
+            raise
+        nbsubl, nbsubc = pair_nsublc;
+        fsizex,fsizey = figsize
+        szlin = fsizey * (top - bottom) / nbsubl
+        szcol = fsizex * (right - left) / nbsubc
+        nblinmod = np.int(np.ceil((Nmdlok + 1) / nbsubc))
+        # correction de la teille de figure
+        print("--figsize correction:")
+        print("  We had figsize={}, nbsubl, nbsubc={} for {} models + Obs...".format(figsize, (nbsubl, nbsubc), Nmdlok))
+        figsize=(fsizex,nblinmod*szlin + fsizey*(1-top + bottom));
+        bottom *= 0.5*nbsubl/nblinmod
+        top1 = 1 - top
+        top1 *= 0.5*nbsubl/nblinmod
+        top = 1 - top1
+        wspace=0.10
+        nbsubl = nblinmod
+        print("  and we have now figsize={}, nbsubl, nbsubc={} ...".format(figsize, (nbsubl, nbsubc)))
+    nsubmax = nbsubl * nbsubc; # derniere casse subplot, pour les OBS
+    pair_nsublc = nbsubl, nbsubc
     #
     sztitle = 10;
     suptitlefs = 16

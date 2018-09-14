@@ -1442,6 +1442,7 @@ def do_models_plot101et102_past_fl(Nmdlok,Lobs,Cobs,isnumobs,isnanobs,
         if wvmax is None : 
             wvmax = np.nanmax(Smoy_)
         #
+        plt.close(101)
         fig = plt.figure(101,figsize=(12,9))
         fignum = fig.number
         plt.clf() # efface une eventuelle figure existente 
@@ -1462,6 +1463,7 @@ def do_models_plot101et102_past_fl(Nmdlok,Lobs,Cobs,isnumobs,isnanobs,
         if ecvmax is None or ecvmin < 0 : 
             ecvmax = np.nanmax(Dstd_)
         #
+        plt.close(102)
         fig = plt.figure(102,figsize=(12,9))
         fignum = fig.number
         plt.clf() # efface une eventuelle figure existente 
@@ -1668,20 +1670,24 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     Dmdl_TVar=None; DMdl_Q=None; DMdl_Qm=None; Dmdl_TVm=None
     if OK104 : # Classification avec, "en transparance", les mals classés
                # par rapport aux obs
+        plt.close(104)
         fig = plt.figure(104,figsize=figsize,facecolor=facecolor)
         plt.clf() # efface une eventuelle figure existente 
         plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
     #                     
     if OK105 : #Classification
+        plt.close(105)
         plt.figure(105,figsize=figsize,facecolor=facecolor)
         plt.clf() # efface une eventuelle figure existente 
         plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
     #                     
     if OK106 : # Courbes des moyennes mensuelles par classe
+        plt.close(106)
         plt.figure(106,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
         plt.clf() # efface une eventuelle figure existente 
         plt.subplots_adjust(wspace=wspace+0.015,hspace=hspace,top=top,bottom=bottom+0.00,left=left+0.02,right=right-0.025)
     if OK107 : # Variance (not 'RED' compatible)
+        plt.close(107)
         plt.figure(107,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
         plt.clf() # efface une eventuelle figure existente 
         Dmdl_TVar  = np.ones((Nmodels,NDobs))*np.nan; # Tableau des Variance par pixel sur climatologie
@@ -1689,6 +1695,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     if MCUM > 0 :
         # Moyenne CUMulative
         if OK108 : # Classification en Model Cumulé Moyen
+            plt.close(108)
             plt.figure(108,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
             plt.clf() # efface une eventuelle figure existente 
             plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
@@ -1698,6 +1705,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
         #
         # Variance CUMulative
         if OK109 : # Variance sur les Models Cumulés Moyens (not 'RED' compatible)
+            plt.close(109)
             plt.figure(109,figsize=figsize,facecolor=facecolor); # Moyennes mensuelles par classe
             plt.clf() # efface une eventuelle figure existente 
             #plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom-0.12,left=left,right=right)
@@ -1713,7 +1721,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
         nbsubl, nbsubc = ldef.nsublc(nsub);
     else :
         if np.prod(pair_nsublc) < (Nmodels + 1):
-            ctloop.printwarning(["** TOO SMALL Combination between number of lines and number of columns **".upper().center(75),
+            printwarning(["** TOO SMALL Combination between number of lines and number of columns **".upper().center(75),
                     "** specified in  pair_nsublc=[{0[0]},{0[1]}]  argument **".upper().format(pair_nsublc).center(75) ],
                     "** You have {:d} models + 1 for Obs **".format((Nmodels)).center(75),
                     "** try another pair_nsublc=[nbsubl, nbsubc] combination. **".center(75))
