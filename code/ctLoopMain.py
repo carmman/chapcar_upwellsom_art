@@ -526,7 +526,7 @@ def plot_geo_classes(lon,lat,XC_ogeo,nb_class,
     else :
         origin = 'upper'
     fig, ax = plt.subplots(nrows=1, ncols=1, num=fignum,facecolor='w')
-    ims = ax.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class,origin=origin);
+    ims = ax.imshow(XC_ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class,origin=origin);
     if 0:
         plt.xticks(np.arange(0,Cobs,nticks), lon[np.arange(0,Cobs,nticks)], rotation=45, fontsize=10)
         plt.yticks(np.arange(0,Lobs,nticks), lat[np.arange(0,Lobs,nticks)], fontsize=10)
@@ -1318,7 +1318,7 @@ def main(argv):
     global nb_class, eqcmap, ccmap, nFigArt
     global sst_obs_coded, Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
     global sMapO, lon, lat, ilon, ilat, varnames, wvmin, wvmax
-    global AFCindnames, NoAFCindnames, TDmdl4CT, Tmdlname
+    global AFCindnames, NoAFCindnames, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb
     global isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir
     global class_afc, list_of_plot_colors
     #
@@ -1720,9 +1720,19 @@ def main(argv):
     #
     #======================================================================
     #
+    if 0: 
+        ModelList=np.copy(Tmdlnamewnb)
+        for ii,mod in enumerate(Tmdlnamewnb) :
+            spd=mod.split('-')
+            ij=int(spd[0])-1
+            ModelList[ij] = Tmdlname[ii]
+            print("Model='{}' --> splited: {}".format(mod,spd))
+        for mod in ModelList :
+            print(mod)
     #%%
-    generalisation_ok = True
+    generalisation_ok = False
     generalisafcclust_ok = False
+    generalisaotherperiods_ok = False
     #**************************************************************************
     #.............................. GENERALISATION ............................
     if generalisation_ok :
@@ -1748,15 +1758,15 @@ def main(argv):
         #generalisation_proc(generalisation_ok=generalisation_ok, generalisafcclust_ok=generalisafcclust_ok)
         # generalisation_proc(generalisation_ok=True, generalisafcclust_ok=True)
     #%%
-    if 0 :
+    if generalisaotherperiods_ok :
     #%%
         #data_period_ident = "raverage_1975_2005";   #<><><><><><><>
-        data_period_ident = "raverage_1930_1960";   #<><><><><><><>
+        #data_period_ident = "raverage_1930_1960";   #<><><><><><><>
         #data_period_ident = "raverage_1944_1974";   #<><><><><><><>
         #data_period_ident = "rcp_2006_2017";        #<><><><><><><>
         #data_period_ident = "rcp_2070_2100";        #<><><><><><><>
         
-        list_of_periods = [ "raverage_1930_1960", "raverage_1944_1974", "rcp_2006_2017", "rcp_2070_2100" ]
+        #list_of_periods = [ "raverage_1930_1960", "raverage_1944_1974", "rcp_2006_2017", "rcp_2070_2100" ]
         list_of_periods = [ "raverage_1930_1960", "raverage_1944_1974", "rcp_2070_2100" ]
         #list_of_periods = [ "rcp_2070_2100" ]
         list_of_scenarios = [ "rcp26", "rcp45", "rcp85" ]

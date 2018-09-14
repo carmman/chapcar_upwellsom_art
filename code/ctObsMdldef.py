@@ -98,7 +98,7 @@ def Dpixmoymens(data,visu=None, climato=None, douze=12, stat=None,NORMMAX=False,
         else :
             vmin = vvmin; vmax = vvmax;
         showimgdata(Data_mmoy.T.reshape(douze,1,Ldata,Cdata),n=douze,fr=0,Labels=varnames,
-                    cmap=cm.gist_ncar,interp='none',
+                    cmap=cm.gist_ncar,interp=None,
                     figsize=(12, 9), wspace=0.0, hspace=0.0,
                     vmin=vmin,vmax=vmax);
                     #vmin=vvmin,vmax=vvmax);
@@ -140,7 +140,7 @@ def aff2D(XD, L, C, isnum, isnan,
     else :
         VC = None
     #
-    showimgdata(X_.T.reshape(p,1,L,C),n=p,fr=0,Labels=varnames,interp='none',
+    showimgdata(X_.T.reshape(p,1,L,C),n=p,fr=0,Labels=varnames,interp=None,
                 cmap=cmap,fignum=fignum,figsize=figsize,cbpos=cbpos,cblabel=cblabel,
                 wspace=wspace, hspace=hspace, top=top, bottom=bottom,
                 left=left, right=right,x=x,y=y,noaxes=noaxes,noticks=noticks,nolabels=nolabels,
@@ -157,7 +157,7 @@ def refbmusD(sm, bmus, Lig, Col, Iisn, Inan) :
     X_[Inan] = np.nan;
     X_       =  X_.reshape(Lig*Col,12); 
     showimgdata(X_.T.reshape(12,1,Lig,Col),n=12,fr=0,Labels=varnames,
-                cmap=cm.gist_ncar,interp='none',
+                cmap=cm.gist_ncar,interp=None,
                 figsize=(12, 9), wspace=0.0, hspace=0.0,
                 vmin=wvmin,vmax=wvmax);
     return X_
@@ -165,7 +165,7 @@ def refbmusD(sm, bmus, Lig, Col, Iisn, Inan) :
 def moybmusD(X_,Lig,Col): # Visu des moyennes des pixels
     moyX_ = np.nanmean(X_,axis=1)
     plt.figure()
-    plt.imshow(moyX_.reshape(Lig,Col), cmap=cm.gist_ncar,interpolation='none', 
+    plt.imshow(moyX_.reshape(Lig,Col), cmap=cm.gist_ncar,interpolation=None, 
                vmin=wvmin,vmax=wvmax);
 
 def classgeo(X, classe_X, nanval=np.nan) :

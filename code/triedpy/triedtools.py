@@ -340,7 +340,7 @@ def plotby2(X,Xclas=None,style=None,mks=10, cmap=cm.jet, \
             # Si Cvs est passé, on entoure ceux qui n'ont pas la même classe
             if Cvs is not None :
                plt.plot(X[Idiff,i], X[Idiff,j],'ok',ms=8, \
-                        fillstyle='none', mew=2, mec='k'); 
+                        fillstyle=None, mew=2, mec='k'); 
             #
             if leg is not None :
                 plt.legend(leg);
@@ -472,7 +472,7 @@ def classperf(Yref, Yest, crit="max", miss=0, idgoodbad=0) :
         return PERF;
 
 
-def shownpat2D(x,xshape,fr,to,subp=True,cmap=cm.jet,interpolation='none') :
+def shownpat2D(x,xshape,fr,to,subp=True,cmap=cm.jet,interpolation=None) :
     ''' .shownpat2D(x,xshape,fr,to,subp,cmap)
     | Affichage de vecteurs sous forme d'une image 2D
     | En entrée :

@@ -78,7 +78,7 @@ def pmcout(X,WW,FF,fparm=[0.6667, 1.7159, 0.0]) :
     '''
     nbc = len(WW); # nombre de couches sans l'input
     if np.size(FF) != nbc :
-        print("pmcout: Le nombre de fonctions de transfert doit correspondre au nombre de couche à calculer");
+        print("pmcout: Le nombre de fonctions de transfert doit correspondre au nombre de couche à calculer");
         sys.exit(0);
     # Init 1 fois parm sigmoide, tant pis si on en a pas besoin
     if FF.count('sig') > 0 :
@@ -368,7 +368,7 @@ def pmctrain(Xa,Ya,WW,FF,nbitemax=1000, fparm=[0.6667,1.7159,0.0], \
                 f2Ai = 1;  
             elif FF[nbc-1]=="exp" :
                 f2Ai = y;
-            #else : Ne devrait pas se produire : déjà  controlé lors de passe avant
+            #else : Ne devrait pas se produire : déjà  controlé lors de passe avant
             dJdAi = dJdy * f2Ai;
             if nbc > 1 :
                 Xai    = np.concatenate((Yi[nbc-2], onell),axis=1);
@@ -391,7 +391,7 @@ def pmctrain(Xa,Ya,WW,FF,nbitemax=1000, fparm=[0.6667,1.7159,0.0], \
                     dJdAi = np.dot(Wi,dJdAi.T).T;  
                 elif FF[nbc-2-i]=="exp" :
                     dJdAi = np.dot(Wi,dJdAi.T).T * y;
-                #else : Ne devrait pas se produire : déjà  controlé lors de passe avant
+                #else : Ne devrait pas se produire : déjà  controlé lors de passe avant
                 if i < nbc-2 : # pas fin
                     Xai    = np.concatenate((Yi[nbc-3-i], onell),axis=1);
                 else :
@@ -1032,7 +1032,7 @@ def wsmshowccpat(Fhid,w1,b1,w2,b2,x,fr,to,xshape,skip,sidevalue=0) :
         #
         isub = n-fr+2;
         plt.subplot(subpb,subpa,isub)
-        plt.imshow(-Ai, interpolation='none', cmap=cm.gray);
+        plt.imshow(-Ai, interpolation=None, cmap=cm.gray);
     plt.show();
 
 #============================================================================

@@ -128,20 +128,20 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,indname=None,
         else : # NO article style
             if p > 1 : # On distingue triangle à droite ou vers le haut selon l'axe
                 ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpa-1]*xoomK,
-                                marker='>',edgecolors=ec_colors,facecolor='none',linewidths=linewidths)
+                                marker='>',edgecolors=ec_colors,facecolor=None,linewidths=linewidths)
                 ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K[:,cpb-1]*xoomK,
-                                marker='^',edgecolors=ec_colors,facecolor='none',linewidths=linewidths)
+                                marker='^',edgecolors=ec_colors,facecolor=None,linewidths=linewidths)
                 if lenCP > lenXcol : # cas des surnumeraire, en principe les obs
                     ax.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs[:,cpa-1]*xoomK,
-                                    marker='>',edgecolors=obscolor,facecolor='none',linewidths=linewidthsobs)
+                                    marker='>',edgecolors=obscolor,facecolor=None,linewidths=linewidthsobs)
                     ax.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs[:,cpb-1]*xoomK,
-                                    marker='^',edgecolors=obscolor,facecolor='none',linewidths=linewidthsobs)            
+                                    marker='^',edgecolors=obscolor,facecolor=None,linewidths=linewidthsobs)            
             else :
                 ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=K*xoomK,
-                                marker='s',edgecolors=ec_colors,facecolor='none',linewidths=linewidths);
+                                marker='s',edgecolors=ec_colors,facecolor=None,linewidths=linewidths);
                 if lenCP > lenXcol : # ? cas des surnumeraire, en principe les obs
                     ax.scatter(CPobs[:,cpa-1],CPobs[:,cpb-1],s=Kobs*xoomK,
-                                marker='s',edgecolors=obscolor,facecolor='none',linewidths=linewidthsobs);
+                                marker='s',edgecolors=obscolor,facecolor=None,linewidths=linewidthsobs);
                     
     else : #(c'est pour lescolonnes -les classes)
         if article_style :
@@ -376,9 +376,9 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,indname=None,
         dy = ylim[1] - ylim[0];
         px = xlim[0] + dx/(xoomK) + dx/20; # à ajuster +|- en ...
         py = ylim[0] + dy/(xoomK) + dy/20; # ... fonction de xoomK
-        ax.scatter(px,py,marker='>',edgecolors='k', s=xoomK,     facecolor='none');
-        ax.scatter(px,py,marker='>',edgecolors='k', s=xoomK*0.5, facecolor='none');
-        ax.scatter(px,py,marker='>',edgecolors='k', s=xoomK*0.1, facecolor='none');
+        ax.scatter(px,py,marker='>',edgecolors='k', s=xoomK,     facecolor=None);
+        ax.scatter(px,py,marker='>',edgecolors='k', s=xoomK*0.5, facecolor=None);
+        ax.scatter(px,py,marker='>',edgecolors='k', s=xoomK*0.1, facecolor=None);
     # remet les axes aux limites mesures precedemment
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
@@ -404,7 +404,7 @@ def Dgeoclassif(sMap,Data,lon,lat,class_ref,classe_Dobs,nb_class,L,C,isnum,Major
     if visu :
         if ax is None :
             ax = plt.gca() # current axes
-        ims = ax.imshow(X_Mgeo_, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
+        ims = ax.imshow(X_Mgeo_, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
         Tperf_ = np.round([iperf*100 for iperf in Tperf_]).astype(int); #print(Tperf_)   
         # colorbar
         if not old :
@@ -554,7 +554,7 @@ def do_save_figure(figfile,path=None,ext=None,dpi=100,figpdf=False,fig2ok=False,
         figurefilelname = path+os.sep+figfile+ext2;
         print("   saving also in {} format in file:\n     '{}'".format(ext2.upper(),
               os.path.basename(figurefilelname)))
-        plt.savefig(figurefilelname, transparent=False)
+        plt.savefig(figurefilelname, dpi=dpi, transparent=False)
 #
 # Efface toute variable globale
 def clearall():
@@ -1071,7 +1071,7 @@ def plot_fig01_article(xc_ogeo,lon,lat,nb_class,classe_Dobs,title="observations"
     else :
         origin = 'upper'
     fig, ax = plt.subplots(nrows=1, ncols=1, num=fignum,facecolor='w')
-    ims = ax.imshow(xc_ogeo, interpolation='none',cmap=cmap,vmin=1,vmax=nb_class,origin=origin);
+    ims = ax.imshow(xc_ogeo, interpolation=None,cmap=cmap,vmin=1,vmax=nb_class,origin=origin);
     if 0:
         plt.xticks(np.arange(0,Cobs,nticks), lon[np.arange(0,Cobs,nticks)], rotation=45, fontsize=10)
         plt.yticks(np.arange(0,Lobs,nticks), lat[np.arange(0,Lobs,nticks)], fontsize=10)
@@ -1781,12 +1781,12 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                    # par classe sont en colorbar)
             plt.figure(104); plt.subplot(nbsubl,nbsubc,isubplot);
             X_ = ctobs.dto2d(classe_DD,Lobs,Cobs,isnumobs); #X_= classgeo(sst_obs, classe_DD);
-            plt.imshow(fond_C, interpolation='none', cmap=cm.gray,vmin=0,vmax=1)
+            plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
             if FONDTRANS == "Obs" :
-                plt.imshow(XC_ogeo, interpolation='none', cmap=ccmap, alpha=0.2,vmin=1,vmax=nb_class);
+                plt.imshow(XC_ogeo, interpolation=None, cmap=ccmap, alpha=0.2,vmin=1,vmax=nb_class);
             elif FONDTRANS == "Mdl" :
-                plt.imshow(XC_mgeo, interpolation='none', cmap=ccmap, alpha=0.2,vmin=1,vmax=nb_class);
-            plt.imshow(X_, interpolation='none', cmap=ccmap,vmin=1,vmax=nb_class);
+                plt.imshow(XC_mgeo, interpolation=None, cmap=ccmap, alpha=0.2,vmin=1,vmax=nb_class);
+            plt.imshow(X_, interpolation=None, cmap=ccmap,vmin=1,vmax=nb_class);
             del X_
             plt.axis('off'); #grid(); # for easier check
             plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob,'%'),fontsize=sztitle,y=ysstitre); 
@@ -1796,8 +1796,8 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
             #
         if OK105 : # Classification (pour les modèles les Perf par classe sont en colorbar)
             plt.figure(105); plt.subplot(nbsubl,nbsubc,isubplot);
-            plt.imshow(fond_C, interpolation='none', cmap=cm.gray,vmin=0,vmax=1)
-            plt.imshow(XC_mgeo, interpolation='none',cmap=ccmap, vmin=1,vmax=nb_class);
+            plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
+            plt.imshow(XC_mgeo, interpolation=None,cmap=ccmap, vmin=1,vmax=nb_class);
             hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
             hcb.set_ticklabels(Tperf);
             hcb.ax.tick_params(labelsize=8);
@@ -1838,8 +1838,8 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
             Tperfglob_Qm[imodel] = Perfglob_Qm
             Tperf_Qm = np.round([i*100 for i in Tperf_Qm]).astype(int);
     
-            plt.imshow(fond_C, interpolation='none', cmap=cm.gray,vmin=0,vmax=1)
-            plt.imshow(XC_mgeo_Qm, interpolation='none',cmap=ccmap, vmin=1,vmax=nb_class);
+            plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
+            plt.imshow(XC_mgeo_Qm, interpolation=None,cmap=ccmap, vmin=1,vmax=nb_class);
             hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
             hcb.set_ticklabels(Tperf_Qm);
             hcb.ax.tick_params(labelsize=8);
@@ -1869,8 +1869,8 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     #isubplot = isubplot + 1; # Michel (ou pas ?)
     if OK104 : # Obs for 104
         plt.figure(104); plt.subplot(nbsubl,nbsubc,isubplot);
-        plt.imshow(fond_C, interpolation='none', cmap=cm.gray,vmin=0,vmax=1)
-        plt.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
+        plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
+        plt.imshow(XC_ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
         hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
         hcb.ax.tick_params(labelsize=8)
@@ -1885,8 +1885,8 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     #
     if OK105 : # Obs for 105
         plt.figure(105); plt.subplot(nbsubl,nbsubc,isubplot);
-        plt.imshow(fond_C, interpolation='none', cmap=cm.gray,vmin=0,vmax=1)
-        plt.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
+        plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
+        plt.imshow(XC_ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
         hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
         hcb.ax.tick_params(labelsize=8)
@@ -1950,8 +1950,8 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     #
     if MCUM>0 and OK108 : # idem OK105, but ...
         plt.figure(108); plt.subplot(nbsubl,nbsubc,isubplot);
-        plt.imshow(fond_C, interpolation='none', cmap=cm.gray,vmin=0,vmax=1)
-        plt.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
+        plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
+        plt.imshow(XC_ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
         hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
         hcb.ax.tick_params(labelsize=8)
@@ -2228,7 +2228,7 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
                         classej_ = class_ref[bmusj_].reshape(NDmdl);
                         XCM_     = ctobs.dto2d(classej_,LObs,CObs,isnumObs); # Classification géographique
                         plt.subplot(8,6,jj+1); # plt.subplot(7,7,jj+1);
-                        plt.imshow(XCM_, interpolation='none',cmap=ccmap, vmin=1,vmax=nb_class);
+                        plt.imshow(XCM_, interpolation=None,cmap=ccmap, vmin=1,vmax=nb_class);
                         plt.axis('off');
                         plt.title("%s(%.0f%c)"%(CAHindnames[ijj],100*Tperfglob[ijj,0],'%'),
                                   fontsize=sztitle,y=ysstitre);
@@ -2340,11 +2340,11 @@ def do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
     # 2- MET EN EVIDENCE LES OBS DANS LA FIGURE ...
     if AFCWITHOBS  :
         ax.plot(F1U[Nmdlok,pa-1],F1U[Nmdlok,po-1], 'oc', markersize=20,
-                markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);    
+                markerfacecolor=None,markeredgecolor='m',markeredgewidth=2);    
     else : # Obs en supplémentaire
         ax.text(F1sU[0,0],F1sU[0,1], ".Obs")
         ax.plot(F1sU[0,0],F1sU[0,1], 'oc', markersize=20,
-                markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);
+                markerfacecolor=None,markeredgecolor='m',markeredgewidth=2);
     #
     # 3- AJOUT ou pas des colonnes (i.e. des classes)
     colnames = (np.arange(nb_class)+1).astype(str)
@@ -2445,11 +2445,11 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlo
         # 2- MET EN EVIDENCE LES OBS DANS LA FIGURE ...
         if AFCWITHOBS  :
             ax.plot(F1U[Nmdlok,pa-1],F1U[Nmdlok,po-1], 'oc', markersize=20,
-                    markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);    
+                    markerfacecolor=None,markeredgecolor='m',markeredgewidth=2);    
         else : # Obs en supplémentaire
             ax.text(F1sU[0,0],F1sU[0,1], ".Obs")
             ax.plot(F1sU[0,0],F1sU[0,1], 'oc', markersize=20,
-                    markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);
+                    markerfacecolor=None,markeredgecolor='m',markeredgewidth=2);
         #
         # 3- AJOUT ou pas des colonnes (i.e. des classes)
         colnames = (np.arange(nb_class)+1).astype(str)

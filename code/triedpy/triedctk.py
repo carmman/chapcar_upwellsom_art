@@ -167,7 +167,7 @@ def showmap(sm, sztext=11, coltext='k',colbar=True, cmap=cm.jet, interp=None,cax
     | interp   : Valeur du paramètre d'interpolation pour la fonction imshow de
     |            Matplotlib. Par défaut, ou en présence de None, un lissage des
     |            couleurs est effectué (comme le shading interp de matlab).
-    |            Passer la valeur 'none' pour ne pas faire de lissage. 
+    |            Passer la valeur None pour ne pas faire de lissage. 
     | caxmin, et caxmax : permet de définir des bornes min et max communes 
     |         pour les échelles de couleur de toutes les variables.
     | axis   : Permet d'agir sur les axes ('off', equal','tight',...)
@@ -647,7 +647,7 @@ def showrefactiv(sm, Patterns, pattext=None, sztext=11, cmap=cm.jet, interp=None
     | interp   : Valeur du paramètre d'interpolation pour la fonction imshow de
     |            Matplotlib. Par défaut, ou en présence de None, un lissage des
     |            couleurs est effectué (comme le shading interp de matlab).
-    |            Passer la valeur 'none' pour ne pas faire de lissage. 
+    |            Passer la valeur None pour ne pas faire de lissage. 
     '''
     if Patterns.ndim != sm.codebook.ndim :
         print("showrefactiv : Patterns must have the same dim as codebooks");
