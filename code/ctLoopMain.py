@@ -1093,7 +1093,10 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=N
             xdeltaposobs   =0.030; ydeltaposobs  =-0.003; linewidthsobs=3
             xdeltaposcls   =0.001; ydeltaposcls  =-0.003; linewidthscls=2.5
             xdeltaposlgnd  =0.03;  ydeltaposlgnd =-0.002
-            legendXstart   =-1.22; legendYstart  =0.88;   legendYstep  =0.06
+            if Nmdlok == 47 :
+                legendXstart   = 0.975; legendYstart  =-0.53;   legendYstep  =0.058
+            else :
+                legendXstart   =-1.22; legendYstart  =0.88;   legendYstep  =0.06
             legendXstartcls=legendXstart;
             legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
         elif SIZE_REDUCTION == 'sel' :
@@ -1110,7 +1113,7 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=N
         #
         stitre = ("SST {:s} -on zone \"{:s}\"- A.F.C Projection with Models, Observations and Classes ({:s})"+\
                   "\n- {:s}, AFC on {:d} CAH Classes for {} models (in {} AFC clusters) + Obs -").format(fcodage,
-                       zone_stitre,dataystartend,method_cah,nb_class,Nmdlafc,nb_clust)
+                       zone_stitre,dataystartend,method_cah,nb_class,Nmdlok,nb_clust)
         #
         ctloop.do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
                     indnames=indnames,
@@ -1155,7 +1158,9 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=N
         if dpi is None :
             dpi = FIGDPI
         figfile += "AFC2DProj-{:d}-{:d}_{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:s}_{:d}-mod".format(
-                pa,po,nb_clust,nb_class,fprefixe,fshortcode,dataystartend,Nmdlafc)
+                pa,po,nb_clust,nb_class,fprefixe,fshortcode,dataystartend,Nmdlok)
+        if AFCWITHOBS :
+            figfile += "+Obs"
         #
         ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
 #
@@ -1365,7 +1370,7 @@ def main(argv):
     #
     #%% DECOMPRESSER / COMPRESSER la ligne suivante selon si executione MANUELLE UN A UN des bloques du MAIN ou complete avec appel externe ... 
     if manualmode :
-        caseconfig='all' # ou 'sel'
+        caseconfig='sel' # 'all' ou 'sel'
     #
     print("Case config is '{:s}'".format(caseconfig))
     pcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
@@ -1615,6 +1620,14 @@ def main(argv):
                     OK108=OK108,
                     OK109=OK109,
                     )
+    indexlastcummod = np.where(Tperfglob_Qm == max(Tperfglob_Qm))[0]
+    if len(indexlastcummod) > 1 : # si plussieurs maximuns on prend le dernier
+        indexlastcummod = indexlastcummod[-1]
+    else :
+        indexlastcummod = indexlastcummod[0]
+    nbestcummod = indexlastcummod + 1
+    print("\n-- {:d} cum. models for best cumulated performances --> {:.1f}%\n   {}".format(
+            nbestcummod,100*Tperfglob_Qm[indexlastcummod],Tmdlnamewnb[np.arange(nbestcummod)]))
     #%% 
     # -------------------------------------------------------------------------
     ctloop.printwarning([ "    MODELS: APRES SECOND LOOP" ])
@@ -1730,8 +1743,8 @@ def main(argv):
         for mod in ModelList :
             print(mod)
     #%%
-    generalisation_ok = False
-    generalisafcclust_ok = False
+    generalisation_ok = True
+    generalisafcclust_ok = True
     generalisaotherperiods_ok = False
     #**************************************************************************
     #.............................. GENERALISATION ............................
@@ -1747,6 +1760,12 @@ def main(argv):
                     TDmdl4CT,Tmdlname,
                     data_period_ident=DATAMDL,
                     generalisation_type='bestcum',  # 'bestclust', 'bestcum'
+                    )
+        generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
+                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                    TDmdl4CT,Tmdlname,
+                    data_period_ident=DATAMDL,
+                    generalisation_type='all',  # 'bestclust', 'bestcum', 'all'
                     )
     if generalisafcclust_ok :
         generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, varnames, wvmin, wvmax, nb_class,
@@ -1836,24 +1855,25 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
     #TMixtMdl= [];
     #TMixtMdl =['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']; 
     #TMixtMdl = Sfiltre;
+    all_possible_values = ["bestclust", "bestcum", "all" ]
     if generalisation_type is None:
         generalisation_type = "bestclust"
-    elif generalisation_type != "bestclust" and generalisation_type != "bestcum" : # SI ni l'un ni l'autre ...
+    elif generalisation_type not in all_possible_values : # SI ni l'un ni l'autre ...
         ctloop.printwarning(["","generalisation_proc ERROR".upper().center(75),""],
                 ["Bad generalisation_type: '{}'".format(generalisation_type).center(75),
-                 "chose one from {}".format(generalisation_type,['bestclust', 'bestcum']).center(75)])
+                 "chose one from {}".format(generalisation_type,all_possible_values).center(75)])
         raise
     #
     ctloop.printwarning(["","current generalisation '{}'".upper().format(generalisation_type).center(75),""])
     if generalisation_type == "bestclust" : # Best AFC Clusters
         if SIZE_REDUCTION == 'All' :
-            # Grande Zone (All): BEST AFC CLUSTER:
+            # Grande Zone (All): BEST AFC CLUSTER: -> Cluster 4, 13 Models, performance: 69.3 :
             TMixtMdlLabel = 'Best AFC Cluster'
             TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
                         'CNRM-CM5-2', 'CanESM2', 'CanCM4', 'GFDL-CM3', 'CNRM-CM5', 'FGOALS-s2', 
                         'CSIRO-Mk3-6-0', 'CMCC-CESM']
         elif SIZE_REDUCTION == 'sel' :
-            # Petite Zone (sel): BEST AFC CLUSTER:
+            # Petite Zone (sel): BEST AFC CLUSTER: -> Cluster 2, 5 Models, performance: 66.0 :
             TMixtMdlLabel = 'Best AFC Cluster'
             TMixtMdl = ['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']
         #
@@ -1866,6 +1886,10 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
             # Petite Zone (sel): BEST CUM GROUP OF MODELS:
             TMixtMdlLabel = 'Best Cumulated Models Group'
             TMixtMdl = ['CanCM4', 'CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'CanESM2', 'NorESM1-ME']
+        #
+    elif generalisation_type == "all" : # Best Cum Clusters Mopr
+        TMixtMdlLabel = 'All Models Cumulated'
+        TMixtMdl = Tmdlname
         #
     else :
         # ALL MODELS (but 'FGOALS-s2', there is no 1975-2005 data for it):

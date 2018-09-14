@@ -71,7 +71,7 @@ else :
     Tmodels_and_institut_anyall = np.array([
         ['BCC',          'bcc-csm1-1',       ''],   #( 3)
         ['BCC',          'bcc-csm1-1-m',     ''],   #( 4)
-        #['BNU',          'BNU-ESM',          ''],   # initialement non fourni, mais present actuellement
+        ['BNU',          'BNU-ESM',          ''],   # initialement non fourni, mais present actuellement
         ['CCCma',        'CanCM4',           ''],
         ['CCCma',        'CanESM2',          ''],
         ['CMCC',         'CMCC-CESM',        ''],
@@ -116,7 +116,7 @@ else :
         ['NSF-DOE-NCAR', 'CESM1-CAM5-1-FV2', ''],
         ['NSF-DOE-NCAR', 'CESM1-FASTCHEM',   ''],
         ['NSF-DOE-NCAR', 'CESM1-WACCM',      ''],
-        #['FIO',          'FIO-ESM',          ''],    # pas de donnees 'tos', en 'historical', uniquement 'so', mais a des donnees en scenarios ...
+        ['FIO',          'FIO-ESM',          ''],    # pas de donnees 'tos', en 'historical', uniquement 'so', mais a des donnees en scenarios ...
         #['',             'OBS',              ''],    #(??)    # par exemple.
     ]);
     Tinstitut_anyall = Tmodels_and_institut_anyall[:,0]
