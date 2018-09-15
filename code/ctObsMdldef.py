@@ -391,7 +391,7 @@ def transco_class(class_ref,codebook,crit='',indexok=False) :
     else :
         return cref_new
 #
-def moymensclass (varN2D,isnum,classe_D,nb_class) :
+def moymensclass (varN2D,isnum,classe_D,nb_class,getstd=False) :
     # Moyennes mensuelles par classe
     N,L,C   = np.shape(varN2D);
     #!!!X   = np.reshape(sst_obs,(N,L*C))
@@ -404,10 +404,17 @@ def moymensclass (varN2D,isnum,classe_D,nb_class) :
     MoyMens = MoyMens[:,isnum]
     #        
     Tmoymensclass = np.zeros((12,nb_class))
+    if getstd :
+        Tecaensclass = np.zeros((12,nb_class))
     for c in np.arange(nb_class) :
         Ic = np.where(classe_D==c+1)[0];
         Tmoymensclass[:,c] = np.mean(MoyMens[:,Ic], axis=1)
-    return Tmoymensclass
+        if getstd :
+            Tecaensclass[:,c] = np.std(MoyMens[:,Ic], axis=1)
+    if getstd :
+        return Tmoymensclass,Tecaensclass
+    else :
+        return Tmoymensclass
 def deltalargeN2D(X) :
     # Différence de sst par rapport à la valeur au large.
     X_ = np.copy(X);

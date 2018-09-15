@@ -355,6 +355,7 @@ Visu_Inertie    = False;    # Flag de visualisation de l'Inertie
 # FLAGS en vue de l'article
 Visu_UpwellArt  = True;     # Flag de visu des figures pour article avec Juliette et Adama
 FIGARTDPI     = 300  # DPI pour les figures bitmap de l'article
+plotctprofilsstd = True;    # plot les STD des profils des codebooks, sous forme de errorbars
 if Visu_UpwellArt :
     nFigArt = 0;
     OK101 = False; # Pour produire la Moyenne d'un modèle moyen par ...

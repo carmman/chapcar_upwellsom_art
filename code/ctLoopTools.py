@@ -1093,9 +1093,11 @@ def plot_fig01_article(xc_ogeo,lon,lat,nb_class,classe_Dobs,title="observations"
 #
 def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames=None,
                              title="observations mean by class",
-                             pcmap=None,
+                             getstd=False,
+                             pcmap=None, darkcmapfactor=0.95,
                              figsize=(12,6),
                              wspace=0.0, hspace=0.0, top=0.96, bottom=0.08, left=0.06, right=0.92,
+                             linewidth=1,
                              ):
     #
     if isnumobs is None :
@@ -1105,18 +1107,28 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
         tmpcmap = cm.jet;       # Accent, Set1, Set1_r, gist_ncar; jet, ...
         # pour avoir des couleurs à peu près equivalente pour les plots
         pcmap  = tmpcmap(np.arange(0,320,round(320/nb_class))); #ok?
-        pcmap *= 0.95 # fonce les legerement tous les couleurs ...
-        if tmpcmap.name == 'jet' and nb_class == 4:
-            pcmap[2] *= 0.9 # fonce la couleur de la classe qui est trop claire(si ccmap = jet)
+        pcmap *= darkcmapfactor # fonce les legerement tous les couleurs ...
+        #if tmpcmap.name == 'jet' and nb_class == 4:
+        #    pcmap[2] *= 0.95 # fonce la couleur de la classe qui est trop claire(si ccmap = jet)
     #
     # Courbes des Moyennes Mensuelles par Classe
     fig = plt.figure(figsize=figsize)
     fignum = fig.number # numero de figure en cours ...
     fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
-    TmoymensclassObs = ctobs.moymensclass(sst_obs,isnumobs,classe_Dobs,nb_class)
+    if getstd :
+        TmoymensclassObs,TecamensclassObs = ctobs.moymensclass(sst_obs,isnumobs,
+                                                        classe_Dobs,nb_class,getstd=getstd)
+    else :
+        TmoymensclassObs = ctobs.moymensclass(sst_obs,isnumobs,classe_Dobs,nb_class)
     #plt.plot(TmoymensclassObs); plt.axis('tight');
+    nx = TmoymensclassObs.shape[0]
+    x = np.arange(nx)
     for i in np.arange(nb_class) :
-        plt.plot(TmoymensclassObs[:,i],'.-',color=pcmap[i]);
+        if getstd : # plot Moyenne st EcartType en barres
+            plt.errorbar(x,TmoymensclassObs[:,i],yerr=TecamensclassObs[:,i],fmt='.-',
+                         color=pcmap[i],linewidth=linewidth);
+        else : # plot  uniquement la Moyenne
+            plt.plot(x,TmoymensclassObs[:,i],'.-',color=pcmap[i],linewidth=linewidth);
     plt.grid(axis='y')
     plt.axis('tight');
     #
@@ -1127,6 +1139,7 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
     plt.xlabel('Month', fontsize=12);
     legax=plt.legend(np.arange(nb_class)+1,loc=2,fontsize=10);
     legax.set_title('Class')
+    plt.axhline(color='k',linewidth=1)
     plt.title(title,fontsize=16); #,fontweigth='bold');
     #plt.show(); sys.exit(0)
 #
@@ -1145,6 +1158,7 @@ def do_plot_ct_profils(sMapO,Dobs,class_ref,
         ctk.showprofils(sMapO, fignum=fignum, Data=Dobs,
                         visu=3, scale=2,Clevel=class_ref-1,Gscale=0.5,
                         axsztext=6,marker='.',markrsz=4,pltcolor='r',
+                        axline=True,
                         ColorClass=pcmap,ticklabels=varnames,xticks=np.arange(0,len(varnames),2),verbose=False);
         plt.suptitle(title,fontsize=titlefntsize); #,fontweigth='bold');
     #

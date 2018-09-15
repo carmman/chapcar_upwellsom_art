@@ -569,9 +569,11 @@ def plot_geo_classes(lon,lat,XC_ogeo,nb_class,
 def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
                               title="figart1", fileext="", figdir=".",
                               figfile=None, dpi=None, figpdf=False,
+                              getstd=False,
                               pcmap=None,
                               figsize=(12,6),
                               wspace=0.0, hspace=0.0, top=0.96, bottom=0.08, left=0.06, right=0.92,
+                              linewidth=1,
                               ) :
     #
     global SAVEFIG, FIGDPI, FIGEXT, FIGARTDPI, SAVEPDF, VFIGEXT, blockshow
@@ -582,9 +584,11 @@ def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
     stitre = title
     ctloop.plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,varnames=varnames,
                                     title=stitre,
-                                    pcmap=pcmap,
+                                    getstd=getstd,
+                                    pcmap=pcmap, darkcmapfactor=1.0,
                                     figsize=figsize,
                                     wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
+                                    linewidth=linewidth,
                                     )
     if SAVEFIG : # sauvegarde de la figure
         if figfile is None :
@@ -1578,9 +1582,11 @@ def main(argv):
                                   title=stitre,
                                   fileext=fileextbis, figdir=case_figs_dir,
                                   figfile=figfile, dpi=dpi, figpdf=figpdf,
+                                  getstd=plotctprofilsstd,
                                   pcmap=pcmap,
                                   figsize=(12,6),
                                   wspace=0.0, hspace=0.0, top=0.95, bottom=0.08, left=0.06, right=0.92,
+                                  linewidth=2.5,
                                   )
     #
     #%% -----------------------------------------------------------------------
@@ -1590,7 +1596,7 @@ def main(argv):
                       fshortcode,dataobsystartend,data_label_base)
         plot_ct_profils(sMapO,Dobs,class_ref,varnames=varnames,
                         fileext=fileextter, figdir=case_figs_dir,
-                        pcmap=pcmap,
+                        pcmap=pcmap*0.7+0.299,
                         title=stitre,
                         titlefntsize=14,
                         )
@@ -1774,8 +1780,8 @@ def main(argv):
             print(mod)
     #%%
     generalisation_ok = True
-    generalisafcclust_ok = True
-    generalisaotherperiods_ok = False
+    generalisa_afc_clust_ok = True
+    generalisa_other_periods_ok = True
     #**************************************************************************
     #.............................. GENERALISATION ............................
     if generalisation_ok :
@@ -1797,17 +1803,16 @@ def main(argv):
                     data_period_ident=DATAMDL,
                     generalisation_type='all',  # 'bestclust', 'bestcum', 'all'
                     )
-    if generalisafcclust_ok :
+    # all AFC Clusters
+    if generalisa_afc_clust_ok :
         generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, varnames, wvmin, wvmax, nb_class,
                         isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
                         TDmdl4CT, Tmdlname,
                         data_period_ident=DATAMDL,
                         )
-
-        #generalisation_proc(generalisation_ok=generalisation_ok, generalisafcclust_ok=generalisafcclust_ok)
-        # generalisation_proc(generalisation_ok=True, generalisafcclust_ok=True)
+    #
     #%%
-    if generalisaotherperiods_ok :
+    if generalisa_other_periods_ok :
     #%%
         #data_period_ident = "raverage_1975_2005";   #<><><><><><><>
         #data_period_ident = "raverage_1930_1960";   #<><><><><><><>

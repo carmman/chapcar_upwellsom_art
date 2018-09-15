@@ -543,6 +543,7 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
                 Clevel=None, Gscale=0.25, showcellid=None, ColorClass=None,
                 sztext=11, axsztext=8, markrsz=6, marker='*',pltcolor='r',xticks=None,
                 ticklabels=None,
+                axline=False,
                 figsize=(12,16),fignum=None, y=0.98,verbose=False) :
     ''' showprofils (sm, visu, Data, bmus ,scale, Clevel, Gscale)
     | Pour chaque neurone, on représente, dans un subplot, le référent et/ou des
@@ -662,6 +663,9 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
                 #
                 ax.plot(sm.codebook[inode,:],'-',color=pltcolor,linewidth=0.5);
                 ax.plot(sm.codebook[inode,:],marker=marker,markersize=markrsz,color=pltcolor);
+                #
+                if axline :
+                    ax.axhline(color='k',linewidth=0.5)
                 #
                 if scale==1 :
                     ax.axis("tight");
