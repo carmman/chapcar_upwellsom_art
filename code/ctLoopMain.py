@@ -74,8 +74,8 @@ def ctloop_init(case='None',verbose=False):
     if case.upper() == 'ALL' :
         SIZE_REDUCTION = 'All';
         # A - Grande zone de l’upwelling (25x36) :
-        #    Longitude : 45W à 9W (-44.5 à -9.5)
-        #    Latitude :  30N à 5N ( 29.5 à  5.5)
+        #    Longitude : 45W à 10W (-44.5 à -9.5)
+        #    Latitude :  30N à 5N ( 29.5 à  4.5)
         frlat =  29.5;  tolat =  4.5; #(excluded)
         #frlon = -44.5;  tolon = -8.5; #(excluded)   #(§:25x35)
         frlon = -44.5;  tolon = -9.5; #(excluded)   #(§:25x35)
@@ -96,8 +96,8 @@ def ctloop_init(case='None',verbose=False):
     elif case.upper() == 'SEL' :
         SIZE_REDUCTION = 'sel';
         # B - Sous-zone ciblant l’upwelling (13x12) :
-        #    LON:  28W à 16W (-27.5 to -16.5)
-        #    LAT : 23N à 10N ( 22.5 to  10.5)
+        #    LON:  28W à 16W (-27.5 to -15.5)
+        #    LAT : 23N à 10N ( 22.5 to  9.5)
         frlat =  22.5;  tolat =   9.5; #(excluded)
         frlon = -27.5;  tolon = -15.5; #(excluded)   #(§:13x12)
         #   * Carte topologique et CAH : 17x6 (4, 4, 1, - 16, 1, 0.1) : TE=0.6067 ; QE=0.082044
