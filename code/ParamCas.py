@@ -300,6 +300,7 @@ dcmap      = cm.gist_ncar;
 # -------------------------
 # map de couleur pour donnes negative/positives
 eqcmap = cm.RdYlBu
+eqcmap = cm.get_cmap('RdYlBu_r')  # Palette RdYlBu inversée
 #eqcmap = cm.coolwarm
 #eqcmap = cm.bwr
 #eqcmap = cm.seismic

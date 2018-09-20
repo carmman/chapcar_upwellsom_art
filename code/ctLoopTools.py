@@ -2581,6 +2581,41 @@ def do_plot_afc_inertie(VAPT,
     return
     #
 #
+def mixtgeneralisationxxx (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
+                        class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
+                        lon=None, lat=None,
+                        TypePerf = ["MeanClassAccuracy"],
+                        label=None, cblabel=None, fignum=None,
+                        nticks=1,
+                        ytitre=0.98, fsizetitre=14) :
+    # déterminer l'indice des modèles de TMixtMdl dans Tmdlname
+    IMixtMdl = [];
+    #print("Tmdlname: {}".format(Tmdlname))
+    for mname in TMixtMdl :
+        if mname in Tmdlname :
+            im = np.where(Tmdlname == mname)[0];
+            if len(im) == 1 :
+                IMixtMdl.append(im[0])
+            else :
+                print("\n ** mixtgeneralisation: too many ({}), model '{}' repeted in list: {} **".format(len(im),mname,Tmdlname))
+        else:
+            print("\n ** mixtgeneralisation: model '{}' not found, in list: {} **".format(mname,Tmdlname))
+        #print("mname: {}".format(mname))
+        #im = np.where(Tmdlname == mname)[0];
+        #if len(im) == 1 :
+        #    IMixtMdl.append(im[0])
+        #else :
+        #    print("\n ** too many ({}) or model '{}' not found, in list: {} **".format(len(im),mname,Tmdlname))
+    #
+    if len(IMixtMdl) == 0 :
+        print("\nGENERALISATION IMPOSSIBLE : AUCUN MODELE DISPONIBLE (sur %d)"%(len(TMixtMdl)))
+        return MdlMoy, IMixtMdl, Perfglob_
+    else :
+        print("\n%d modèles disponibles (sur %d) pour la generalisation : %s"
+              %(len(IMixtMdl),len(TMixtMdl),Tmdlname[IMixtMdl]));
+    #
+    return IMixtMdl
+#
 def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
                         class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
                         lon=None, lat=None,

@@ -235,7 +235,12 @@ def plot_obs4ct(sst_obs,Dobs,lon,lat,isnanobs=None,isnumobs=None,varnames=None,w
     global fprefixe, blockshow
     #
     if eqcmap is None :
-        eqcmap = cm.jet
+        eqcmap = cm.get_cmap('RdYlBu_r')  # Palette RdYlBu inversée
+    #
+    if type(eqcmap) is list :
+        iter_cmap = eqcmap
+    else :
+        iter_cmap = [ eqcmap ]
     #
     dataystartend = datemdl2dateinreval(DATAMDL)
     #
@@ -252,24 +257,26 @@ def plot_obs4ct(sst_obs,Dobs,lon,lat,isnanobs=None,isnumobs=None,varnames=None,w
     if Show_ObsSTD :
         stitre += "(monthly {:d} years STD in contours)".format(Nda)
     #
-    ctloop.plot_obs(sst_obs,Dobs,lon,lat,varnames=varnames,cmap=eqcmap,
-                    isnanobs=isnanobs,isnumobs=isnumobs,
-                    title=stitre, wvmin=wvmin, wvmax=wvmax,
-                    lolast=lolast,figsize=figsize,
-                    wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
-                    climato=climato,NORMMAX=NORMMAX,CENTRED=CENTRED,Show_ObsSTD=Show_ObsSTD
-                    )
-    #
-    if SAVEFIG : # sauvegarde de la figure
-        figfile = "Fig_Obs4CT"
-        if Show_ObsSTD :
-            figfile += "+{:d}ySTD".format(Nda)
-        figfile += "{:s}{:s}".format(filecomp,fileext)
-        # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
-        # eventuellement en PDF, si SAVEPDF active. 
-        ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figpath,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
-    #
-    plt.show(block=blockshow)
+    for ii,v_eqcmap in enumerate(iter_cmap) :
+        ctloop.plot_obs(sst_obs,Dobs,lon,lat,varnames=varnames,cmap=v_eqcmap,
+                        isnanobs=isnanobs,isnumobs=isnumobs,
+                        title=stitre, wvmin=wvmin, wvmax=wvmax,
+                        lolast=lolast,figsize=figsize,
+                        wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
+                        climato=climato,NORMMAX=NORMMAX,CENTRED=CENTRED,Show_ObsSTD=Show_ObsSTD
+                        )
+        #
+        if SAVEFIG : # sauvegarde de la figure
+            figfile = "Fig_Obs4CT"
+            if Show_ObsSTD :
+                figfile += "+{:d}ySTD".format(Nda)
+            figfile += "{:s}{:s}".format(filecomp,fileext)
+            figfile += "_{:s}".format(v_eqcmap.name)
+            # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
+            # eventuellement en PDF, si SAVEPDF active. 
+            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figpath,ext=FIGEXT,fig2ok=SAVEPDF,ext2=VFIGEXT)
+        #
+        plt.show(block=blockshow)
     #
     if freelimststoo :
         if SIZE_REDUCTION == 'All' :
@@ -281,24 +288,24 @@ def plot_obs4ct(sst_obs,Dobs,lon,lat,isnanobs=None,isnumobs=None,varnames=None,w
             figsize=(10,8.5)
             wspace=0.04; hspace=0.12; top=0.925; bottom=0.035; left=0.035; right=0.965;
         #
-        localcmap = eqcmap
         stitre = "Observed SST {:s} MEAN ({:s}) - FREE LIMITS".format(fcodage,dataystartend)
         #
-        ctloop.plot_obsbis(sst_obs,Dobs,varnames=varnames,cmap=localcmap,
-                        title=stitre,
-                        figsize=figsize,
-                        wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
-                        )
+        for ii,v_eqcmap in enumerate(iter_cmap) :
+            ctloop.plot_obsbis(sst_obs,Dobs,varnames=varnames,cmap=v_eqcmap,
+                            title=stitre,
+                            figsize=figsize,
+                            wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
+                            )
         #
         if SAVEFIG : # sauvegarde de la figure
             figfile = "Fig_Obs4CT_FREELIMITS"
             figfile += fileext
+            figfile += "_{}".format(eqcmap.name)
             # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
             # eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figpath,ext=FIGEXT)
         #
         plt.show(block=blockshow)
-    #
     #
     return
 #%%
@@ -1207,11 +1214,16 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
                           figdir=".",
                           figfile1=None, figfile2=None, figfileext1="", figfileext2="", dpi=None, figpdf=False,
                           wvmin=None,wvmax=None,
+                          eqcmap=None,
+                          plotmeanmodel=True,
                           ) :
     #
     global SIZE_REDUCTION
     global SAVEFIG, FIGDPI, FIGEXT, FIGARTDPI, SAVEPDF, VFIGEXT, blockshow
     global TypePerf
+    #
+    if eqcmap is None :
+        eqcmap = cm.get_cmap('RdYlBu_r')  # Palette RdYlBu inversée
     #
     ctloop.printwarning([ "","GENERALISATION".center(75),""])
     #==========================================================================
@@ -1240,42 +1252,43 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
     if TMixtMdl == [] :
         print("\nSopt non renseigné ; Ce Cas n'a pas encore été prévu")
         return
-    
-    if SIZE_REDUCTION == 'All' :
-        figsize = (9,6)
-        wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.06; right=0.925;
-        nticks = 5; # 4
-    elif SIZE_REDUCTION == 'sel' :
-        figsize=(9,9)
-        wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.05; right=0.96;
-        nticks = 2; # 4
     #
-    fig = plt.figure(figsize=figsize)
-    fignum = fig.number # numero de figure en cours ...
-    fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
-    #
-    print("\n{:d}-model(s)' generalization: {} ".format(len(TMixtMdl),TMixtMdl))
-    MdlMoy, IMixtMdl, MGPerfglob = ctloop.mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT, 
-                                        class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
-                                        lon=lon, lat=lat,
-                                        TypePerf=TypePerf,
-                                        label=misttitlelabel,
-                                        fignum=fignum,
-                                        fsizetitre=14, ytitre=1.01, nticks=nticks);
-    #
-    if len(IMixtMdl) == 0 :
-        print("\n *** PAS DE MODELES POUR GENERALISATION !!! ***\n" )
-        return
-    else :
-        if SAVEFIG : # sauvegarde de la figure
-            if figfile1 is None :
-                figfile1 = "Fig_"
-            if dpi is None :
-                dpi = FIGDPI
-            figfile1 += "MeanModel_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
-            figfile1 += figfileext1
-            #
-            ctloop.do_save_figure(figfile1,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
+    if plotmeanmodel :
+        if SIZE_REDUCTION == 'All' :
+            figsize = (9,6)
+            wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.06; right=0.925;
+            nticks = 5; # 4
+        elif SIZE_REDUCTION == 'sel' :
+            figsize=(9,9)
+            wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.05; right=0.96;
+            nticks = 2; # 4
+        #
+        fig = plt.figure(figsize=figsize)
+        fignum = fig.number # numero de figure en cours ...
+        fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
+        #
+        print("\n{:d}-model(s)' generalization: {} ".format(len(TMixtMdl),TMixtMdl))
+        MdlMoy, IMixtMdl, MGPerfglob = ctloop.mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT, 
+                                            class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
+                                            lon=lon, lat=lat,
+                                            TypePerf=TypePerf,
+                                            label=misttitlelabel,
+                                            fignum=fignum,
+                                            fsizetitre=14, ytitre=1.01, nticks=nticks);
+        #
+        if len(IMixtMdl) == 0 :
+            print("\n *** PAS DE MODELES POUR GENERALISATION !!! ***\n" )
+            return
+        else :
+            if SAVEFIG : # sauvegarde de la figure
+                if figfile1 is None :
+                    figfile1 = "Fig_"
+                if dpi is None :
+                    dpi = FIGDPI
+                figfile1 += "MeanModel_{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
+                figfile1 += figfileext1
+                #
+                ctloop.do_save_figure(figfile1,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
     
     # Affichage du moyen for CT
     if SIZE_REDUCTION == 'All' :
@@ -1328,12 +1341,242 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
             dpi = FIGDPI
         figfile2 += "{:s}-{:d}-mod_Mean".format(mistfilelabel,len(Tmdlname[IMixtMdl]))
         figfile2 += figfileext2
+        figfile2 += "_{}".format(eqcmap.name)
         # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
         # eventuellement en PDF, si SAVEPDF active. 
         ctloop.do_save_figure(figfile2,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
     #
     #
     #**********************************************************************
+    return
+#%%
+#%%
+def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
+                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                        TDmdl4CT, Tmdlname,
+                        data_period_ident=None,
+                        scenario=None,
+                        generalisation_type=None,  # 'bestclust', 'bestcum'
+                        eqcmap=None,
+                        ) :
+    ##########################################################################
+    #    global , eqcmap, ccmap, nFigArt
+    #    global , Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
+    #    global , ilon, ilat, 
+    #    global AFCindnames, NoAFCindnames, 
+    #    global 
+    #    global class_afc, list_of_plot_colors
+    #
+    if eqcmap is None :
+        eqcmap = cm.get_cmap('RdYlBu_r')  # Palette RdYlBu inversée
+    #
+    global nFigArt
+    #**************************************************************************
+    #.............................. GENERALISATION ............................
+    #
+    #--------------------------------------------------------------------------
+    # Modèles Optimaux (Sopt) ;  Avec "NEW Obs - v3b " 1975-2005
+    # Je commence par le plus simple : Une ligne de modèle sans classe en une phase
+    # et une seule codification à la fois
+    # Sopt-1975-2005 : Les meilleurs modèles de la période "de référence" 1975-2005
+    #TMixtMdl= [];
+    #TMixtMdl =['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']; 
+    #TMixtMdl = Sfiltre;
+    all_possible_values = ["bestclust", "bestcum", "all" ]
+    if generalisation_type is None:
+        generalisation_type = "bestclust"
+    elif generalisation_type not in all_possible_values : # SI ni l'un ni l'autre ...
+        ctloop.printwarning(["","generalisation_proc ERROR".upper().center(75),""],
+                ["Bad generalisation_type: '{}'".format(generalisation_type).center(75),
+                 "chose one from {}".format(generalisation_type,all_possible_values).center(75)])
+        raise
+    #
+    ctloop.printwarning(["","current generalisation '{}'".upper().format(generalisation_type).center(75),""])
+    if generalisation_type == "bestclust" : # Best AFC Clusters
+        if SIZE_REDUCTION == 'All' :
+            # Grande Zone (All): BEST AFC CLUSTER: -> Cluster 4, 13 Models, performance: 69.3 :
+            TMixtMdlLabel = 'Best AFC Cluster'
+            TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
+                        'CNRM-CM5-2', 'CanESM2', 'CanCM4', 'GFDL-CM3', 'CNRM-CM5', 'FGOALS-s2', 
+                        'CSIRO-Mk3-6-0', 'CMCC-CESM']
+        elif SIZE_REDUCTION == 'sel' :
+            # Petite Zone (sel): BEST AFC CLUSTER: -> Cluster 2, 5 Models, performance: 66.0 :
+            TMixtMdlLabel = 'Best AFC Cluster'
+            TMixtMdl = ['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']
+        #
+    elif generalisation_type == "bestcum" : # Best Cum Clusters Mopr
+        if SIZE_REDUCTION == 'All' :
+            # Grande Zone (All): BEST CUM GROUP OF MODELS:
+            TMixtMdlLabel = 'Best Cumulated Models Group'
+            TMixtMdl = ['CMCC-CM']
+        elif SIZE_REDUCTION == 'sel' :
+            # Petite Zone (sel): BEST CUM GROUP OF MODELS:
+            TMixtMdlLabel = 'Best Cumulated Models Group'
+            TMixtMdl = ['CanCM4', 'CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'CanESM2', 'NorESM1-ME']
+        #
+    elif generalisation_type == "all" : # Best Cum Clusters Mopr
+        TMixtMdlLabel = 'All Models Cumulated'
+        TMixtMdl = Tmdlname
+        #
+    else :
+        # ALL MODELS (but 'FGOALS-s2', there is no 1975-2005 data for it):
+        TMixtMdlLabel = 'All Models'
+        TMixtMdl = Tmdlname
+        #TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
+        #            'FGOALS-g2', 'IPSL-CM5B-LR', 'CNRM-CM5-2', 'CanESM2', 'CanCM4',
+        #            'GFDL-CM3', 'CNRM-CM5', 'CSIRO-Mk3-6-0', 'MPI-ESM-MR', 'MRI-CGCM3',
+        #            'MRI-ESM1', 'CMCC-CESM', 'inmcm4', 'bcc-csm1-1', 'MPI-ESM-LR',
+        #            'CESM1-BGC', 'MPI-ESM-P', 'IPSL-CM5A-LR', 'GISS-E2-R',
+        #            'GISS-E2-R-CC', 'NorESM1-M', 'CCSM4', 'NorESM1-ME', 'bcc-csm1-1-m',
+        #            'GFDL-CM2p1', 'GISS-E2-H', 'ACCESS1-3', 'MIROC5', 'GFDL-ESM2G',
+        #            'MIROC-ESM-CHEM', 'GFDL-ESM2M', 'GISS-E2-H-CC', 'MIROC-ESM',
+        #            'IPSL-CM5A-MR', 'HadCM3', 'CESM1-CAM5', 'CESM1-CAM5-1-FV2',
+        #            'ACCESS1-0']
+    #
+    # -------------------------------------------------------------------------
+    # Figure 5 pour Article : Classes par cluster sur projectrion geo best cluster AFC
+    # -------------------------------------------------------------------------
+    if Visu_UpwellArt :
+        nFigArt = 5;
+        figfile = "FigArt{:02d}_".format(nFigArt)
+        dpi     = FIGARTDPI
+        figpdf  = True
+    else :
+        figfile = "Fig_"
+        dpi     = FIGDPI
+        figpdf  = False
+    #
+    if type(eqcmap) is list :
+        iter_cmap = eqcmap
+    else :
+        iter_cmap = [ eqcmap ]
+    #
+    if data_period_ident is not None :
+        dataystartend = datemdl2dateinreval(data_period_ident)
+        stitre = "({:s})".format(dataystartend)
+        datafileext = "-{:s}".format(dataystartend)
+    else :
+        stitre = None
+        datafileext = "-{:s}".format(dataystartend)
+    #
+    if scenario is not None :
+        if stitre is None :
+            stitre = ""
+        stitre += " {:s}".format(scenario.upper())
+        datafileext += "-{:s}".format(scenario.upper())
+    # -------------------------------------------------------------------------
+    figfileext1 = "_{:s}{:s}_{:d}Class{:s}".format(fprefixe,fshortcode,nb_class,datafileext)
+    figfileext2 = ""
+    #if Show_ModSTD :
+    #    figfileext2 += "+{:d}ySTD".format(Nda)
+    figfileext2 += "_Lim{:+.1f}-{:+.1f}_{:s}{:s}Clim{:s}".format(wvmin,wvmax,
+                        fprefixe,fshortcode,datafileext)
+    #
+    for ii,v_eqcmap in enumerate(iter_cmap) :
+        plotmeanmodel = (ii==0) # seulemen une fois (pour le premier)
+        plotmeanmodel = True # a chaqu fois, pour l'instant ...
+        ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tmdlname,
+                          nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs,
+                          varnames=varnames,
+                          modstdflg=Show_ModSTD,
+                          figdir=case_figs_dir,
+                          figfile1=figfile, figfile2=figfile, figfileext1=figfileext1, figfileext2=figfileext2,
+                          dpi=dpi, figpdf=figpdf,
+                          wvmin=wvmin,wvmax=wvmax,
+                          subtitle=stitre,
+                          eqcmap=v_eqcmap,
+                          plotmeanmodel=plotmeanmodel,
+                          )
+    #
+    return
+#
+#%%
+def generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, varnames, wvmin, wvmax, nb_class,
+                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                        TDmdl4CT, Tmdlname,
+                        data_period_ident=None,
+                        eqcmap=None,
+                        ) :
+    # #########################################################################
+    #    global , eqcmap, ccmap, nFigArt
+    #    global , Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
+    #    global , ilon, ilat, 
+    #    global AFCindnames, NoAFCindnames, 
+    #    global 
+    #    global class_afc, list_of_plot_colors
+    #
+    if eqcmap is None :
+        eqcmap = cm.get_cmap('RdYlBu_r')  # Palette RdYlBu inversée
+    #
+    global nFigArt
+    #
+    if data_period_ident is not None :
+        dataystartend = datemdl2dateinreval(data_period_ident)
+        datastitre = " ({:s})".format(dataystartend)
+        datafigext = "-{:s}".format(dataystartend)
+    else :
+        datastitre = ""
+        datafigext = ""
+    #
+    if type(eqcmap) is list :
+        iter_cmap = eqcmap
+    else :
+        iter_cmap = [ eqcmap ]
+    #
+    #**************************************************************************
+    #.............................. GENERALISATION ............................
+    #
+    #
+    #  Generalisation d'une ensemble ou cluster precis
+    for kclust in np.arange(1,nb_clust + 1) :
+        #kclust = 1
+        SfiltredMod = AFCindnames[np.where(class_afc==kclust)[0]]
+        print("--Generalizing for AFC Cluster{:s}: {:d} with models:\n  {}".format(
+                datastitre,kclust,SfiltredMod))
+        stitre = "AFC Cluster: {:d}{:s}".format(kclust,datastitre)
+        fileextIV = "_AFCclust{:d}{:s}-{:s}{:s}_{:s}{:s}".format(kclust,datafigext,fprefixe,
+                           SIZE_REDUCTION,fshortcode,method_cah)
+        fileextIV79 = "_AFCclust{:d}{:s}-{:s}{:s}_{:s}".format(kclust,datafigext,fprefixe,
+                             SIZE_REDUCTION,fshortcode)
+        xTperfglob, xTperfglob_Qm, xTDmdl4CT, xTmdlname, xTmdlnamewnb, \
+            xTmdlonlynb, xTTperf, xNmdlok, \
+            xNDmdl = ctloop_model_traitement(
+                        sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
+                        nb_class,class_ref,classe_Dobs,NDobs,fond_C,
+                        isnanobs,isnumobs,Lobs,Cobs,list_of_plot_colors,
+                        Sfiltre=SfiltredMod,
+                        varnames=varnames, figdir=case_figs_dir,
+                        commonfileext=fileextIV, commonfileext79=fileextIV79,
+                        pair_nsublc=[7,7],
+                        subtitle=stitre,
+                        eqcmap=eqcmap, ccmap=ccmap,pcmap=pcmap,
+                        obs_data_path=obs_data_path,
+                        data_period_ident=data_period_ident,
+                        OK101=False,
+                        OK102=False,
+                        OK104=OK104,
+                        OK105=OK105,
+                        OK106=False,
+                        OK107=False,
+                        OK108=OK108,
+                        OK109=False,
+                        )
+        #
+        TMixtMdlLabel = "Cumulated for AFC Cluster {:d} {:s}".format(kclust,datastitre)
+        TMixtMdl = AFCindnames[np.where(class_afc==kclust)[0]]
+        for ii,v_eqcmap in enumerate(iter_cmap) :
+            plotmeanmodel = (ii==0) # seulemen une fois (pour le premier)
+            plotmeanmodel = True # a chaqu fois, pour l'instant ...
+            ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel,
+                              TDmdl4CT, Tmdlname,
+                              nb_class, isnumobs, isnanobs, Lobs, Cobs,
+                              class_ref, classe_Dobs,
+                              varnames=varnames,
+                              figdir=case_figs_dir,
+                              wvmin=wvmin,wvmax=wvmax,
+                              eqcmap=v_eqcmap,
+                              plotmeanmodel=plotmeanmodel,
+                              )
     return
 #%%
 # #############################################################################
@@ -1404,7 +1647,7 @@ def main(argv):
     #
     #%% DECOMPRESSER / COMPRESSER la ligne suivante selon si executione MANUELLE UN A UN des bloques du MAIN ou complete avec appel externe ... 
     if manualmode :
-        caseconfig='sel' # 'all' ou 'sel'
+        caseconfig='all' # 'all' ou 'sel'
     #
     print("Case config is '{:s}'".format(caseconfig))
     pcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
@@ -1455,16 +1698,25 @@ def main(argv):
     #%% -----------------------------------------------------------------------
     # Figure Obs4CT
     if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
-        fileext1 = "_Lim{:+.1f}-{:+.1f}".format(wvmin,wvmax)
-        fileext2 = "_{:s}_{:s}{:s}Clim-{:s}_{:s}".format(eqcmap.name,fprefixe,
-                      fshortcode,dataobsystartend,data_label_base)
-
-        plot_obs4ct(sst_obs_coded,Dobs,lon,lat,isnanobs=isnanobs,isnumobs=isnumobs,
-                    varnames=varnames,wvmin=wvmin,wvmax=wvmax,
-                    eqcmap=eqcmap,Show_ObsSTD=Show_ObsSTD,
-                    filecomp=fileext1, fileext=fileext2,
-                    figpath=case_figs_dir,fcodage=fcodage,
-                    freelimststoo=False)
+        current_eqcmap = [eqcmap, cm.jet]
+        #current_eqcmap = eqcmap
+        #current_eqcmap = cm.jet
+        if type(current_eqcmap) is list :
+            iter_cmap = current_eqcmap
+        else :
+            iter_cmap = [ eqcmap ]
+        #  
+        for ii,v_eqcmap in enumerate(iter_cmap) :
+            fileext1 = "_Lim{:+.1f}-{:+.1f}".format(wvmin,wvmax)
+            fileext2 = "_{:s}_{:s}{:s}Clim-{:s}_{:s}".format(v_eqcmap.name,fprefixe,
+                          fshortcode,dataobsystartend,data_label_base)
+            
+            plot_obs4ct(sst_obs_coded,Dobs,lon,lat,isnanobs=isnanobs,isnumobs=isnumobs,
+                        varnames=varnames,wvmin=wvmin,wvmax=wvmax,
+                        eqcmap=v_eqcmap,Show_ObsSTD=Show_ObsSTD,
+                        filecomp=fileext1, fileext=fileext2,
+                        figpath=case_figs_dir,fcodage=fcodage,
+                        freelimststoo=False)
     #
     if STOP_BEFORE_CT :
         plt.show(); sys.exit(0);
@@ -1779,6 +2031,10 @@ def main(argv):
         for mod in ModelList :
             print(mod)
     #%%
+    list_of_eqcmap = [eqcmap, cm.jet]
+    #current_eqcmap = eqcmap
+    #current_eqcmap = cm.jet
+    #
     generalisation_ok = True
     generalisa_afc_clust_ok = True
     generalisa_other_periods_ok = True
@@ -1790,18 +2046,21 @@ def main(argv):
                     TDmdl4CT,Tmdlname,
                     data_period_ident=DATAMDL,
                     generalisation_type='bestclust',  # 'bestclust', 'bestcum'
+                    eqcmap=list_of_eqcmap,
                     )
         generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
                     isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
                     TDmdl4CT,Tmdlname,
                     data_period_ident=DATAMDL,
                     generalisation_type='bestcum',  # 'bestclust', 'bestcum'
+                    eqcmap=list_of_eqcmap,
                     )
         generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
                     isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
                     TDmdl4CT,Tmdlname,
                     data_period_ident=DATAMDL,
                     generalisation_type='all',  # 'bestclust', 'bestcum', 'all'
+                    eqcmap=list_of_eqcmap,
                     )
     # all AFC Clusters
     if generalisa_afc_clust_ok :
@@ -1809,11 +2068,11 @@ def main(argv):
                         isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
                         TDmdl4CT, Tmdlname,
                         data_period_ident=DATAMDL,
+                        eqcmap=list_of_eqcmap,
                         )
     #
     #%%
     if generalisa_other_periods_ok :
-    #%%
         #data_period_ident = "raverage_1975_2005";   #<><><><><><><>
         #data_period_ident = "raverage_1930_1960";   #<><><><><><><>
         #data_period_ident = "raverage_1944_1974";   #<><><><><><><>
@@ -1857,211 +2116,9 @@ def main(argv):
                                     TDmdl4CTx,Tmdlnamex,
                                     data_period_ident=data_period_ident,
                                     scenario=scenario_name,
+                                    eqcmap=list_of_eqcmap,
                                     )
 
-    #%%
-    return
-#%%
-def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
-                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
-                        TDmdl4CT, Tmdlname,
-                        data_period_ident=None,
-                        scenario=None,
-                        generalisation_type=None,  # 'bestclust', 'bestcum'
-                        ) :
-    #%% #########################################################################
-#    global , eqcmap, ccmap, nFigArt
-#    global , Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
-#    global , ilon, ilat, 
-#    global AFCindnames, NoAFCindnames, 
-#    global 
-#    global class_afc, list_of_plot_colors
-
-    #%%
-    global nFigArt
-    #**************************************************************************
-    #.............................. GENERALISATION ............................
-    #
-    #--------------------------------------------------------------------------
-    # Modèles Optimaux (Sopt) ;  Avec "NEW Obs - v3b " 1975-2005
-    # Je commence par le plus simple : Une ligne de modèle sans classe en une phase
-    # et une seule codification à la fois
-    # Sopt-1975-2005 : Les meilleurs modèles de la période "de référence" 1975-2005
-    #TMixtMdl= [];
-    #TMixtMdl =['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']; 
-    #TMixtMdl = Sfiltre;
-    all_possible_values = ["bestclust", "bestcum", "all" ]
-    if generalisation_type is None:
-        generalisation_type = "bestclust"
-    elif generalisation_type not in all_possible_values : # SI ni l'un ni l'autre ...
-        ctloop.printwarning(["","generalisation_proc ERROR".upper().center(75),""],
-                ["Bad generalisation_type: '{}'".format(generalisation_type).center(75),
-                 "chose one from {}".format(generalisation_type,all_possible_values).center(75)])
-        raise
-    #
-    ctloop.printwarning(["","current generalisation '{}'".upper().format(generalisation_type).center(75),""])
-    if generalisation_type == "bestclust" : # Best AFC Clusters
-        if SIZE_REDUCTION == 'All' :
-            # Grande Zone (All): BEST AFC CLUSTER: -> Cluster 4, 13 Models, performance: 69.3 :
-            TMixtMdlLabel = 'Best AFC Cluster'
-            TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
-                        'CNRM-CM5-2', 'CanESM2', 'CanCM4', 'GFDL-CM3', 'CNRM-CM5', 'FGOALS-s2', 
-                        'CSIRO-Mk3-6-0', 'CMCC-CESM']
-        elif SIZE_REDUCTION == 'sel' :
-            # Petite Zone (sel): BEST AFC CLUSTER: -> Cluster 2, 5 Models, performance: 66.0 :
-            TMixtMdlLabel = 'Best AFC Cluster'
-            TMixtMdl = ['CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'FGOALS-s2']
-        #
-    elif generalisation_type == "bestcum" : # Best Cum Clusters Mopr
-        if SIZE_REDUCTION == 'All' :
-            # Grande Zone (All): BEST CUM GROUP OF MODELS:
-            TMixtMdlLabel = 'Best Cumulated Models Group'
-            TMixtMdl = ['CMCC-CM']
-        elif SIZE_REDUCTION == 'sel' :
-            # Petite Zone (sel): BEST CUM GROUP OF MODELS:
-            TMixtMdlLabel = 'Best Cumulated Models Group'
-            TMixtMdl = ['CanCM4', 'CNRM-CM5', 'CMCC-CMS', 'CNRM-CM5-2', 'GFDL-CM3', 'CanESM2', 'NorESM1-ME']
-        #
-    elif generalisation_type == "all" : # Best Cum Clusters Mopr
-        TMixtMdlLabel = 'All Models Cumulated'
-        TMixtMdl = Tmdlname
-        #
-    else :
-        # ALL MODELS (but 'FGOALS-s2', there is no 1975-2005 data for it):
-        TMixtMdlLabel = 'All Models'
-        TMixtMdl = Tmdlname
-        #TMixtMdl = ['CMCC-CM', 'HadGEM2-ES', 'HadGEM2-AO', 'HadGEM2-CC', 'CMCC-CMS',
-        #            'FGOALS-g2', 'IPSL-CM5B-LR', 'CNRM-CM5-2', 'CanESM2', 'CanCM4',
-        #            'GFDL-CM3', 'CNRM-CM5', 'CSIRO-Mk3-6-0', 'MPI-ESM-MR', 'MRI-CGCM3',
-        #            'MRI-ESM1', 'CMCC-CESM', 'inmcm4', 'bcc-csm1-1', 'MPI-ESM-LR',
-        #            'CESM1-BGC', 'MPI-ESM-P', 'IPSL-CM5A-LR', 'GISS-E2-R',
-        #            'GISS-E2-R-CC', 'NorESM1-M', 'CCSM4', 'NorESM1-ME', 'bcc-csm1-1-m',
-        #            'GFDL-CM2p1', 'GISS-E2-H', 'ACCESS1-3', 'MIROC5', 'GFDL-ESM2G',
-        #            'MIROC-ESM-CHEM', 'GFDL-ESM2M', 'GISS-E2-H-CC', 'MIROC-ESM',
-        #            'IPSL-CM5A-MR', 'HadCM3', 'CESM1-CAM5', 'CESM1-CAM5-1-FV2',
-        #            'ACCESS1-0']
-    #
-    if data_period_ident is not None :
-        dataystartend = datemdl2dateinreval(data_period_ident)
-        stitre = "({:s})".format(dataystartend)
-        datafileext = "-{:s}".format(dataystartend)
-    else :
-        stitre = None
-        datafileext = "-{:s}".format(dataystartend)
-    #
-    if scenario is not None :
-        if stitre is None :
-            stitre = ""
-        stitre += " {:s}".format(scenario.upper())
-        datafileext += "-{:s}".format(scenario.upper())
-    # -------------------------------------------------------------------------
-    figfileext1 = "_{:s}{:s}_{:d}Class{:s}".format(fprefixe,fshortcode,nb_class,datafileext)
-    figfileext2 = ""
-    #if Show_ModSTD :
-    #    figfileext2 += "+{:d}ySTD".format(Nda)
-    figfileext2 += "_Lim{:+.1f}-{:+.1f}_{:s}{:s}Clim{:s}".format(wvmin,wvmax,
-                        fprefixe,fshortcode,datafileext)
-    # -------------------------------------------------------------------------
-    # Figure 5 pour Article : Classes par cluster sur projectrion geo best cluster AFC
-    # -------------------------------------------------------------------------
-    if Visu_UpwellArt :
-        nFigArt = 5;
-        figfile = "FigArt{:02d}_".format(nFigArt)
-        dpi     = FIGARTDPI
-        figpdf  = True
-    else :
-        figfile = "Fig_"
-        dpi     = FIGDPI
-        figpdf  = False
-    #
-    ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tmdlname,
-                      nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs,
-                      varnames=varnames,
-                      modstdflg=Show_ModSTD,
-                      figdir=case_figs_dir,
-                      figfile1=figfile, figfile2=figfile, figfileext1=figfileext1, figfileext2=figfileext2,
-                      dpi=dpi, figpdf=figpdf,
-                      wvmin=wvmin,wvmax=wvmax,
-                      subtitle=stitre,
-                      )
-        #
-    #%%
-    return
-#
-def generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, varnames, wvmin, wvmax, nb_class,
-                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
-                        TDmdl4CT, Tmdlname,
-                        data_period_ident=None,
-                        ) :
-    #%% #########################################################################
-#    global , eqcmap, ccmap, nFigArt
-#    global , Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
-#    global , ilon, ilat, 
-#    global AFCindnames, NoAFCindnames, 
-#    global 
-#    global class_afc, list_of_plot_colors
-
-    #%%
-    
-    global nFigArt
-    #
-    if data_period_ident is not None :
-        dataystartend = datemdl2dateinreval(data_period_ident)
-        datastitre = " ({:s})".format(dataystartend)
-        datafigext = "-{:s}".format(dataystartend)
-    else :
-        datastitre = ""
-        datafigext = ""
-    #
-    #**************************************************************************
-    #.............................. GENERALISATION ............................
-    #
-    #
-    #  Generalisation d'une ensemble ou cluster precis
-    for kclust in np.arange(1,nb_clust + 1) :
-        #kclust = 1
-        SfiltredMod = AFCindnames[np.where(class_afc==kclust)[0]]
-        print("--Generalizing for AFC Cluster{:s}: {:d} with models:\n  {}".format(
-                datastitre,kclust,SfiltredMod))
-        stitre = "AFC Cluster: {:d}{:s}".format(kclust,datastitre)
-        fileextIV = "_AFCclust{:d}{:s}-{:s}{:s}_{:s}{:s}".format(kclust,datafigext,fprefixe,
-                           SIZE_REDUCTION,fshortcode,method_cah)
-        fileextIV79 = "_AFCclust{:d}{:s}-{:s}{:s}_{:s}".format(kclust,datafigext,fprefixe,
-                             SIZE_REDUCTION,fshortcode)
-        xTperfglob, xTperfglob_Qm, xTDmdl4CT, xTmdlname, xTmdlnamewnb, \
-            xTmdlonlynb, xTTperf, xNmdlok, \
-            xNDmdl = ctloop_model_traitement(
-                        sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
-                        nb_class,class_ref,classe_Dobs,NDobs,fond_C,
-                        isnanobs,isnumobs,Lobs,Cobs,list_of_plot_colors,
-                        Sfiltre=SfiltredMod,
-                        varnames=varnames, figdir=case_figs_dir,
-                        commonfileext=fileextIV, commonfileext79=fileextIV79,
-                        pair_nsublc=[7,7],
-                        subtitle=stitre,
-                        eqcmap=eqcmap, ccmap=ccmap,pcmap=pcmap,
-                        obs_data_path=obs_data_path,
-                        data_period_ident=data_period_ident,
-                        OK101=False,
-                        OK102=False,
-                        OK104=OK104,
-                        OK105=OK105,
-                        OK106=False,
-                        OK107=False,
-                        OK108=OK108,
-                        OK109=False,
-                        )
-        #
-        TMixtMdlLabel = "Cumulated for AFC Cluster {:d} {:s}".format(kclust,datastitre)
-        TMixtMdl = AFCindnames[np.where(class_afc==kclust)[0]]
-        ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel,
-                          TDmdl4CT, Tmdlname,
-                          nb_class, isnumobs, isnanobs, Lobs, Cobs,
-                          class_ref, classe_Dobs,
-                          varnames=varnames,
-                          figdir=case_figs_dir,
-                          wvmin=wvmin,wvmax=wvmax,
-                          )
     #%%
     return
 #%%
