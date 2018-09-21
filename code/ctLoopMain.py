@@ -1121,6 +1121,7 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=N
     Nmdlafc = CRi.shape[0]
     dataystartend = datemdl2dateinreval(DATAMDL)
     ctloop.printwarning([ "    AFC: 2-D PROJECTION" ])
+    #
     if Visu_UpwellArt :
         lblfontsize=14;    mdlmarkersize=250;
         lblfontsizeobs=16; obsmarkersize=320;
@@ -1352,12 +1353,14 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
 #%%
 #%%
 def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
-                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
                         TDmdl4CT, Tmdlname,
                         data_period_ident=None,
-                        scenario=None,
-                        generalisation_type=None,  # 'bestclust', 'bestcum'
                         eqcmap=None,
+                        figdir=None,
+                        generalisation_type=None,  # 'bestclust', 'bestcum'
+                        scenario=None,
+                        nFigArt=None,
                         ) :
     ##########################################################################
     #    global , eqcmap, ccmap, nFigArt
@@ -1370,7 +1373,8 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
     if eqcmap is None :
         eqcmap = cm.get_cmap('RdYlBu_r')  # Palette RdYlBu inversée
     #
-    global nFigArt
+    global SAVEFIG
+    #
     #**************************************************************************
     #.............................. GENERALISATION ............................
     #
@@ -1436,13 +1440,14 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
     # -------------------------------------------------------------------------
     # Figure 5 pour Article : Classes par cluster sur projectrion geo best cluster AFC
     # -------------------------------------------------------------------------
-    if Visu_UpwellArt :
-        nFigArt = 5;
-        figfile = "FigArt{:02d}_".format(nFigArt)
+    if nFigArt is not None :
+        figfile1 = "FigArt{:02d}_".format(nFigArt)
+        nFigArt += 1;
+        figfile2 = "FigArt{:02d}_".format(nFigArt)
         dpi     = FIGARTDPI
         figpdf  = True
     else :
-        figfile = "Fig_"
+        figfile1 = figfile2 = "Fig_"
         dpi     = FIGDPI
         figpdf  = False
     #
@@ -1464,6 +1469,20 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
             stitre = ""
         stitre += " {:s}".format(scenario.upper())
         datafileext += "-{:s}".format(scenario.upper())
+    #
+    current_figs_dir = None
+    if SAVEFIG :
+        if figdir is None :
+            global FIGSDIR
+            figdir = FIGSDIR
+        #
+        if generalisation_type is None :
+            local_figs_subdir = "generaliz"
+        else :
+            local_figs_subdir = "gen-{}".format(generalisation_type)
+        local_figs_subdir += "{}".format(datafileext)
+            #
+        current_figs_dir = ctloop.do_check_and_create_dirname(figdir, subdir=local_figs_subdir)
     # -------------------------------------------------------------------------
     figfileext1 = "_{:s}{:s}_{:d}Class{:s}".format(fprefixe,fshortcode,nb_class,datafileext)
     figfileext2 = ""
@@ -1479,8 +1498,8 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
                           nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs,
                           varnames=varnames,
                           modstdflg=Show_ModSTD,
-                          figdir=case_figs_dir,
-                          figfile1=figfile, figfile2=figfile, figfileext1=figfileext1, figfileext2=figfileext2,
+                          figdir=current_figs_dir,
+                          figfile1=figfile1, figfile2=figfile2, figfileext1=figfileext1, figfileext2=figfileext2,
                           dpi=dpi, figpdf=figpdf,
                           wvmin=wvmin,wvmax=wvmax,
                           subtitle=stitre,
@@ -1492,10 +1511,12 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
 #
 #%%
 def generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, varnames, wvmin, wvmax, nb_class,
-                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
                         TDmdl4CT, Tmdlname,
                         data_period_ident=None,
                         eqcmap=None,
+                        figdir=None,
+                        nFigArt=None,
                         ) :
     # #########################################################################
     #    global , eqcmap, ccmap, nFigArt
@@ -1508,15 +1529,19 @@ def generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, v
     if eqcmap is None :
         eqcmap = cm.get_cmap('RdYlBu_r')  # Palette RdYlBu inversée
     #
-    global nFigArt
-    #
     if data_period_ident is not None :
         dataystartend = datemdl2dateinreval(data_period_ident)
         datastitre = " ({:s})".format(dataystartend)
-        datafigext = "-{:s}".format(dataystartend)
+        datafileext = "-{:s}".format(dataystartend)
     else :
         datastitre = ""
-        datafigext = ""
+        datafileext = ""
+    #
+    current_figs_dir = None
+    if SAVEFIG :
+        if figdir is None :
+            global FIGSDIR
+            figdir = FIGSDIR
     #
     if type(eqcmap) is list :
         iter_cmap = eqcmap
@@ -1530,13 +1555,18 @@ def generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, v
     #  Generalisation d'une ensemble ou cluster precis
     for kclust in np.arange(1,nb_clust + 1) :
         #kclust = 1
+        if SAVEFIG :
+            local_figs_subdir = "gen-afcclust{:02d}".format(kclust)
+            local_figs_subdir += "{}".format(datafileext)
+            current_figs_dir = ctloop.do_check_and_create_dirname(figdir, subdir=local_figs_subdir)
+        #
         SfiltredMod = AFCindnames[np.where(class_afc==kclust)[0]]
         print("--Generalizing for AFC Cluster{:s}: {:d} with models:\n  {}".format(
                 datastitre,kclust,SfiltredMod))
         stitre = "AFC Cluster: {:d}{:s}".format(kclust,datastitre)
-        fileextIV = "_AFCclust{:d}{:s}-{:s}{:s}_{:s}{:s}".format(kclust,datafigext,fprefixe,
+        fileextIV = "_AFCclust{:d}{:s}-{:s}{:s}_{:s}{:s}".format(kclust,datafileext,fprefixe,
                            SIZE_REDUCTION,fshortcode,method_cah)
-        fileextIV79 = "_AFCclust{:d}{:s}-{:s}{:s}_{:s}".format(kclust,datafigext,fprefixe,
+        fileextIV79 = "_AFCclust{:d}{:s}-{:s}{:s}_{:s}".format(kclust,datafileext,fprefixe,
                              SIZE_REDUCTION,fshortcode)
         xTperfglob, xTperfglob_Qm, xTDmdl4CT, xTmdlname, xTmdlnamewnb, \
             xTmdlonlynb, xTTperf, xNmdlok, \
@@ -1545,7 +1575,7 @@ def generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, v
                         nb_class,class_ref,classe_Dobs,NDobs,fond_C,
                         isnanobs,isnumobs,Lobs,Cobs,list_of_plot_colors,
                         Sfiltre=SfiltredMod,
-                        varnames=varnames, figdir=case_figs_dir,
+                        varnames=varnames, figdir=current_figs_dir,
                         commonfileext=fileextIV, commonfileext79=fileextIV79,
                         pair_nsublc=[7,7],
                         subtitle=stitre,
@@ -1572,9 +1602,9 @@ def generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, v
                               nb_class, isnumobs, isnanobs, Lobs, Cobs,
                               class_ref, classe_Dobs,
                               varnames=varnames,
-                              figdir=case_figs_dir,
                               wvmin=wvmin,wvmax=wvmax,
                               eqcmap=v_eqcmap,
+                              figdir=current_figs_dir,
                               plotmeanmodel=plotmeanmodel,
                               )
     return
@@ -1597,7 +1627,7 @@ def main(argv):
     global fprefixe, tpgm0, blockshow, fcodage, fshortcode
     #
     # Globals necessaires a la generalisation manuelle ...
-    global nb_class, eqcmap, ccmap, nFigArt
+    global nb_class, eqcmap, ccmap
     global sst_obs_coded, Dobs, XC_Ogeo, NDobs, fond_C, pcmap, obs_data_path
     global sMapO, lon, lat, ilon, ilat, varnames, wvmin, wvmax
     global AFCindnames, NoAFCindnames, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb
@@ -1670,19 +1700,11 @@ def main(argv):
     # -----------------------------------------------------------------------------
     # Repertoire principal des maps (les objets des SOM) et sous-repertoire por le cas en cours 
     if SAVEMAP :
-        if not os.path.exists(MAPSDIR) :
-            os.makedirs(MAPSDIR)
-        case_maps_dir = os.path.join(MAPSDIR,case_label)
-        if not os.path.exists(case_maps_dir) :
-            os.makedirs(case_maps_dir)
+        case_maps_dir = ctloop.do_check_and_create_dirname(MAPSDIR, subdir=case_label)
     # -------------------------------------------------------------------------
     # Repertoire principal des figures et sous-repertoire por le cas en cours 
     if SAVEFIG :
-        if not os.path.exists(FIGSDIR) :
-            os.makedirs(FIGSDIR)
-        case_figs_dir = os.path.join(FIGSDIR,case_label)
-        if not os.path.exists(case_figs_dir) :
-            os.makedirs(case_figs_dir)
+        case_figs_dir = ctloop.do_check_and_create_dirname(FIGSDIR, subdir=case_label)
     #
     # Limites (min, max) manuelles de l'annomalie de la SST
     if WITHANO :
@@ -1708,7 +1730,7 @@ def main(argv):
         #  
         for ii,v_eqcmap in enumerate(iter_cmap) :
             fileext1 = "_Lim{:+.1f}-{:+.1f}".format(wvmin,wvmax)
-            fileext2 = "_{:s}_{:s}{:s}Clim-{:s}_{:s}".format(v_eqcmap.name,fprefixe,
+            fileext2 = "_{:s}{:s}Clim-{:s}_{:s}".format(fprefixe,
                           fshortcode,dataobsystartend,data_label_base)
             
             plot_obs4ct(sst_obs_coded,Dobs,lon,lat,isnanobs=isnanobs,isnumobs=isnumobs,
@@ -2042,33 +2064,37 @@ def main(argv):
     #.............................. GENERALISATION ............................
     if generalisation_ok :
         generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
-                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
                     TDmdl4CT,Tmdlname,
                     data_period_ident=DATAMDL,
+                    eqcmap=list_of_eqcmap,
+                    figdir=case_figs_dir,
                     generalisation_type='bestclust',  # 'bestclust', 'bestcum'
-                    eqcmap=list_of_eqcmap,
                     )
         generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
-                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
                     TDmdl4CT,Tmdlname,
                     data_period_ident=DATAMDL,
+                    eqcmap=list_of_eqcmap,
+                    figdir=case_figs_dir,
                     generalisation_type='bestcum',  # 'bestclust', 'bestcum'
-                    eqcmap=list_of_eqcmap,
                     )
         generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
-                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
                     TDmdl4CT,Tmdlname,
                     data_period_ident=DATAMDL,
-                    generalisation_type='all',  # 'bestclust', 'bestcum', 'all'
                     eqcmap=list_of_eqcmap,
+                    figdir=case_figs_dir,
+                    generalisation_type='all',  # 'bestclust', 'bestcum', 'all'
                     )
     # all AFC Clusters
     if generalisa_afc_clust_ok :
         generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, varnames, wvmin, wvmax, nb_class,
-                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
                         TDmdl4CT, Tmdlname,
                         data_period_ident=DATAMDL,
                         eqcmap=list_of_eqcmap,
+                        figdir=case_figs_dir,
                         )
     #
     #%%
@@ -2112,11 +2138,13 @@ def main(argv):
                                         NIJ=NIJ,
                                         )
                 generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
-                                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir, 
+                                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
                                     TDmdl4CTx,Tmdlnamex,
                                     data_period_ident=data_period_ident,
-                                    scenario=scenario_name,
                                     eqcmap=list_of_eqcmap,
+                                    figdir=case_figs_dir,
+                                    generalisation_type='bestclust',  # 'bestclust', 'bestcum'
+                                    scenario=scenario_name,
                                     )
 
     #%%

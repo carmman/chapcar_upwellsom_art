@@ -433,6 +433,33 @@ def Dgeoclassif(sMap,Data,lon,lat,class_ref,classe_Dobs,nb_class,L,C,isnum,Major
         #grid(); # for easier check
     return Perfglob_
 #----------------------------------------------------------------------
+def do_check_and_create_dirname(dirname, subdir=None, verbose=False) :
+    ''' checks existence of directory DIRNAME, creates it if not exists
+    '''
+    if os.path.exists(dirname) :
+        if verbose :
+            print("-- directory '{}' already exists".format(dirname))
+    else :
+        if verbose :
+            print("-- creating directory '{}'".format(dirname))
+        os.makedirs(dirname)
+    #
+    if subdir is None :
+        subdirpath = dirname
+    else :
+        if verbose :
+            print("-- adding '{}' to path '{}'".format(subdir,dirname))
+        subdirpath = os.path.join(dirname,subdir)
+        if not os.path.exists(subdirpath) :
+            if verbose :
+                print("-- creating subdirectory '{}'".format(subdirpath))
+            os.makedirs(subdirpath)
+        else :
+            if verbose :
+                print("-- subdirectory '{}' already exists".format(subdirpath))
+    #
+    return subdirpath
+#----------------------------------------------------------------------
 def _printwarning0(msg):
     if isinstance(msg, (list,)) :
         for m in msg :
@@ -440,7 +467,7 @@ def _printwarning0(msg):
     else:
         print(" * {:75s} *".format(msg))
     #print(" * {:75s} *".format(" "))
-
+#
 def printwarning(msg, msg2=None, msg3=None):
     print("\n{}".format(" ".ljust(80,"*")))
     _printwarning0(msg)
