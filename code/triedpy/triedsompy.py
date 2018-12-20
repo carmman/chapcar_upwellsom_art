@@ -22,7 +22,7 @@ import shutil
 import os
 import itertools
 from   scipy.sparse import csr_matrix
-from   sklearn.decomposition import RandomizedPCA
+#from   sklearn.decomposition import RandomizedPCA # *** class removed in sklean 0.20, use PCA with svd_solver='randomized' in place ***
 from   sklearn.decomposition import PCA
 from   sklearn import neighbors
 from   matplotlib.colors import LogNorm
@@ -1302,10 +1302,12 @@ def lininit(self):
         #     insensible aux modifications de graines. Donc tant pis pour le warning.
         if self.dim == 1 :
              #pca = PCA(svd_solver='randomized',n_components=1) #Randomized PCA is scalable
-             pca = RandomizedPCA(n_components=1) #Randomized PCA is scalable
+             #pca = RandomizedPCA(n_components=1) #Randomized PCA is scalable *** class removed in sklean 0.20, use PCA with svd_solver='randomized' in place ***
+             pca = PCA(n_components=1,svd_solver='randomized') #Using PCA with svd_solver,'randomized' in place of RandomizedPCA (class removed in sklean 0.20)
         else :
             #pca = PCA(svd_solver='randomized',n_components=2) #Randomized PCA is scalable
-            pca = RandomizedPCA(n_components=2) #Randomized PCA is scalable
+            #pca = RandomizedPCA(n_components=2) #Randomized PCA is scalable *** class removed in sklean 0.20, use PCA with svd_solver='randomized' in place ***
+            pca = PCA(n_components=2,svd_solver='randomized') #Using PCA with svd_solver,'randomized' in place of RandomizedPCA (class removed in sklean 0.20)
         pca.fit(data)
         eigvec = pca.components_ ; #print(self.dim,eigvec.shape)
         eigval = pca.explained_variance_
@@ -1334,7 +1336,8 @@ def lininit(self):
         me = np.mean(data, 0)
         data = (data - me)
         codebook = np.tile(me, (nnodes,1))
-        pca = RandomizedPCA(n_components=1) #Randomized PCA is scalable
+        #pca = RandomizedPCA(n_components=1) #Randomized PCA is scalable *** class removed in sklean 0.20, use PCA with svd_solver='randomized' in place ***
+        pca = PCA(n_components=1,svd_solver='randomized') #Using PCA with svd_solver,'randomized' in place of RandomizedPCA (class removed in sklean 0.20)
         #pca = PCA(n_components=2)
         pca.fit(data)
         eigvec = pca.components_

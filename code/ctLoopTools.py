@@ -1125,7 +1125,11 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
                              figsize=(12,6),
                              wspace=0.0, hspace=0.0, top=0.96, bottom=0.08, left=0.06, right=0.92,
                              linewidth=1,
+                             ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
+                             lgticks_fontsize=12,lglabel_fontsize=14,
+                             title_y=1.015,
                              ):
+    from matplotlib.font_manager import FontProperties
     #
     if isnumobs is None :
         isnumobs = np.where(~np.isnan(sst_obs[0].reshape(np.prod(np.shape(sst_obs)[1:]))))[0];
@@ -1160,14 +1164,19 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
     plt.axis('tight');
     #
     if varnames is not None :
-        plt.xticks(np.arange(len(varnames)),varnames)
+        plt.xticks(np.arange(len(varnames)),varnames,fontsize=ticks_fontsize)
+    else:
+        plt.xticks(plt.xticks()[0],fontsize=ticks_fontsize)
+    plt.yticks(plt.yticks()[0],fontsize=ticks_fontsize)
     #
-    plt.ylabel('Mean SST Anomaly [°C]', fontsize=12);
-    plt.xlabel('Month', fontsize=12);
-    legax=plt.legend(np.arange(nb_class)+1,loc=2,fontsize=10);
-    legax.set_title('Class')
+    plt.ylabel('Mean SST Anomaly [°C]', fontsize=labels_fontsize);
+    plt.xlabel('Month', fontsize=labels_fontsize);
+    fontP = FontProperties()
+    fontP.set_size(lglabel_fontsize)
+    legax=plt.legend(np.arange(nb_class)+1,loc=2,fontsize=lgticks_fontsize);
+    legax.set_title('Class',prop=fontP)
     plt.axhline(color='k',linewidth=1)
-    plt.title(title,fontsize=16); #,fontweigth='bold');
+    plt.title(title,fontsize=title_fontsize,y=title_y); #,fontweigth='bold');
     #plt.show(); sys.exit(0)
 #
 

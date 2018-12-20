@@ -8,6 +8,10 @@ Version sur 'Master'
 Exemple d'appel depuis python:
       runfile('/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code/ctLoopMain.py',
               wdir='/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code',
+              args="--case=All -v")         
+
+      runfile('/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code/ctLoopMain.py',
+              wdir='/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code',
               args="--case=sel -v")         
 
 @author: carlos
@@ -78,7 +82,7 @@ def ctloop_init(case='None',verbose=False):
         #    Latitude :  30N à 5N ( 29.5 à  4.5)
         frlat =  29.5;  tolat =  4.5; #(excluded)
         #frlon = -44.5;  tolon = -8.5; #(excluded)   #(§:25x35)
-        frlon = -44.5;  tolon = -9.5; #(excluded)   #(§:25x35)
+        frlon = -44.5;  tolon = -8.5; #(excluded)   #(§:25x35)
         #   * Carte topologique et CAH : 30x4 (5, 5, 1, - 16, 1, 0.1) : TE=0.6824 ; QE=0.153757
         #   Nb_classe = 7
         nbl            = 30;  nbc =  4;  # Taille de la carte
@@ -517,6 +521,9 @@ def plot_geo_classes(lon,lat,XC_ogeo,nb_class,
                      ccmap=cm.jet,
                      figsize=(9,6),
                      top=0.94, bottom=0.08, left=0.06, right=0.925,
+                     ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
+                     cbticks_fontsize=12,cblabel_fontsize=14,
+                     title_y=1.015,
                      ) :
     #
     global SAVEFIG, FIGDPI, FIGEXT, FIGARTDPI, SAVEPDF, VFIGEXT, blockshow
@@ -535,16 +542,16 @@ def plot_geo_classes(lon,lat,XC_ogeo,nb_class,
     fig, ax = plt.subplots(nrows=1, ncols=1, num=fignum,facecolor='w')
     ims = ax.imshow(XC_ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class,origin=origin);
     if 0:
-        plt.xticks(np.arange(0,Cobs,nticks), lon[np.arange(0,Cobs,nticks)], rotation=45, fontsize=10)
-        plt.yticks(np.arange(0,Lobs,nticks), lat[np.arange(0,Lobs,nticks)], fontsize=10)
+        plt.xticks(np.arange(0,Cobs,nticks), lon[np.arange(0,Cobs,nticks)], rotation=45, fontsize=ticks_fontsize)
+        plt.yticks(np.arange(0,Lobs,nticks), lat[np.arange(0,Lobs,nticks)], fontsize=ticks_fontsize)
     else :
         #plt.xticks(np.arange(-0.5,Cobs,lolast), np.round(lon[np.arange(0,Cobs,lolast)]).astype(int), fontsize=12)
         #plt.yticks(np.arange(0.5,Lobs,lolast), np.round(lat[np.arange(0,Lobs,lolast)]).astype(int), fontsize=12)
-        ctloop.set_lonlat_ticks(lon,lat,step=nticks,fontsize=10,verbose=False,lengthen=True)
+        ctloop.set_lonlat_ticks(lon,lat,step=nticks,fontsize=ticks_fontsize,verbose=False,lengthen=True)
         #set_lonlat_ticks(lon,lat,fontsize=10,londecal=0,latdecal=0,roundlabelok=False,lengthen=False)
     #plt.axis('tight')
-    plt.xlabel('Longitude', fontsize=12); plt.ylabel('Latitude', fontsize=12)
-    plt.title(title,fontsize=16); 
+    plt.xlabel('Longitude', fontsize=labels_fontsize); plt.ylabel('Latitude', fontsize=labels_fontsize)
+    plt.title(title,fontsize=title_fontsize,y=title_y); 
     #grid(); # for easier check
     # Colorbar
     #cbar_ax,kw = cb.make_axes(ax,orientation="vertical",fraction=0.04,pad=0.03,aspect=20)
@@ -553,8 +560,8 @@ def plot_geo_classes(lon,lat,XC_ogeo,nb_class,
     cax = ax_divider.append_axes("right", size="4%", pad="3%")
     hcb = plt.colorbar(ims,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
     cax.set_yticklabels(coches);
-    cax.tick_params(labelsize=12)
-    cax.set_ylabel('Class',size=14)
+    cax.tick_params(labelsize=cbticks_fontsize)
+    cax.set_ylabel('Class',size=cblabel_fontsize)
 
     #hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
     #hcb.set_ticklabels(coches);
@@ -581,6 +588,9 @@ def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
                               figsize=(12,6),
                               wspace=0.0, hspace=0.0, top=0.96, bottom=0.08, left=0.06, right=0.92,
                               linewidth=1,
+                              ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
+                              lgticks_fontsize=12,lglabel_fontsize=14,
+                              title_y=1.015,
                               ) :
     #
     global SAVEFIG, FIGDPI, FIGEXT, FIGARTDPI, SAVEPDF, VFIGEXT, blockshow
@@ -596,6 +606,10 @@ def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
                                     figsize=figsize,
                                     wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
                                     linewidth=linewidth,
+                                    ticks_fontsize=ticks_fontsize,labels_fontsize=labels_fontsize,
+                                    title_fontsize=title_fontsize,
+                                    lgticks_fontsize=lgticks_fontsize,lglabel_fontsize=lglabel_fontsize,
+                                    title_y=title_y,
                                     )
     if SAVEFIG : # sauvegarde de la figure
         if figfile is None :
@@ -1633,11 +1647,14 @@ def main(argv):
     global AFCindnames, NoAFCindnames, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb
     global isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, case_figs_dir
     global class_afc, list_of_plot_colors
+    global Visu_UpwellArt
     #
     caseconfig = ''
     caseconfig_valid_set = ( 'All', 'sel' )   # toutes en minuscules svp !
     verbose = False
     manualmode = True
+    if Visu_UpwellArt :
+        FIGSDIR = 'FigArt'
     #%% NE PAS EXECUTER CE BLOCK EN MODE MANUEL
     manualmode = False
     try:
@@ -1810,16 +1827,18 @@ def main(argv):
                       fshortcode,dataobsystartend,data_label_base)
         if SIZE_REDUCTION == 'All' :
             figsize = (9,6)
-            top=0.94; bottom=0.08; left=0.06; right=0.925;
+            #top=0.94; bottom=0.08; left=0.06; right=0.925;
+            top=0.93; bottom=0.095; left=0.07; right=0.925;
             nticks = 5; # 4
         elif SIZE_REDUCTION == 'sel' :
             figsize=(9,9)
-            top=0.94; bottom=0.08; left=0.05; right=0.96;
+            top=0.92; bottom=0.10; left=0.06; right=0.96;
             nticks = 2; # 4
         #
         if Visu_UpwellArt :
-            nFigArt = 1;
-            figfile = "FigArt{:02d}_".format(nFigArt);
+            nFigArt = 2;
+            FigArtId = 'a';
+            figfile = "FigArt{:02d}{:s}_".format(nFigArt,FigArtId);
             dpi     = FIGARTDPI
             figpdf  = True
         else :
@@ -1835,7 +1854,12 @@ def main(argv):
                          ccmap=ccmap,
                          figsize=figsize,
                          top=top, bottom=bottom, left=left, right=right,
+                         ticks_fontsize=14,labels_fontsize=14,title_fontsize=18,
+                         cbticks_fontsize=16,cblabel_fontsize=18,
+                         title_y=1.015,
                          )
+                         #ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
+                         #cbticks_fontsize=12,cblabel_fontsize=14,
     #%% -----------------------------------------------------------------------
     # Figure 2 pour Article : profils moyens par classe
     # -------------------------------------------------------------------------
@@ -1845,13 +1869,17 @@ def main(argv):
                       fshortcode,dataobsystartend,data_label_base)
         if Visu_UpwellArt :
             nFigArt = 2;
-            figfile = "FigArt{:02d}_".format(nFigArt)
+            FigArtId = 'b';
+            figfile = "FigArt{:02d}{:s}_".format(nFigArt,FigArtId);
             dpi     = FIGARTDPI
             figpdf  = True
         else :
             figfile = "Fig_"
             dpi     = FIGDPI
             figpdf  = False
+        #top=0.95; bottom=0.08; left=0.06; right=0.92;
+        top=0.93; bottom=0.095; left=0.07; right=0.98;
+
         plot_mean_profil_by_class(sst_obs_coded,nb_class,classe_Dobs,varnames=varnames,
                                   title=stitre,
                                   fileext=fileextbis, figdir=case_figs_dir,
@@ -1859,8 +1887,11 @@ def main(argv):
                                   getstd=plotctprofilsstd,
                                   pcmap=pcmap,
                                   figsize=(12,6),
-                                  wspace=0.0, hspace=0.0, top=0.95, bottom=0.08, left=0.06, right=0.92,
+                                  top=top, bottom=bottom, left=left, right=right,
                                   linewidth=2.5,
+                                  ticks_fontsize=14,labels_fontsize=14,title_fontsize=18,
+                                  lgticks_fontsize=14,lglabel_fontsize=16,
+                                  title_y=1.015,
                                   )
     #
     #%% -----------------------------------------------------------------------
