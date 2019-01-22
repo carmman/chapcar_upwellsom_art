@@ -436,13 +436,13 @@ def ctloop_topol_map_traitement (Dobs,Parm_app=(5,5.,1.,10,1.,0.1),mapsize=[7, 3
     #
     return sMapO,q_err,t_err
 #%%
-def plot_ct_Umatrix(sMapO) :
+def plot_ct_Umatrix(sMapO, figsize=(4,8)) :
     global blockshow
     # #########################################################################
     # C.T. Visualisation ______________________________________________________
     # #########################################################################
     #==>> la U_matrix
-    fig = plt.figure(figsize=(6,8));
+    fig = plt.figure(figsize=figsize);
     fignum = fig.number
     #wspace=0.02; hspace=0.14; top=0.80; bottom=0.02; left=0.01; right=0.95;
     #fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
@@ -454,13 +454,13 @@ def plot_ct_Umatrix(sMapO) :
     #
     return
 #%%
-def plot_ct_map_wei(sMapO) :
+def plot_ct_map_wei(sMapO, figsize=(6,8)) :
     #
     global blockshow
     #
-    fig = plt.figure(figsize=(8,8));
+    fig = plt.figure(figsize=figsize);
     fignum = fig.number
-    wspace=0.02; hspace=0.14; top=0.925; bottom=0.02; left=0.01; right=0.95;
+    wspace=0.01; hspace=0.10; top=0.935; bottom=0.02; left=0.01; right=0.94;
     fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
     #ctk.showmap(sMapO,sztext=11,colbar=1,cmap=cm.rainbow,interp=None);
     ctk.showmap(sMapO,sztext=11,cbsztext=8,fignum=fignum,
@@ -673,6 +673,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
                             OK107=False,
                             OK108=False,
                             OK109=False,
+                            OK105Art=False,
                             ) :
     #
     global SIZE_REDUCTION, MDLCOMPLETION, NIJ, FONDTRANS 
@@ -681,6 +682,8 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     #
     global fshortcode, fprefixe, fcodage, blockshow
     global SAVEFIG, FIGDPI, FIGEXT
+    #
+    if OK105Art : OK105 = True;
     #
     ctloop.printwarning([ "","TRAITEMENTS DES DONNEES DES MODELES OCEANOGRAPHIQUES".center(75),""])
     print(" OK101: {}, OK102: {}, OK104: {}, OK105: {}, OK106: {}, OK107: {}, OK108: {}, OK109: {}".format(OK101, OK102, OK104, OK105, OK106, OK107, OK108, OK109))
@@ -890,10 +893,20 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     if OK105 : 
         if SAVEFIG :
             plt.figure(105);
-            figfile = "Fig-105{:s}{:d}Mdl-{:s}_{:d}-mod".format(commonfileext,nb_class,dataystartend,Nmdlok)
+            if OK105Art:
+                nFigArt = 3;
+                figfile = "FigArt{:02d}-105_".format(nFigArt)
+                dpi     = FIGARTDPI
+                figpdf  = True
+            else:
+                figfile = "Fig-105_"
+                dpi     = FIGDPI
+                figpdf  = False
+            #
+            figfile += "{:s}{:d}Mdl-{:s}_{:d}-mod".format(commonfileext,nb_class,dataystartend,Nmdlok)
             # sauvegarde de la figure ... en format FIGFMT (normalement BITMAP (png,jpg))
             # et eventuellement en PDF, si SAVEPDF active. 
-            ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
+            ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     if OK106 :
         if SAVEFIG :
@@ -940,12 +953,15 @@ def datemdl2dateinreval(datamdl):
 #%%
 def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb, 
                        nb_class, nb_clust, isnumobs, isnanobs, class_ref, classe_Dobs,
+                       fond_C, XC_Ogeo,
                        TTperf, Nmdlok, Lobs, Cobs, NDmdl, Nobsc, data_label_base,
                        AFC_Visu_Classif_Mdl_Clust=[],
                        AFC_Visu_Clust_Mdl_Moy_4CT=[],
                        ccmap=cm.jet, sztitle=10,
                        figdir=".",
                        figfile=None, dpi=None, figpdf=False,
+                       clustfigsublc=None, clustfigsize=None,
+                       plotobs=False,
                        ) :
     '''
     Analyse Factorielle des Correspondances (Correspondence Analysis)
@@ -994,14 +1010,48 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
                           SIZE_REDUCTION=SIZE_REDUCTION,
                           mdlnamewnumber_ok=mdlnamewnumber_ok,
                           onlymdlumberAFC_ok=onlymdlumberAFC_ok,
+                          figsublc=clustfigsublc, figsize=clustfigsize,
                           )
+        
+    if plotobs : # Obs --------
+        nbsubl,nbsubc=clustfigsublc; isubplot = nbsubl * nbsubc
+        bounds = np.arange(nb_class+1)+1;
+        coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
+        ticks  = coches + 0.5;            # [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]
+        if SIZE_REDUCTION == 'All' :
+            nticks = 5; # 4
+        elif SIZE_REDUCTION == 'sel' :
+            nticks = 2; # 4
+        plt.figure(figclustmoynum);
+        ax = plt.subplot(nbsubl,nbsubc,isubplot);
+        ax.imshow(fond_C, interpolation=None,cmap=cm.gray,vmin=0,vmax=1)
+        ims = ax.imshow(XC_Ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
+        ax.set_title("Obs, %d classes "%(nb_class),fontsize=12);
+        if 0 :
+            plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
+            plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+        else :
+            ctloop.set_lonlat_ticks(lon,lat,step=nticks,fontsize=10,verbose=False,lengthen=True)
+        if True :
+            #cbar_ax,kw = cb.make_axes(ax,orientation="vertical",fraction=0.04,pad=0.03,aspect=20)
+            #fig.colorbar(ims, cax=cbar_ax, ticks=ticks,boundaries=bounds,values=bounds, **kw);
+            ax_divider = make_axes_locatable(ax)
+            cax = ax_divider.append_axes("right", size="4%", pad="3%")
+            hcb = plt.colorbar(ims,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
+        else :
+            hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
+        hcb.set_ticklabels(coches);
+        hcb.ax.tick_params(labelsize=10)
+        hcb.set_label('Class',size=10)
+        #grid(); # for easier check
+
     #print("--CAHindnames: {}".format(CAHindnames))
     #print("--NoCAHindnames: {}".format(NoCAHindnames))
     #print("--Tmdlname: {}".format(Tmdlname))
     print("\n--Tmdlnamewnb: {}".format(Tmdlnamewnb))
     # reprend la figure de performanes par cluster
     plt.figure(figclustmoynum)
-    plt.suptitle("AFC Clusters Class Performance ({}), ({} models)".format(dataystartend,Nmodels),fontsize=18);
+    plt.suptitle("AFC Clusters Class Performance ({}) ({} models)".format(dataystartend,Nmdlafc),fontsize=18);
     #
     if SAVEFIG : # sauvegarde de la figure
         plt.figure(figclustmoynum)
@@ -1365,7 +1415,6 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
     #**********************************************************************
     return
 #%%
-#%%
 def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
                         isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
                         TDmdl4CT, Tmdlname,
@@ -1653,21 +1702,31 @@ def main(argv):
     caseconfig_valid_set = ( 'All', 'sel' )   # toutes en minuscules svp !
     verbose = False
     manualmode = True
+    #
+    generalisation_ok = False
+    generalisa_bestafc_clust_ok = True
+    generalisa_bestcum_ok = True
+    generalisa_allmod_ok = True
+    generalisa_afc_clust_ok = True
+    generalisa_other_periods_ok = True
+    #
     if Visu_UpwellArt :
         FIGSDIR = 'FigArt'
     #%% NE PAS EXECUTER CE BLOCK EN MODE MANUEL
     manualmode = False
     try:
-        opts, args = getopt.getopt(argv,"hvc:",["case=","verbose"])
+        opts, args = getopt.getopt(argv,"hvc:g",["case=","verbose","generalization"])
         #
         for opt, arg in opts:
             if opt == '-h':
-                print('ctLoopMain.py -c all -v | --case=all --verbose /* cases are all or sel */')
+                print('ctLoopMain.py -c all -v -n | --case=all --verbose --no-generalization /* cases are all or sel */')
                 sys.exit()
             elif opt in ("-v", "--verbose"):
                 verbose = True
             elif opt in ("-c", "--case"):
                 caseconfig = arg
+            elif opt in ("-g", "--generalization"):
+                generalisation_ok = True
         if caseconfig.lower() not in [ x.lower() for x in caseconfig_valid_set ] :
             ctloop.printwarning(["","Start error".center(75),""],
                     "   Not CASE value '{}'".format(caseconfig).center(75),
@@ -1682,7 +1741,7 @@ def main(argv):
                ' * {:s} *\n'.format("  ctLoopMain.py <OPTIONS> -c CASE".ljust(62))+\
                ' * {:s} *\n'.format("".ljust(62))+\
                ' * {:s} *\n'.format("  where CASE is one in < {} >".format(caseconfig_valid_set).ljust(62))+\
-               ' * {:s} *\n'.format("      <OPTIONS> are -h, -v".ljust(62))+\
+               ' * {:s} *\n'.format("      <OPTIONS> are -h, -v, -n".ljust(62))+\
                ' {:s}\n'.format("".center(66,'*'))))
         sys.exit(2)
     #print("Case config is '{:s}'".format(caseconfig))
@@ -1694,7 +1753,8 @@ def main(argv):
     #
     #%% DECOMPRESSER / COMPRESSER la ligne suivante selon si executione MANUELLE UN A UN des bloques du MAIN ou complete avec appel externe ... 
     if manualmode :
-        caseconfig='all' # 'all' ou 'sel'
+        caseconfig='sel' # 'all' ou 'sel'
+        #caseconfig='all' # 'all' ou 'sel'
     #
     print("Case config is '{:s}'".format(caseconfig))
     pcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
@@ -1776,8 +1836,8 @@ def main(argv):
     # -------------------------------------------------------------------------
     # Figure dec CT
     if Visu_CTStuff : # Visu (et sauvegarde éventuelle de la figure) des données
-        plot_ct_Umatrix(sMapO)
-        plot_ct_map_wei(sMapO)
+        plot_ct_Umatrix(sMapO,figsize=(4,10))
+        plot_ct_map_wei(sMapO,figsize=(6,11))
     #
     #%% -----------------------------------------------------------------------
     # Computing C.T. Linkage for Dendrogram ___________________________________
@@ -1836,7 +1896,12 @@ def main(argv):
             nticks = 2; # 4
         #
         if Visu_UpwellArt :
-            nFigArt = 2;
+            if SIZE_REDUCTION == 'All' :
+                nFigArt = 2;
+            elif SIZE_REDUCTION == 'sel' :
+                nFigArt = 6;
+            else:
+                nFigArt = 99;
             FigArtId = 'a';
             figfile = "FigArt{:02d}{:s}_".format(nFigArt,FigArtId);
             dpi     = FIGARTDPI
@@ -1868,7 +1933,12 @@ def main(argv):
         fileextbis = "_{:s}{:s}Clim-{:s}_{:s}".format(fprefixe,
                       fshortcode,dataobsystartend,data_label_base)
         if Visu_UpwellArt :
-            nFigArt = 2;
+            if SIZE_REDUCTION == 'All' :
+                nFigArt = 2;
+            elif SIZE_REDUCTION == 'sel' :
+                nFigArt = 6;
+            else:
+                nFigArt = 99;
             FigArtId = 'b';
             figfile = "FigArt{:02d}{:s}_".format(nFigArt,FigArtId);
             dpi     = FIGARTDPI
@@ -1955,7 +2025,7 @@ def main(argv):
                     OK101=OK101,
                     OK102=OK102,
                     OK104=OK104,
-                    OK105=OK105,
+                    OK105Art=OK105,
                     OK106=OK106,
                     OK107=OK107,
                     OK108=OK108,
@@ -2013,7 +2083,7 @@ def main(argv):
     # Figure 3 pour Article : Performances selon les clusters de l'AFC
     # -------------------------------------------------------------------------
     if Visu_UpwellArt :
-        nFigArt = 3;
+        nFigArt = 5;
         figfile = "FigArt{:02d}_".format(nFigArt)
         dpi     = FIGARTDPI
         figpdf  = True
@@ -2022,17 +2092,30 @@ def main(argv):
         dpi     = FIGDPI
         figpdf  = False
     #
+    if SIZE_REDUCTION == 'All' :
+        clustfigsublc=(2,3)
+        clustfigsize=(10,5)
+    elif SIZE_REDUCTION == 'sel' :
+        clustfigsublc=(2,3)
+        clustfigsize=(10,7)
+    else:
+        clustfigsublc=(2,3)
+        clustfigsize=(10,5)
+    #
     VAPT, F1U, F1sU, F2V, CRi, CAj, CAHindnames, CAHindnameswnb, NoCAHindnames,\
         class_afc,AFCindnames,AFCindnameswnb,\
         NoAFCindnames = ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT,
                            Tmdlname, Tmdlnamewnb, Tmdlonlynb,
                            nb_class, nb_clust, isnumobs, isnanobs, class_ref, classe_Dobs,
+                           fond_C, XC_Ogeo,
                            TTperf, Nmdlok, Lobs, Cobs, NDmdl, Nobsc, data_label_base,
                            AFC_Visu_Classif_Mdl_Clust=AFC_Visu_Classif_Mdl_Clust,
                            AFC_Visu_Clust_Mdl_Moy_4CT=AFC_Visu_Clust_Mdl_Moy_4CT,
                            ccmap=ccmap,
                            figdir=case_figs_dir,
                            figfile=figfile, dpi=dpi, figpdf=figpdf,
+                           clustfigsublc=clustfigsublc, clustfigsize=clustfigsize,
+                           plotobs=True,
                            )
     #
     #
@@ -2088,95 +2171,97 @@ def main(argv):
     #current_eqcmap = eqcmap
     #current_eqcmap = cm.jet
     #
-    generalisation_ok = True
-    generalisa_afc_clust_ok = True
-    generalisa_other_periods_ok = True
     #**************************************************************************
     #.............................. GENERALISATION ............................
     if generalisation_ok :
-        generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
-                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
-                    TDmdl4CT,Tmdlname,
-                    data_period_ident=DATAMDL,
-                    eqcmap=list_of_eqcmap,
-                    figdir=case_figs_dir,
-                    generalisation_type='bestclust',  # 'bestclust', 'bestcum'
-                    )
-        generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
-                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
-                    TDmdl4CT,Tmdlname,
-                    data_period_ident=DATAMDL,
-                    eqcmap=list_of_eqcmap,
-                    figdir=case_figs_dir,
-                    generalisation_type='bestcum',  # 'bestclust', 'bestcum'
-                    )
-        generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
-                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
-                    TDmdl4CT,Tmdlname,
-                    data_period_ident=DATAMDL,
-                    eqcmap=list_of_eqcmap,
-                    figdir=case_figs_dir,
-                    generalisation_type='all',  # 'bestclust', 'bestcum', 'all'
-                    )
-    # all AFC Clusters
-    if generalisa_afc_clust_ok :
-        generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, varnames, wvmin, wvmax, nb_class,
+        #
+        if generalisa_bestafc_clust_ok :
+            generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
                         isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
-                        TDmdl4CT, Tmdlname,
+                        TDmdl4CT,Tmdlname,
                         data_period_ident=DATAMDL,
                         eqcmap=list_of_eqcmap,
                         figdir=case_figs_dir,
+                        generalisation_type='bestclust',  # 'bestclust', 'bestcum'
                         )
-    #
-    #%%
-    if generalisa_other_periods_ok :
-        #data_period_ident = "raverage_1975_2005";   #<><><><><><><>
-        #data_period_ident = "raverage_1930_1960";   #<><><><><><><>
-        #data_period_ident = "raverage_1944_1974";   #<><><><><><><>
-        #data_period_ident = "rcp_2006_2017";        #<><><><><><><>
-        #data_period_ident = "rcp_2070_2100";        #<><><><><><><>
-        
-        #list_of_periods = [ "raverage_1930_1960", "raverage_1944_1974", "rcp_2006_2017", "rcp_2070_2100" ]
-        list_of_periods = [ "raverage_1930_1960", "raverage_1944_1974", "rcp_2070_2100" ]
-        #list_of_periods = [ "rcp_2070_2100" ]
-        list_of_scenarios = [ "rcp26", "rcp45", "rcp85" ]
-        
-        for iper,data_period_ident in enumerate(list_of_periods) :
-            if data_period_ident.lower().startswith('rcp_') :
-                all_scenarions = list_of_scenarios
-            else :
-                all_scenarions = [ None ];
-            for ipscenar,scenario_name in enumerate(all_scenarions) :
-                if scenario_name is None :
-                    ctloop.printwarning([ "    MODEL: INITIALIZATION AND FIRST LOOP - NEW SET '{}' ".format(data_period_ident)])
+        #
+        if generalisa_bestcum_ok :
+            generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
+                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
+                        TDmdl4CT,Tmdlname,
+                        data_period_ident=DATAMDL,
+                        eqcmap=list_of_eqcmap,
+                        figdir=case_figs_dir,
+                        generalisation_type='bestcum',  # 'bestclust', 'bestcum'
+                        )
+        #
+        if generalisa_allmod_ok :
+            generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
+                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
+                        TDmdl4CT,Tmdlname,
+                        data_period_ident=DATAMDL,
+                        eqcmap=list_of_eqcmap,
+                        figdir=case_figs_dir,
+                        generalisation_type='all',  # 'bestclust', 'bestcum', 'all'
+                        )
+        # all AFC Clusters
+        if generalisa_allafc_clust_ok :
+            generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, varnames, wvmin, wvmax, nb_class,
+                            isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
+                            TDmdl4CT, Tmdlname,
+                            data_period_ident=DATAMDL,
+                            eqcmap=list_of_eqcmap,
+                            figdir=case_figs_dir,
+                            )
+        #
+        if generalisa_other_periods_ok :
+            #data_period_ident = "raverage_1975_2005";   #<><><><><><><>
+            #data_period_ident = "raverage_1930_1960";   #<><><><><><><>
+            #data_period_ident = "raverage_1944_1974";   #<><><><><><><>
+            #data_period_ident = "rcp_2006_2017";        #<><><><><><><>
+            #data_period_ident = "rcp_2070_2100";        #<><><><><><><>
+            
+            #list_of_periods = [ "raverage_1930_1960", "raverage_1944_1974", "rcp_2006_2017", "rcp_2070_2100" ]
+            list_of_periods = [ "raverage_1930_1960", "raverage_1944_1974", "rcp_2070_2100" ]
+            #list_of_periods = [ "rcp_2070_2100" ]
+            list_of_scenarios = [ "rcp26", "rcp45", "rcp85" ]
+            
+            for iper,data_period_ident in enumerate(list_of_periods) :
+                if data_period_ident.lower().startswith('rcp_') :
+                    all_scenarions = list_of_scenarios
                 else :
-                    ctloop.printwarning([ "    MODEL: INITIALIZATION AND FIRST LOOP - NEW SET '{}', SCENARIO '{}'".format(data_period_ident,scenario_name)])
-                #
-                Sfiltre=None
-                #
-                TDmdl4CTx,Tmdlnamex,Tmdlnamewnbx,Tmdlonlynbx,Tperfglob4Sortx,Tclasse_DMdlx,\
-                    Tmoymensclassx,NDmdlx,Nmdlokx,Smoy_101x,Tsst_102x = ctloop.do_models_startnloop(sMapO,
-                                        Tmodels,Tinstit,ilat,ilon,
-                                        isnanobs,isnumobs,nb_class,class_ref,classe_Dobs,
-                                        Tnmodel=Tnmodel,
-                                        Sfiltre=Sfiltre,
-                                        TypePerf=TypePerf,
-                                        obs_data_path=obs_data_path,
+                    all_scenarions = [ None ];
+                for ipscenar,scenario_name in enumerate(all_scenarions) :
+                    if scenario_name is None :
+                        ctloop.printwarning([ "    MODEL: INITIALIZATION AND FIRST LOOP - NEW SET '{}' ".format(data_period_ident)])
+                    else :
+                        ctloop.printwarning([ "    MODEL: INITIALIZATION AND FIRST LOOP - NEW SET '{}', SCENARIO '{}'".format(data_period_ident,scenario_name)])
+                    #
+                    Sfiltre=None
+                    #
+                    TDmdl4CTx,Tmdlnamex,Tmdlnamewnbx,Tmdlonlynbx,Tperfglob4Sortx,Tclasse_DMdlx,\
+                        Tmoymensclassx,NDmdlx,Nmdlokx,Smoy_101x,Tsst_102x = ctloop.do_models_startnloop(sMapO,
+                                            Tmodels,Tinstit,ilat,ilon,
+                                            isnanobs,isnumobs,nb_class,class_ref,classe_Dobs,
+                                            Tnmodel=Tnmodel,
+                                            Sfiltre=Sfiltre,
+                                            TypePerf=TypePerf,
+                                            obs_data_path=obs_data_path,
+                                            data_period_ident=data_period_ident,
+                                            scenario=scenario_name,
+                                            MDLCOMPLETION=MDLCOMPLETION,
+                                            SIZE_REDUCTION=SIZE_REDUCTION,
+                                            NIJ=NIJ,
+                                            )
+                    generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
+                                        isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
+                                        TDmdl4CTx,Tmdlnamex,
                                         data_period_ident=data_period_ident,
+                                        eqcmap=list_of_eqcmap,
+                                        figdir=case_figs_dir,
+                                        generalisation_type='bestclust',  # 'bestclust', 'bestcum'
                                         scenario=scenario_name,
-                                        MDLCOMPLETION=MDLCOMPLETION,
-                                        SIZE_REDUCTION=SIZE_REDUCTION,
-                                        NIJ=NIJ,
                                         )
-                generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
-                                    isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
-                                    TDmdl4CTx,Tmdlnamex,
-                                    data_period_ident=data_period_ident,
-                                    eqcmap=list_of_eqcmap,
-                                    figdir=case_figs_dir,
-                                    generalisation_type='bestclust',  # 'bestclust', 'bestcum'
-                                    scenario=scenario_name,
-                                    )
 
     #%%
     return

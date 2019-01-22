@@ -2109,6 +2109,7 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
       AFCWITHOBS = True, CAHWITHOBS = True,
       SIZE_REDUCTION="All",
       mdlnamewnumber_ok=True, onlymdlumberAFC_ok=True,
+      figsublc=None, figsize=None,
       ) :
     #%=========================================================================
     if NIJ == 0 : # A.F.C
@@ -2241,8 +2242,11 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
             Loop_nb_clust = np.array([nb_clust]);       MultiLevel = False;
         if max(Loop_nb_clust) > Nmdlok :
             print("Warning : You should not require more clusters level than the number of (valid) models");
-        #subc_, subl_ = lcsub(max(Loop_nb_clust)); # <-- NON, utiliser plutot nl,nc = nsublc() qui est dans localdef.py
-        subl_, subc_ = ldef.nsublc(max(Loop_nb_clust),nsubc=5);
+        if figsublc is None :
+            #subc_, subl_ = lcsub(max(Loop_nb_clust)); # <-- NON, utiliser plutot nl,nc = nsublc() qui est dans localdef.py
+            subl_, subc_ = ldef.nsublc(max(Loop_nb_clust),nsubc=5);
+        else :
+            subl_, subc_ = figsublc
         if MultiLevel == True :
             bestglob_ = 0.0;
             bestloc_  = []; # meilleure perf localement (i.e pour un niveau de coupe)
@@ -2257,12 +2261,15 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
             #
             if MultiLevel == False : # Si il n'y a qu'un seul niveau de découpe, on fera la figure 
                 # Nouvelle figure:  performanes par cluster
+                if figsize is None :
+                    if SIZE_REDUCTION == 'All' :
+                        figsize = (4*subc_,2+2*subl_)
+                    elif SIZE_REDUCTION == 'sel' :
+                        figsize = (3.5*subc_,1+3*subl_)
                 if SIZE_REDUCTION == 'All' :
-                    figsize = (4*subc_,2+2*subl_)
-                    wspace=0.35; hspace=0.02; top=0.94; bottom=0.01; left=0.02; right=0.94;
+                    wspace=0.35; hspace=0.02; top=0.94; bottom=0.01; left=0.05; right=0.94;
                 elif SIZE_REDUCTION == 'sel' :
-                    figsize = (3.5*subc_,1+3*subl_)
-                    wspace=0.45; hspace=0.02; top=0.94; bottom=0.01; left=0.03; right=0.94;
+                    wspace=0.45; hspace=0.02; top=0.94; bottom=0.01; left=0.05; right=0.94;
                 figclustmoy = plt.figure(figsize=figsize,facecolor="w"); # pour les différents cluster induit par ce niveau.
                 figclustmoynum = figclustmoy.number
                 figclustmoy.subplots_adjust(wspace=wspace, hspace=hspace, top=top,
