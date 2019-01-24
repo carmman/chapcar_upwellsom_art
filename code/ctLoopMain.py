@@ -524,6 +524,7 @@ def plot_geo_classes(lon,lat,XC_ogeo,nb_class,
                      ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
                      cbticks_fontsize=12,cblabel_fontsize=14,
                      title_y=1.015,
+                     notitle=False
                      ) :
     #
     global SAVEFIG, FIGDPI, FIGEXT, FIGARTDPI, SAVEPDF, VFIGEXT, blockshow
@@ -551,7 +552,8 @@ def plot_geo_classes(lon,lat,XC_ogeo,nb_class,
         #set_lonlat_ticks(lon,lat,fontsize=10,londecal=0,latdecal=0,roundlabelok=False,lengthen=False)
     #plt.axis('tight')
     plt.xlabel('Longitude', fontsize=labels_fontsize); plt.ylabel('Latitude', fontsize=labels_fontsize)
-    plt.title(title,fontsize=title_fontsize,y=title_y); 
+    if not notitle :
+        plt.title(title,fontsize=title_fontsize,y=title_y); 
     #grid(); # for easier check
     # Colorbar
     #cbar_ax,kw = cb.make_axes(ax,orientation="vertical",fraction=0.04,pad=0.03,aspect=20)
@@ -591,6 +593,7 @@ def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
                               ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
                               lgticks_fontsize=12,lglabel_fontsize=14,
                               title_y=1.015,
+                              notitle=False,
                               ) :
     #
     global SAVEFIG, FIGDPI, FIGEXT, FIGARTDPI, SAVEPDF, VFIGEXT, blockshow
@@ -610,6 +613,7 @@ def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
                                     title_fontsize=title_fontsize,
                                     lgticks_fontsize=lgticks_fontsize,lglabel_fontsize=lglabel_fontsize,
                                     title_y=title_y,
+                                    notitle=notitle,
                                     )
     if SAVEFIG : # sauvegarde de la figure
         if figfile is None :
@@ -961,7 +965,7 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
                        figdir=".",
                        figfile=None, dpi=None, figpdf=False,
                        clustfigsublc=None, clustfigsize=None,
-                       plotobs=False,
+                       plotobs=False, notitle=False,
                        ) :
     '''
     Analyse Factorielle des Correspondances (Correspondence Analysis)
@@ -1011,58 +1015,61 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
                           mdlnamewnumber_ok=mdlnamewnumber_ok,
                           onlymdlumberAFC_ok=onlymdlumberAFC_ok,
                           figsublc=clustfigsublc, figsize=clustfigsize,
+                          notitle=notitle,
                           )
         
-    if plotobs : # Obs --------
-        nbsubl,nbsubc=clustfigsublc; isubplot = nbsubl * nbsubc
-        bounds = np.arange(nb_class+1)+1;
-        coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
-        ticks  = coches + 0.5;            # [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]
-        if SIZE_REDUCTION == 'All' :
-            nticks = 5; # 4
-        elif SIZE_REDUCTION == 'sel' :
-            nticks = 2; # 4
-        plt.figure(figclustmoynum);
-        ax = plt.subplot(nbsubl,nbsubc,isubplot);
-        ax.imshow(fond_C, interpolation=None,cmap=cm.gray,vmin=0,vmax=1)
-        ims = ax.imshow(XC_Ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
-        ax.set_title("Obs, %d classes "%(nb_class),fontsize=12);
-        if 0 :
-            plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
-            plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
-        else :
-            ctloop.set_lonlat_ticks(lon,lat,step=nticks,fontsize=10,verbose=False,lengthen=True)
-        if True :
-            #cbar_ax,kw = cb.make_axes(ax,orientation="vertical",fraction=0.04,pad=0.03,aspect=20)
-            #fig.colorbar(ims, cax=cbar_ax, ticks=ticks,boundaries=bounds,values=bounds, **kw);
-            ax_divider = make_axes_locatable(ax)
-            cax = ax_divider.append_axes("right", size="4%", pad="3%")
-            hcb = plt.colorbar(ims,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
-        else :
-            hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
-        hcb.set_ticklabels(coches);
-        hcb.ax.tick_params(labelsize=10)
-        hcb.set_label('Class',size=10)
-        #grid(); # for easier check
-
-    #print("--CAHindnames: {}".format(CAHindnames))
-    #print("--NoCAHindnames: {}".format(NoCAHindnames))
-    #print("--Tmdlname: {}".format(Tmdlname))
-    print("\n--Tmdlnamewnb: {}".format(Tmdlnamewnb))
-    # reprend la figure de performanes par cluster
-    plt.figure(figclustmoynum)
-    plt.suptitle("AFC Clusters Class Performance ({}) ({} models)".format(dataystartend,Nmdlafc),fontsize=18);
-    #
-    if SAVEFIG : # sauvegarde de la figure
-        plt.figure(figclustmoynum)
-        if figfile is None :
-            figfile = "Fig_"
-        if dpi is None :
-            dpi = FIGDPI
-        figfile += "AFCClustersPerf-{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:s}_{:d}-mod".format(nb_clust,
-                    nb_class,fprefixe,fshortcode,dataystartend,Nmdlafc)
-        #
-        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
+#    if plotobs : # Obs --------
+#        nbsubl,nbsubc=clustfigsublc; isubplot = nbsubl * nbsubc
+#        bounds = np.arange(nb_class+1)+1;
+#        coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
+#        ticks  = coches + 0.5;            # [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]
+#        if SIZE_REDUCTION == 'All' :
+#            nticks = 5; # 4
+#        elif SIZE_REDUCTION == 'sel' :
+#            nticks = 2; # 4
+#        plt.figure(figclustmoynum);
+#        ax = plt.subplot(nbsubl,nbsubc,isubplot);
+#        ax.imshow(fond_C, interpolation=None,cmap=cm.gray,vmin=0,vmax=1)
+#        ims = ax.imshow(XC_Ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
+#        ax.set_title("Obs, %d classes "%(nb_class),fontsize=12);
+#        if 0 :
+#            plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
+#            plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+#        else :
+#            ctloop.set_lonlat_ticks(lon,lat,step=nticks,fontsize=10,verbose=False,lengthen=True)
+#        if True :
+#            #cbar_ax,kw = cb.make_axes(ax,orientation="vertical",fraction=0.04,pad=0.03,aspect=20)
+#            #fig.colorbar(ims, cax=cbar_ax, ticks=ticks,boundaries=bounds,values=bounds, **kw);
+#            ax_divider = make_axes_locatable(ax)
+#            cax = ax_divider.append_axes("right", size="4%", pad="3%")
+#            hcb = plt.colorbar(ims,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
+#        else :
+#            hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
+#        hcb.set_ticklabels(coches);
+#        hcb.ax.tick_params(labelsize=10)
+#        hcb.set_label('Class',size=10)
+#        #grid(); # for easier check
+#
+#    #print("--CAHindnames: {}".format(CAHindnames))
+#    #print("--NoCAHindnames: {}".format(NoCAHindnames))
+#    #print("--Tmdlname: {}".format(Tmdlname))
+#    print("\n--Tmdlnamewnb: {}".format(Tmdlnamewnb))
+#    # reprend la figure de performanes par cluster
+#    plt.figure(figclustmoynum)
+#    plt.suptitle("AFC Clusters Class Performance ({}) ({} models)".format(dataystartend,Nmdlafc),fontsize=18);
+#    #
+#    if SAVEFIG : # sauvegarde de la figure
+#        plt.figure(figclustmoynum)
+#        if figfile is None :
+#            figfile = "Fig_"
+#        if dpi is None :
+#            dpi = FIGDPI
+#        figfile += "AFCClustersPerf-{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:s}_{:d}-mod".format(nb_clust,
+#                    nb_class,fprefixe,fshortcode,dataystartend,Nmdlafc)
+#        #
+#        ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
+        
+        
     #
     #            if Visu_Dendro :
     #        figsize=(14,6);
@@ -1172,7 +1179,7 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,CAHindnameswnb,NoCAHindnames,\
-           class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames
+           class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames,figclustmoynum
 #
 #%%
 def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=None,
@@ -1333,18 +1340,17 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
         fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
         #
         print("\n{:d}-model(s)' generalization: {} ".format(len(TMixtMdl),TMixtMdl))
-        MdlMoy, IMixtMdl, MGPerfglob = ctloop.mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT, 
-                                            class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
-                                            lon=lon, lat=lat,
-                                            TypePerf=TypePerf,
-                                            label=misttitlelabel,
-                                            fignum=fignum,
-                                            fsizetitre=14, ytitre=1.01, nticks=nticks);
+        MdlMoy, IMixtMdl, MGPerfglob, XMgeo, \
+            Tperf = ctloop.mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT, 
+                                               class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
+                                               lon=lon, lat=lat,
+                                               TypePerf=TypePerf,
+                                               label=misttitlelabel,
+                                               fignum=fignum,
+                                               fsizetitre=14, ytitre=1.01, nticks=nticks,
+                                               visu=True);
         #
-        if len(IMixtMdl) == 0 :
-            print("\n *** PAS DE MODELES POUR GENERALISATION !!! ***\n" )
-            return
-        else :
+        if len(IMixtMdl) != 0 :
             if SAVEFIG : # sauvegarde de la figure
                 if figfile1 is None :
                     figfile1 = "Fig_"
@@ -1354,7 +1360,17 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
                 figfile1 += figfileext1
                 #
                 ctloop.do_save_figure(figfile1,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
-    
+    else :
+        MdlMoy, IMixtMdl, MGPerfglob, XMgeo, \
+            Tperf = ctloop.mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT, 
+                                               class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
+                                               lon=lon, lat=lat,
+                                               TypePerf=TypePerf,
+                                               visu=False);
+    if len(IMixtMdl) == 0 :
+        print("\n *** PAS DE MODELES POUR GENERALISATION !!! ***\n" )
+        return
+    #
     # Affichage du moyen for CT
     if SIZE_REDUCTION == 'All' :
         lolast = 4
@@ -1556,7 +1572,7 @@ def generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
     #
     for ii,v_eqcmap in enumerate(iter_cmap) :
         plotmeanmodel = (ii==0) # seulemen une fois (pour le premier)
-        plotmeanmodel = True # a chaqu fois, pour l'instant ...
+        #plotmeanmodel = True # a chaqu fois, pour l'instant ...
         ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tmdlname,
                           nb_class, isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs,
                           varnames=varnames,
@@ -1753,8 +1769,8 @@ def main(argv):
     #
     #%% DECOMPRESSER / COMPRESSER la ligne suivante selon si executione MANUELLE UN A UN des bloques du MAIN ou complete avec appel externe ... 
     if manualmode :
-        caseconfig='sel' # 'all' ou 'sel'
-        #caseconfig='all' # 'all' ou 'sel'
+        #caseconfig='sel' # 'all' ou 'sel'
+        caseconfig='all' # 'all' ou 'sel'
     #
     print("Case config is '{:s}'".format(caseconfig))
     pcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
@@ -1886,12 +1902,12 @@ def main(argv):
         fileextbis = "_{:s}{:s}Clim-{:s}_{:s}".format(fprefixe,
                       fshortcode,dataobsystartend,data_label_base)
         if SIZE_REDUCTION == 'All' :
-            figsize = (9,6)
+            figsize = (10,7)
             #top=0.94; bottom=0.08; left=0.06; right=0.925;
             top=0.93; bottom=0.095; left=0.07; right=0.925;
             nticks = 5; # 4
         elif SIZE_REDUCTION == 'sel' :
-            figsize=(9,9)
+            figsize=(8.5,7)
             top=0.92; bottom=0.10; left=0.06; right=0.96;
             nticks = 2; # 4
         #
@@ -1906,10 +1922,13 @@ def main(argv):
             figfile = "FigArt{:02d}{:s}_".format(nFigArt,FigArtId);
             dpi     = FIGARTDPI
             figpdf  = True
+            notitle = False
+            #top = 0.98
         else :
             figfile = "Fig_"
             dpi     = FIGDPI
             figpdf  = False
+            notitle = False
 
         plot_geo_classes(lon,lat,XC_Ogeo,nb_class,
                          nticks=nticks,
@@ -1922,6 +1941,7 @@ def main(argv):
                          ticks_fontsize=14,labels_fontsize=14,title_fontsize=18,
                          cbticks_fontsize=16,cblabel_fontsize=18,
                          title_y=1.015,
+                         notitle=notitle,
                          )
                          #ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
                          #cbticks_fontsize=12,cblabel_fontsize=14,
@@ -1932,6 +1952,9 @@ def main(argv):
         stitre = "Observations ({:s}), Monthly Mean by Class (method: {:s})".format(dataobsystartend,method_cah)
         fileextbis = "_{:s}{:s}Clim-{:s}_{:s}".format(fprefixe,
                       fshortcode,dataobsystartend,data_label_base)
+        #top=0.95; bottom=0.08; left=0.06; right=0.92;
+        top=0.93; bottom=0.095; left=0.07; right=0.98;
+        #
         if Visu_UpwellArt :
             if SIZE_REDUCTION == 'All' :
                 nFigArt = 2;
@@ -1943,12 +1966,13 @@ def main(argv):
             figfile = "FigArt{:02d}{:s}_".format(nFigArt,FigArtId);
             dpi     = FIGARTDPI
             figpdf  = True
+            notitle = False
+            #top = 0.98
         else :
             figfile = "Fig_"
             dpi     = FIGDPI
             figpdf  = False
-        #top=0.95; bottom=0.08; left=0.06; right=0.92;
-        top=0.93; bottom=0.095; left=0.07; right=0.98;
+            notitle = False
 
         plot_mean_profil_by_class(sst_obs_coded,nb_class,classe_Dobs,varnames=varnames,
                                   title=stitre,
@@ -1956,12 +1980,13 @@ def main(argv):
                                   figfile=figfile, dpi=dpi, figpdf=figpdf,
                                   getstd=plotctprofilsstd,
                                   pcmap=pcmap,
-                                  figsize=(12,6),
+                                  figsize=(14,7),
                                   top=top, bottom=bottom, left=left, right=right,
                                   linewidth=2.5,
                                   ticks_fontsize=14,labels_fontsize=14,title_fontsize=18,
                                   lgticks_fontsize=14,lglabel_fontsize=16,
                                   title_y=1.015,
+                                  notitle=notitle,
                                   )
     #
     #%% -----------------------------------------------------------------------
@@ -2083,28 +2108,39 @@ def main(argv):
     # Figure 3 pour Article : Performances selon les clusters de l'AFC
     # -------------------------------------------------------------------------
     if Visu_UpwellArt :
-        nFigArt = 5;
+        if SIZE_REDUCTION == 'All' :
+            nFigArt = 5;
+        elif SIZE_REDUCTION == 'sel' :
+            nFigArt = 7;
+        else:
+            nFigArt = 99;
         figfile = "FigArt{:02d}_".format(nFigArt)
         dpi     = FIGARTDPI
         figpdf  = True
+        notitle = True
+        #top = 0.98
     else :
         figfile = "Fig_"
         dpi     = FIGDPI
         figpdf  = False
+        notitle = False
     #
     if SIZE_REDUCTION == 'All' :
         clustfigsublc=(2,3)
-        clustfigsize=(10,5)
+        clustfigsize=(13,6)
     elif SIZE_REDUCTION == 'sel' :
-        clustfigsublc=(2,3)
-        clustfigsize=(10,7)
+        clustfigsublc=(2,4)
+        clustfigsize=(13,6)
     else:
         clustfigsublc=(2,3)
         clustfigsize=(10,5)
     #
+    plotmodgen = True
+    plotobs = True
+    #
     VAPT, F1U, F1sU, F2V, CRi, CAj, CAHindnames, CAHindnameswnb, NoCAHindnames,\
-        class_afc,AFCindnames,AFCindnameswnb,\
-        NoAFCindnames = ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT,
+        class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames,\
+        figclustmoynum = ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT,
                            Tmdlname, Tmdlnamewnb, Tmdlonlynb,
                            nb_class, nb_clust, isnumobs, isnanobs, class_ref, classe_Dobs,
                            fond_C, XC_Ogeo,
@@ -2115,8 +2151,86 @@ def main(argv):
                            figdir=case_figs_dir,
                            figfile=figfile, dpi=dpi, figpdf=figpdf,
                            clustfigsublc=clustfigsublc, clustfigsize=clustfigsize,
-                           plotobs=True,
+                           notitle=notitle,
                            )
+    
+    if plotmodgen : # Obs --------
+        Nmdlafc = Tmdlname.shape[0]
+        dataystartend = datemdl2dateinreval(DATAMDL)
+
+        TMixtMdlLabel = 'Mod Cum.'
+        #print("misttitlelabel AVANT> {}".format(misttitlelabel))
+        #mistfilelabel = misttitlelabel.replace(' ','').replace(':','-').replace('(','_').replace(')','')
+        #print("mistfilelabel APRES>  {}".format(mistfilelabel))
+        #
+        nbsubl,nbsubc=clustfigsublc; isubplot = nbsubl * nbsubc - 1
+        plt.figure(figclustmoynum);
+        ax = plt.subplot(nbsubl,nbsubc,isubplot);
+        print("\n{:d}-model(s)' generalization: {} ".format(len(Tmdlname),Tmdlname))
+        MdlMoy, IMixtMdl, MGPerfglob, XMgeo, \
+            Tperf = ctloop.mixtgeneralisation (sMapO, Tmdlname, Tmdlname, TDmdl4CT, 
+                                               class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
+                                               lon=lon, lat=lat,
+                                               TypePerf=TypePerf,
+                                               label=TMixtMdlLabel, shorttitle=True,
+                                               fignum=fignum,ax=ax,
+                                               fsizetitre=12, ytitre=1.00, nticks=nticks,
+                                               tickfontsize=10,
+                                               cbticklabelsize=10,cblabelsize=8,
+                                               show_xylabels=False,
+                                               visu=True);
+
+    if plotobs : # Obs --------
+        nbsubl,nbsubc=clustfigsublc; isubplot = nbsubl * nbsubc
+        bounds = np.arange(nb_class+1)+1;
+        coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
+        ticks  = coches + 0.5;            # [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]
+        if SIZE_REDUCTION == 'All' :
+            nticks = 5; # 4
+        elif SIZE_REDUCTION == 'sel' :
+            nticks = 2; # 4
+        plt.figure(figclustmoynum);
+        ax = plt.subplot(nbsubl,nbsubc,isubplot);
+        ax.imshow(fond_C, interpolation=None,cmap=cm.gray,vmin=0,vmax=1)
+        ims = ax.imshow(XC_Ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
+        ax.set_title("Obs, %d classes "%(nb_class),fontsize=12);
+        if 0 :
+            plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
+            plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+        else :
+            ctloop.set_lonlat_ticks(lon,lat,step=nticks,fontsize=10,verbose=False,lengthen=True)
+        if True :
+            #cbar_ax,kw = cb.make_axes(ax,orientation="vertical",fraction=0.04,pad=0.03,aspect=20)
+            #fig.colorbar(ims, cax=cbar_ax, ticks=ticks,boundaries=bounds,values=bounds, **kw);
+            ax_divider = make_axes_locatable(ax)
+            cax = ax_divider.append_axes("right", size="4%", pad="3%")
+            hcb = plt.colorbar(ims,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
+        else :
+            hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
+        hcb.set_ticklabels(coches);
+        hcb.ax.tick_params(labelsize=10)
+        hcb.set_label('Class',size=10)
+        #grid(); # for easier check
+
+    #print("--CAHindnames: {}".format(CAHindnames))
+    #print("--NoCAHindnames: {}".format(NoCAHindnames))
+    #print("--Tmdlname: {}".format(Tmdlname))
+    print("\n--Tmdlnamewnb: {}".format(Tmdlnamewnb))
+    # reprend la figure de performanes par cluster
+    plt.figure(figclustmoynum)
+    if not notitle:
+        plt.suptitle("AFC Clusters Class Performance ({}) ({} models)".format(dataystartend,Nmdlafc),fontsize=18);
+    #
+    if SAVEFIG : # sauvegarde de la figure
+        plt.figure(figclustmoynum)
+        if figfile is None :
+            figfile = "Fig_"
+        if dpi is None :
+            dpi = FIGDPI
+        figfile += "AFCClustersPerf-{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:s}_{:d}-mod".format(nb_clust,
+                    nb_class,fprefixe,fshortcode,dataystartend,Nmdlafc)
+        #
+        ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,figpdf=figpdf)
     #
     #
     #%% -------------------------------------------------------------------------
@@ -2167,13 +2281,13 @@ def main(argv):
         for mod in ModelList :
             print(mod)
     #%%
-    list_of_eqcmap = [eqcmap, cm.jet]
-    #current_eqcmap = eqcmap
-    #current_eqcmap = cm.jet
-    #
     #**************************************************************************
     #.............................. GENERALISATION ............................
     if generalisation_ok :
+        #
+        list_of_eqcmap = [eqcmap, cm.jet]
+        #current_eqcmap = eqcmap
+        #current_eqcmap = cm.jet
         #
         if generalisa_bestafc_clust_ok :
             generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,

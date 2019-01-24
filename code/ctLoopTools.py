@@ -388,6 +388,18 @@ def Dgeoclassif(sMap,Data,lon,lat,class_ref,classe_Dobs,nb_class,L,C,isnum,Major
                 ccmap="jet", visu=True,
                 cbticklabelsize=8,cblabel=None,
                 cblabelsize=10,old=False,ax=None,nticks=1,tickfontsize=10) :
+    ''' Retourne --> Perfglob_, X_Mgeo_, classe_DD_, Tperf_
+    ou X_Mgeo_ et Tperf_ peuvent etre utilises pour l'affichage et les ticks de la colorbar:
+        
+            ims = ax.imshow(X_Mgeo_, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
+            Tperf_ = np.round([iperf*100 for iperf in Tperf_]).astype(int); #print(Tperf_)   
+            ax_divider = make_axes_locatable(ax)
+            cax = ax_divider.append_axes("right", size="4%", pad="3%")
+            hcb = plt.colorbar(ims,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
+            hcb.set_ticklabels(Tperf_);
+            hcb.ax.tick_params(labelsize=cbticklabelsize);
+
+    '''
     #
     coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
     ticks  = coches + 0.5;            # [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]
@@ -431,7 +443,7 @@ def Dgeoclassif(sMap,Data,lon,lat,class_ref,classe_Dobs,nb_class,L,C,isnum,Major
             else :
                 set_lonlat_ticks(lon,lat,step=nticks,fontsize=tickfontsize,verbose=False,lengthen=True)
         #grid(); # for easier check
-    return Perfglob_
+    return Perfglob_, X_Mgeo_, classe_DD_, Tperf_
 #----------------------------------------------------------------------
 def do_check_and_create_dirname(dirname, subdir=None, verbose=False) :
     ''' checks existence of directory DIRNAME, creates it if not exists
@@ -1128,6 +1140,7 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
                              ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
                              lgticks_fontsize=12,lglabel_fontsize=14,
                              title_y=1.015,
+                             notitle=False,
                              ):
     from matplotlib.font_manager import FontProperties
     #
@@ -1176,7 +1189,8 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
     legax=plt.legend(np.arange(nb_class)+1,loc=2,fontsize=lgticks_fontsize);
     legax.set_title('Class',prop=fontP)
     plt.axhline(color='k',linewidth=1)
-    plt.title(title,fontsize=title_fontsize,y=title_y); #,fontweigth='bold');
+    if not notitle :
+        plt.title(title,fontsize=title_fontsize,y=title_y); #,fontweigth='bold');
     #plt.show(); sys.exit(0)
 #
 
@@ -2109,7 +2123,7 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
       AFCWITHOBS = True, CAHWITHOBS = True,
       SIZE_REDUCTION="All",
       mdlnamewnumber_ok=True, onlymdlumberAFC_ok=True,
-      figsublc=None, figsize=None,
+      figsublc=None, figsize=None, notitle=False,
       ) :
     #%=========================================================================
     if NIJ == 0 : # A.F.C
@@ -2270,6 +2284,8 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
                     wspace=0.35; hspace=0.02; top=0.94; bottom=0.01; left=0.05; right=0.94;
                 elif SIZE_REDUCTION == 'sel' :
                     wspace=0.45; hspace=0.02; top=0.94; bottom=0.01; left=0.05; right=0.94;
+                if notitle :
+                    top = 0.98;
                 figclustmoy = plt.figure(figsize=figsize,facecolor="w"); # pour les différents cluster induit par ce niveau.
                 figclustmoynum = figclustmoy.number
                 figclustmoy.subplots_adjust(wspace=wspace, hspace=hspace, top=top,
@@ -2318,19 +2334,21 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
                 # Classification du, des modèles moyen d'un cluster
                 if MultiLevel : # Plusieurs niveaux de découpe, c'est pas la peine de faire toutes ces
                                 # figures, mais on a besoin de la perf
-                    Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,lon,lat,class_ref,classe_Dobs,nb_class,
-                                            LObs,CObs,isnumObs,TypePerf[0],
-                                            ccmap=ccmap,
-                                            visu=False,nticks=nticks);
+                    Perfglob_, _, _, _ = Dgeoclassif(sMapO,CmdlMoy,lon,lat,class_ref,
+                                                     classe_Dobs,nb_class,
+                                                     LObs,CObs,isnumObs,TypePerf[0],
+                                                     ccmap=ccmap,
+                                                     visu=False,nticks=nticks);
                 else : # 1 seul niveau de découpe, on fait la figure
                     plt.figure(figclustmoynum)
                     ax = plt.subplot(subl_,subc_,ii+1);
-                    Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,lon,lat,class_ref,classe_Dobs,nb_class,
-                                            LObs,CObs,isnumObs,TypePerf[0],
-                                            ccmap=ccmap,
-                                            ax = ax,
-                                            cblabel="performance [%]",cblabelsize=8,
-                                            cbticklabelsize=10,nticks=nticks);
+                    Perfglob_, _, _, _ = Dgeoclassif(sMapO,CmdlMoy,lon,lat,class_ref,
+                                                     classe_Dobs,nb_class,
+                                                     LObs,CObs,isnumObs,TypePerf[0],
+                                                     ccmap=ccmap,
+                                                     ax = ax,
+                                                     cblabel="performance [%]",cblabelsize=8,
+                                                     cbticklabelsize=10,nticks=nticks);
                     plt.title("Cluster %d (%d mod.), mean perf=%.0f%c"%(ii+1,len(iclust),
                                                100*Perfglob_,'%'),fontsize=12);
                 #
@@ -2663,9 +2681,13 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
                         class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
                         lon=None, lat=None,
                         TypePerf = ["MeanClassAccuracy"],
-                        label=None, cblabel=None, fignum=None,
+                        label=None, cblabel=None, fignum=None, ax=None,
                         nticks=1,
-                        ytitre=0.98, fsizetitre=14) :
+                        ytitre=0.98, fsizetitre=14, tickfontsize=10,
+                        cbticklabelsize=12,cblabelsize=12,
+                        shorttitle=False,
+                        show_xylabels=True,
+                        visu=True) :
     ''' Ici, j'ai :
              - Tmdlname : une table de NOMS de N modèles valides ; ##!!??? 
              - TDmdl4ct : la table correspondante des modèles 4CT (N, v,12)
@@ -2749,29 +2771,47 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
     #                 np.max(MdlMoy),np.mean(MdlMoy),np.std(MdlMoy)))
     #
     # Classification du modèles moyen
-    if fignum is None :
-        fig = plt.figure();
-        fignum = fig.number # numero de figure en cours ...
+    if visu :
+        if fignum is None :
+            fig = plt.figure();
+            fignum = fig.number # numero de figure en cours ...
+        else :
+            fig = plt.figure(fignum);
+            if ax is None :
+                fig, ax = plt.subplots(nrows=1, ncols=1, num=fignum,facecolor='w')
     else :
-        fig = plt.figure(fignum);
-        fig, ax = plt.subplots(nrows=1, ncols=1, num=fignum,facecolor='w')
+        ax = None
     #
     #def Dgeoclassif(sMap,Data,lon,lat,class_ref,classe_Dobs,nb_class,L,C,isnum,MajorPerf,visu=True,cbticklabelsize=8,cblabel=None,
     #                cblabelsize=10,old=False,ax=None,nticks=1,tickfontsize=10) :
-    Perfglob_ = Dgeoclassif(sMapO,MdlMoy,lon,lat,class_ref,classe_Dobs,nb_class,LObs,CObs,isnumObs,TypePerf[0],
-                            cblabel="class performance [%]",
-                            ax=ax,nticks=nticks,tickfontsize=10,
-                            cbticklabelsize=12,cblabelsize=12); #use perfbyclass
-    plt.xlabel('Longitude', fontsize=12); plt.ylabel('Latitude', fontsize=12)
-    if label is None :
-        titre = "MdlMoy ({} models: {})".format(len(Tmdlname[IMixtMdl]),Tmdlname[IMixtMdl])
-    else :
-        titre = "{} ({} models)".format(label,len(Tmdlname[IMixtMdl]))
-    titre += ", mean perf={:.0f}%".format(100*Perfglob_)
-    #
-    plt.title(titre,fontsize=fsizetitre,y=ytitre);
+    
+    # Dgeoclassif returne :    Perfglob_, X_Mgeo_, classe_DD_, Tperf_
+
+    Perfglob_, X_Mgeo_, _, Tperf_ = Dgeoclassif(sMapO,MdlMoy,lon,lat,class_ref,
+                                                  classe_Dobs,nb_class,LObs,CObs,
+                                                  isnumObs,TypePerf[0],
+                                                  cblabel="performance [%]",
+                                                  ax=ax,nticks=nticks,tickfontsize=tickfontsize,
+                                                  cbticklabelsize=cbticklabelsize,cblabelsize=cblabelsize,
+                                                  visu=visu); #use perfbyclass
+    if visu :
+        if show_xylabels :
+            plt.xlabel('Longitude', fontsize=12); plt.ylabel('Latitude', fontsize=12)
+        if label is None :
+            if shorttitle:
+                titre = "MdlMoy ({} mod.)".format(len(Tmdlname[IMixtMdl]))
+            else:
+                titre = "MdlMoy ({} models: {})".format(len(Tmdlname[IMixtMdl]),Tmdlname[IMixtMdl])
+        else :
+            if shorttitle:
+                titre = "{} ({} mod.)".format(label,len(Tmdlname[IMixtMdl]))
+            else:
+                titre = "{} ({} models)".format(label,len(Tmdlname[IMixtMdl]))
+        titre += ", mean perf={:.0f}%".format(100*Perfglob_)
+        #
+        plt.title(titre,fontsize=fsizetitre,y=ytitre);
     #tls.klavier();
-    return MdlMoy, IMixtMdl, Perfglob_
+    return MdlMoy, IMixtMdl, Perfglob_, X_Mgeo_, Tperf_
 
 
 #%%
