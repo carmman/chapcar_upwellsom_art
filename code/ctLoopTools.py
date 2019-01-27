@@ -386,8 +386,10 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,indname=None,
 #----------------------------------------------------------------------
 def Dgeoclassif(sMap,Data,lon,lat,class_ref,classe_Dobs,nb_class,L,C,isnum,MajorPerf,
                 ccmap="jet", visu=True,
-                cbticklabelsize=8,cblabel=None,
-                cblabelsize=10,old=False,ax=None,nticks=1,tickfontsize=10) :
+                tickfontsize=10,
+                cblabel=None,cblabelsize=10,cbticklabelsize=8,
+                old=False,
+                ax=None,nticks=1) :
     ''' Retourne --> Perfglob_, X_Mgeo_, classe_DD_, Tperf_
     ou X_Mgeo_ et Tperf_ peuvent etre utilises pour l'affichage et les ticks de la colorbar:
         
@@ -1201,6 +1203,7 @@ def do_plot_ct_profils(sMapO,Dobs,class_ref,
                        titlefntsize=16,
                        figsize=(7.5,12),
                        wspace=0.01, hspace=0.05, top=0.95, bottom=0.04, left=0.15, right=0.86,
+                       ysuptitle=0.98,
                        ):
         fig = plt.figure(figsize=figsize)
         fignum = fig.number
@@ -1209,8 +1212,9 @@ def do_plot_ct_profils(sMapO,Dobs,class_ref,
                         visu=3, scale=2,Clevel=class_ref-1,Gscale=0.5,
                         axsztext=6,marker='.',markrsz=4,pltcolor='r',
                         axline=True,
-                        ColorClass=pcmap,ticklabels=varnames,xticks=np.arange(0,len(varnames),2),verbose=False);
-        plt.suptitle(title,fontsize=titlefntsize); #,fontweigth='bold');
+                        ColorClass=pcmap,ticklabels=varnames,xticks=np.arange(0,len(varnames),2),
+                        verbose=False);
+        plt.suptitle(title,fontsize=titlefntsize,y=ysuptitle); #,fontweigth='bold');
     #
     #######################################################################
     #
@@ -2648,7 +2652,8 @@ def mixtgeneralisationxxx (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
                         TypePerf = ["MeanClassAccuracy"],
                         label=None, cblabel=None, fignum=None,
                         nticks=1,
-                        ytitre=0.98, fsizetitre=14) :
+                        ytitre=0.98, fsizetitre=14, 
+                        ) :
     # déterminer l'indice des modèles de TMixtMdl dans Tmdlname
     IMixtMdl = [];
     #print("Tmdlname: {}".format(Tmdlname))
@@ -2683,11 +2688,13 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
                         TypePerf = ["MeanClassAccuracy"],
                         label=None, cblabel=None, fignum=None, ax=None,
                         nticks=1,
-                        ytitre=0.98, fsizetitre=14, tickfontsize=10,
+                        ytitre=0.98, title_fontsize=14,labels_fontsize=12,
+                        tickfontsize=10,
                         cbticklabelsize=12,cblabelsize=12,
                         shorttitle=False,
                         show_xylabels=True,
-                        visu=True) :
+                        visu=True,
+                        ) :
     ''' Ici, j'ai :
              - Tmdlname : une table de NOMS de N modèles valides ; ##!!??? 
              - TDmdl4ct : la table correspondante des modèles 4CT (N, v,12)
@@ -2792,11 +2799,13 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
                                                   isnumObs,TypePerf[0],
                                                   cblabel="performance [%]",
                                                   ax=ax,nticks=nticks,tickfontsize=tickfontsize,
-                                                  cbticklabelsize=cbticklabelsize,cblabelsize=cblabelsize,
+                                                  cbticklabelsize=cbticklabelsize,
+                                                  cblabelsize=cblabelsize,
                                                   visu=visu); #use perfbyclass
     if visu :
         if show_xylabels :
-            plt.xlabel('Longitude', fontsize=12); plt.ylabel('Latitude', fontsize=12)
+            plt.xlabel('Longitude', fontsize=labels_fontsize);
+            plt.ylabel('Latitude', fontsize=labels_fontsize)
         if label is None :
             if shorttitle:
                 titre = "MdlMoy ({} mod.)".format(len(Tmdlname[IMixtMdl]))
@@ -2809,7 +2818,7 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
                 titre = "{} ({} models)".format(label,len(Tmdlname[IMixtMdl]))
         titre += ", mean perf={:.0f}%".format(100*Perfglob_)
         #
-        plt.title(titre,fontsize=fsizetitre,y=ytitre);
+        plt.title(titre,fontsize=title_fontsize,y=ytitre);
     #tls.klavier();
     return MdlMoy, IMixtMdl, Perfglob_, X_Mgeo_, Tperf_
 

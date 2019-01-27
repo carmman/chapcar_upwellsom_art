@@ -632,25 +632,28 @@ def plot_ct_profils(sMapO,Dobs,class_ref,varnames=None, fileext="", figdir=".",
                     pcmap=None,
                     title="SOM Map Profils by Cell (background color represents classes)",
                     titlefntsize=16,
+                    ytitle=0.98,
                     ) :
     #
     global SIZE_REDUCTION, SAVEFIG, FIGDPI, FIGEXT, blockshow
     #
     if SIZE_REDUCTION == 'All' :
-        figsize = (7.5,12)
+        figsize = (5,12)
         wspace=0.01; hspace=0.05; top=0.945; bottom=0.04; left=0.15; right=0.86;
     elif SIZE_REDUCTION == 'sel' :
         figsize=(8,8)
         wspace=0.01; hspace=0.04; top=0.945; bottom=0.04; left=0.04; right=0.97;
     #
-    stitre="SOM Map Profils by Cell ({:s}), (background color represents classes)",
+    #stitre="SOM Map Profils by Cell ({:s})\n(background color represents classes)",
 
     ctloop.do_plot_ct_profils(sMapO,Dobs,class_ref,varnames=varnames,
                            pcmap=pcmap,
                            figsize=figsize,
                            title=title,
                            titlefntsize=titlefntsize,
-                           wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
+                           wspace=wspace, hspace=hspace,
+                           top=top, bottom=bottom,left=left, right=right,
+                           ysuptitle=ytitle,
                            )
     if SAVEFIG : # sauvegarde de la figure
         figfile = "Fig_"
@@ -1327,12 +1330,14 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
     #
     if plotmeanmodel :
         if SIZE_REDUCTION == 'All' :
-            figsize = (9,6)
-            wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.06; right=0.925;
+            figsize = (10.5,7)
+            top=0.93; bottom=0.095; left=0.07; right=0.915;
+            wspace=0.0; hspace=0.0;
             nticks = 5; # 4
         elif SIZE_REDUCTION == 'sel' :
-            figsize=(9,9)
-            wspace=0.0; hspace=0.0; top=0.94; bottom=0.08; left=0.05; right=0.96;
+            figsize=(8.5,7)
+            top=0.92; bottom=0.10; left=0.06; right=0.96;
+            wspace=0.0; hspace=0.0;
             nticks = 2; # 4
         #
         fig = plt.figure(figsize=figsize)
@@ -1347,8 +1352,12 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
                                                TypePerf=TypePerf,
                                                label=misttitlelabel,
                                                fignum=fignum,
-                                               fsizetitre=14, ytitre=1.01, nticks=nticks,
-                                               visu=True);
+                                               title_fontsize=16,labels_fontsize=14,
+                                               tickfontsize=14,
+                                               cbticklabelsize=16,cblabelsize=18,
+                                               ytitre=1.015, nticks=nticks,
+                                               visu=True,
+                                               );
         #
         if len(IMixtMdl) != 0 :
             if SAVEFIG : # sauvegarde de la figure
@@ -1719,12 +1728,12 @@ def main(argv):
     verbose = False
     manualmode = True
     #
-    generalisation_ok = False
+    generalisation_ok = True
     generalisa_bestafc_clust_ok = True
     generalisa_bestcum_ok = True
-    generalisa_allmod_ok = True
-    generalisa_afc_clust_ok = True
-    generalisa_other_periods_ok = True
+    generalisa_allcum_ok = True
+    generalisa_allafc_clust_ok = True
+    generalisa_other_periods_ok = False
     #
     if Visu_UpwellArt :
         FIGSDIR = 'FigArt'
@@ -1902,9 +1911,9 @@ def main(argv):
         fileextbis = "_{:s}{:s}Clim-{:s}_{:s}".format(fprefixe,
                       fshortcode,dataobsystartend,data_label_base)
         if SIZE_REDUCTION == 'All' :
-            figsize = (10,7)
+            figsize = (10.5,7)
             #top=0.94; bottom=0.08; left=0.06; right=0.925;
-            top=0.93; bottom=0.095; left=0.07; right=0.925;
+            top=0.93; bottom=0.095; left=0.07; right=0.915;
             nticks = 5; # 4
         elif SIZE_REDUCTION == 'sel' :
             figsize=(8.5,7)
@@ -1991,14 +2000,15 @@ def main(argv):
     #
     #%% -----------------------------------------------------------------------
     if Visu_CTStuff : # Visu des profils des référents de la carte SOM
-        stitre="SOM Map Profils by Cell ({:s}) (background color represents classes)".format(dataobsystartend)
+        stitre="SOM Map Profils by Cell ({:s})\n(background color represents classes)".format(dataobsystartend)
         fileextter = "_{:s}{:s}Clim-{:s}_{:s}".format(fprefixe,
                       fshortcode,dataobsystartend,data_label_base)
         plot_ct_profils(sMapO,Dobs,class_ref,varnames=varnames,
                         fileext=fileextter, figdir=case_figs_dir,
                         pcmap=pcmap*0.7+0.299,
                         title=stitre,
-                        titlefntsize=14,
+                        titlefntsize=12,
+                        ytitle=0.995,
                         )
     #
     if STOP_BEFORE_MDLSTUFF :
@@ -2174,7 +2184,7 @@ def main(argv):
                                                TypePerf=TypePerf,
                                                label=TMixtMdlLabel, shorttitle=True,
                                                fignum=fignum,ax=ax,
-                                               fsizetitre=12, ytitre=1.00, nticks=nticks,
+                                               title_fontsize=12, ytitre=1.00, nticks=nticks,
                                                tickfontsize=10,
                                                cbticklabelsize=10,cblabelsize=8,
                                                show_xylabels=False,
@@ -2309,7 +2319,7 @@ def main(argv):
                         generalisation_type='bestcum',  # 'bestclust', 'bestcum'
                         )
         #
-        if generalisa_allmod_ok :
+        if generalisa_allcum_ok :
             generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
                         isnumobs, isnanobs, Lobs, Cobs, class_ref, classe_Dobs, 
                         TDmdl4CT,Tmdlname,
