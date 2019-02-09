@@ -1188,6 +1188,7 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
 def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=None,
                   figdir=".",
                   figfile=None, dpi=None, figpdf=False,
+                  xobs=False,
                   ) :
     global SIZE_REDUCTION, AFCWITHOBS
     global FIGDPI, FIGEXT, Visu_UpwellArt
@@ -1236,6 +1237,7 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=N
                     title=stitre,
                     Visu4Art=Visu_UpwellArt,
                     AFCWITHOBS = AFCWITHOBS,
+                    xobs=xobs,
                     figsize=figsize,
                     top=top, bottom=bottom, left=left, right=right,
                     lblfontsize=lblfontsize,       mdlmarkersize=mdlmarkersize,
@@ -2243,6 +2245,25 @@ def main(argv):
         ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,figpdf=figpdf)
     #
     #
+    #%%
+    tmp_max_cluster_afc = class_afc.max(); # nombre max de clusters AFC
+    tmp_n_afc_mod = class_afc.shape[0]; # nombre de modeles AFC
+    tmp_list_of_afc_models = AFCindnameswnb; # liste avec numero de modele (le N+1 est 'Obs')
+    #tmp_list_of_afc_models = AFCindnames; # liste sans numero de modele
+    #tmp_list_of_afc_models = NoAFCindnames; # numero de modele seulement (le N+1 est 'Obs')
+    
+    print('\n {:s}\n -- {:s} --\n -- {:s} --\n {:s}'.format(''.center(56,'-'),
+          'Model List by AFC Cluster'.center(50),
+          case_name_base.center(50),
+          ''.center(56,'-')))
+    for iClust in np.arange(tmp_max_cluster_afc) :
+        print('\nAFC Cluster {:d}:\n#############\n'.format(iClust+1))
+        for iMod in np.arange(tmp_n_afc_mod) :
+            if class_afc[iMod] == (iClust + 1) :
+                print('{:s}'.format(tmp_list_of_afc_models[iMod]))
+
+    
+    
     #%% -------------------------------------------------------------------------
     #                        PLOT DE PROJECTION AFC
     # -------------------------------------------------------------------------
@@ -2258,11 +2279,21 @@ def main(argv):
         dpi     = FIGDPI
         figpdf  = False
     #
-    plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
-                  indnames=NoAFCindnames,
-                  figdir=case_figs_dir,
-                  figfile=figfile, dpi=dpi, figpdf=figpdf,
-                  )
+    if AFCWITHOBS :
+        # si l'AFC est faite avec les OBS aussi
+        plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+                      indnames=NoAFCindnames,
+                      figdir=case_figs_dir,
+                      figfile=figfile, dpi=dpi, figpdf=figpdf,
+                      )
+    else :
+        # si les OBS ne participent pas a l'AFC mais seulement projetés
+        plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+                      indnames=NoAFCindnames,
+                      figdir=case_figs_dir,
+                      figfile=figfile, dpi=dpi, figpdf=figpdf,
+                      xobs=F1sU,
+                      )
     #
     if STOP_BEFORE_GENERAL :
         plt.show(); sys.exit(0)

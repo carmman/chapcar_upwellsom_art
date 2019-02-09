@@ -32,7 +32,8 @@ import UW3_triedctk as ctk
 import ctObsMdldef  as ctobs
 #
 #%=====================================================================
-def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,indname=None,
+def afcnuage (CP,cpa,cpb,Xcol,xobs=None,
+              K=None,xoomK=500,indname=None,
               cmap=cm.jet,holdon=False,ax=None,gridok=False,
               drawaxes=False,axescolors=None,axlinewidth=1,
               drawtriangref=False,axtight=False,aximage=False,axdecal=False,
@@ -52,7 +53,7 @@ def afcnuage (CP,cpa,cpb,Xcol,K=None,xoomK=500,indname=None,
               legendprefixlbl="AFC Clust.",
               legendprefixlblobs="Obs.",
               ) :
-# pompé de WORKZONE ... TPA05
+    # pompé de WORKZONE ... TPA05
     if ax is None :
         fig = plt.figure(figsize=(16,12));
         ax = plt.subplot(111)
@@ -2397,13 +2398,14 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
            figclustmoynum,class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames
 #
 def do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
-                    indnames=None,
-                    title="AFC Projection",
-                    AFCWITHOBS = True,
-                    figsize=(16,12),
-                    top=0.93, bottom=0.05, left=0.05, right=0.95,
-                    lblfontsize=14, linewidths=2.5,
-                    ) :
+                           xobs=None,
+                           indnames=None,
+                           title="AFC Projection",
+                           AFCWITHOBS = True,
+                           figsize=(16,12),
+                           top=0.93, bottom=0.05, left=0.05, right=0.95,
+                           lblfontsize=14, linewidths=2.5,
+                           ) :
     # 1- NOUVELLE FIGURE POUR PROJECTIONS DE L'AFC
     fig = plt.figure(figsize=figsize);
     fignum = fig.number # numero de figure en cours ...
@@ -2411,7 +2413,9 @@ def do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
     ax = plt.subplot(111) # un seul axe
     #
     K=CRi; xoomK=500;  # Pour les contrib Rel (CRi)
-    afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,
+    afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,
+             xobs=xobs,
+             K=K,xoomK=xoomK,linewidths=2,
              indname=indnames,
              drawaxes=True, gridok=True,
              ax=ax,
@@ -2449,6 +2453,7 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlo
                     title="AFC Projection",
                     Visu4Art=False,
                     AFCWITHOBS = True,
+                    xobs=None,
                     figsize=(16,12),
                     top=0.93, bottom=0.05, left=0.05, right=0.95,
                     mdlmarkersize=None, obsmarkersize=None,clsmarkersize=None,
@@ -2475,6 +2480,7 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlo
     if Visu4Art :
         afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,
                  indname=indnames,
+                 xobs=xobs,
                  linewidths=2.5,linewidthsobs=3,
                  ax=ax,article_style=True,
                  marker='o',obsmarker='o',
