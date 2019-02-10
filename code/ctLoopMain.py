@@ -211,6 +211,10 @@ def ctloop_load_obs(DATAOBS, path=".", case_name="case") :
     # -----------------------------------------------------------------------------
     # Complete le Nom du Cas
     case_label = "{}_ZG{:d}x{:d}px_{}".format(case_name,len(lat),len(lon),data_label_base)
+    if AFCWITHOBS:
+        case_label += '_AFC-Mod+Obs';
+    else:
+        case_label += '_AFC-ModOnly';
     print("\n{:*>86s}\nCase label with data version: {}\n".format('',case_label))
     #
     Nobs,Lobs,Cobs = np.shape(sst_obs);
@@ -866,7 +870,8 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     sztitle = 10;
     suptitlefs = 16
     ysuptitre = 0.99
-    Tperfglob,Tperfglob_Qm,Tmdlname,Tmdlnamewnb,Tmdlonlynb,TTperf,\
+    
+    Tperfglob,Tperfglob_Qm,Tmdlname,Tmdlnamewnb,Tmdlonlynb,TTperf,TTperf_Qm,\
         TDmdl4CT = ctloop.do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_Ogeo,TDmdl4CT,
                                 Tmdlname,Tmdlnamewnb,Tmdlonlynb,
                                 Tperfglob4Sort,Tclasse_DMdl,Tmoymensclass,
@@ -948,7 +953,8 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
     #
-    return Tperfglob, Tperfglob_Qm, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb, TTperf, Nmdlok, NDmdl
+    return Tperfglob, Tperfglob_Qm, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb,\
+           TTperf, TTperf_Qm, Nmdlok, NDmdl
 #
 #%%
 def datemdl2dateinreval(datamdl):
@@ -1001,7 +1007,8 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
     ctloop.printwarning([ "","CALCUL DE L'A.F.C".center(75),""])
     #
 #
-    VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,CAHindnameswnb,NoCAHindnames,\
+    VAPT,F1U,F1sU,F2V,CRi,CAj,TTperf4afc,\
+        CAHindnames,CAHindnameswnb,NoCAHindnames,\
         figclustmoynum,class_afc,AFCindnames,AFCindnameswnb,\
         NoAFCindnames = ctloop.do_afc(NIJ,
                           sMapO, TDmdl4CT, lon, lat,
@@ -1181,14 +1188,15 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
             # eventuellement en PDF, si SAVEPDF active. 
             ctloop.do_save_figure(figfile,dpi=FIGDPI,path=figdir,ext=FIGEXT) #,fig2ok=SAVEPDF,ext2=VFIGEXT)
     #
-    return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,CAHindnameswnb,NoCAHindnames,\
+    return VAPT,F1U,F1sU,F2V,CRi,CAj,TTperf4afc,\
+           CAHindnames,CAHindnameswnb,NoCAHindnames,\
            class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames,figclustmoynum
 #
 #%%
-def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=None,
+def plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=None,
                   figdir=".",
                   figfile=None, dpi=None, figpdf=False,
-                  xobs=False,
+                  xextraF1=None,xextraLbl=None,xextracolor=None,
                   ) :
     global SIZE_REDUCTION, AFCWITHOBS
     global FIGDPI, FIGEXT, Visu_UpwellArt
@@ -1228,24 +1236,29 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=N
             legendXstartcls=legendXstart;
             legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
         #
-        stitre = ("SST {:s} -on zone \"{:s}\"- A.F.C Projection with Models, Observations and Classes ({:s})"+\
-                  "\n- {:s}, AFC on {:d} CAH Classes for {} models (in {} AFC clusters) + Obs -").format(fcodage,
-                       zone_stitre,dataystartend,method_cah,nb_class,Nmdlok,nb_clust)
+        if AFCWITHOBS :
+            stitre = ("SST {:s} -on zone \"{:s}\"- A.F.C Mod+Obs -").format(fcodage,zone_stitre)
+        else:
+            stitre = ("SST {:s} -on zone \"{:s}\"- A.F.C Mod.only -").format(fcodage,zone_stitre)
         #
-        ctloop.do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+        stitre += (" Projection with Models, Observations and Classes ({:s})"+\
+                   "\n- {:s}, AFC on {:d} CAH Classes for {} models (in {}"+\
+                   " AFC clusters) + Obs -").format(dataystartend,method_cah,nb_class,Nmdlok,nb_clust)
+        #
+        ctloop.do_plotart_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
                     indnames=indnames,
                     title=stitre,
                     Visu4Art=Visu_UpwellArt,
                     AFCWITHOBS = AFCWITHOBS,
-                    xobs=xobs,
+                    xextraF1=xextraF1,xextraLbl=xextraLbl,xextracolor=xextracolor,
                     figsize=figsize,
                     top=top, bottom=bottom, left=left, right=right,
                     lblfontsize=lblfontsize,       mdlmarkersize=mdlmarkersize,
                     lblfontsizeobs=lblfontsizeobs, obsmarkersize=obsmarkersize,
                     lblfontsizecls=lblfontsizecls, clsmarkersize=clsmarkersize,
-                    xdeltapos   =xdeltapos ,   ydeltapos   =ydeltapos,
-                    xdeltaposobs=xdeltaposobs, ydeltaposobs=ydeltaposobs,
-                    xdeltaposcls=xdeltaposcls, ydeltaposcls=ydeltaposcls,
+                    xdeltapos=xdeltapos,           ydeltapos=ydeltapos,
+                    xdeltaposobs=xdeltaposobs,     ydeltaposobs=ydeltaposobs,
+                    xdeltaposcls=xdeltaposcls,     ydeltaposcls=ydeltaposcls,
                     linewidths=linewidths, linewidthsobs=linewidthsobs, linewidthscls=linewidthscls,
                     legendok=True,
                     xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
@@ -1261,7 +1274,7 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=N
                   dataystartend,method_cah));
         lblfontsize=14; linewidths = 2.0
         #
-        ctloop.do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+        ctloop.do_plot_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
                     indnames=indnames,
                     title=stitre,
                     AFCWITHOBS = AFCWITHOBS,
@@ -1278,7 +1291,9 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=N
         figfile += "AFC2DProj-{:d}-{:d}_{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:s}_{:d}-mod".format(
                 pa,po,nb_clust,nb_class,fprefixe,fshortcode,dataystartend,Nmdlok)
         if AFCWITHOBS :
-            figfile += "+Obs"
+            figfile += "+ObsInAFC"
+        else:
+            figfile += "+ObsOutAFC"
         #
         ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
 #
@@ -1659,7 +1674,7 @@ def generalisafcclust_proc(sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon, v
         fileextIV79 = "_AFCclust{:d}{:s}-{:s}{:s}_{:s}".format(kclust,datafileext,fprefixe,
                              SIZE_REDUCTION,fshortcode)
         xTperfglob, xTperfglob_Qm, xTDmdl4CT, xTmdlname, xTmdlnamewnb, \
-            xTmdlonlynb, xTTperf, xNmdlok, \
+            xTmdlonlynb, xTTperf, xTTperf_Qm, xNmdlok, \
             xNDmdl = ctloop_model_traitement(
                         sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
                         nb_class,class_ref,classe_Dobs,NDobs,fond_C,
@@ -1731,6 +1746,7 @@ def main(argv):
     manualmode = True
     #
     generalisation_ok = True
+    #generalisation_ok = True
     generalisa_bestafc_clust_ok = True
     generalisa_bestcum_ok = True
     generalisa_allcum_ok = True
@@ -1824,11 +1840,11 @@ def main(argv):
     #%% -----------------------------------------------------------------------
     # Figure Obs4CT
     if Visu_ObsStuff : # Visu (et sauvegarde éventuelle de la figure) des données
-        current_eqcmap = [eqcmap, cm.jet]
-        #current_eqcmap = eqcmap
-        #current_eqcmap = cm.jet
-        if type(current_eqcmap) is list :
-            iter_cmap = current_eqcmap
+        #list_of_eqcmap = [eqcmap, cm.jet]
+        list_of_eqcmap = eqcmap
+        #list_of_eqcmap = cm.jet
+        if type(list_of_eqcmap) is list :
+            iter_cmap = list_of_eqcmap
         else :
             iter_cmap = [ eqcmap ]
         #  
@@ -2049,7 +2065,8 @@ def main(argv):
     fileextIV79 = "_{:s}{:s}_{:s}".format(fprefixe,SIZE_REDUCTION,fshortcode)
     #
     Tperfglob, Tperfglob_Qm, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonlynb, TTperf, \
-        Nmdlok, NDmdl = ctloop_model_traitement(sst_obs_coded,Dobs,XC_Ogeo,sMapO,
+        TTperf_Qm, Nmdlok, \
+        NDmdl = ctloop_model_traitement(sst_obs_coded,Dobs,XC_Ogeo,sMapO,
                     lon,lat,ilat,ilon,
                     nb_class,class_ref,classe_Dobs,NDobs,fond_C,
                     isnanobs,isnumobs,Lobs,Cobs,list_of_plot_colors,
@@ -2150,7 +2167,8 @@ def main(argv):
     plotmodgen = True
     plotobs = True
     #
-    VAPT, F1U, F1sU, F2V, CRi, CAj, CAHindnames, CAHindnameswnb, NoCAHindnames,\
+    VAPT, F1U, F1sU, F2V, CRi, CAj, TTperf4afc,\
+        CAHindnames, CAHindnameswnb, NoCAHindnames,\
         class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames,\
         figclustmoynum = ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT,
                            Tmdlname, Tmdlnamewnb, Tmdlonlynb,
@@ -2261,9 +2279,8 @@ def main(argv):
         for iMod in np.arange(tmp_n_afc_mod) :
             if class_afc[iMod] == (iClust + 1) :
                 print('{:s}'.format(tmp_list_of_afc_models[iMod]))
-
-    
-    
+    #
+    #
     #%% -------------------------------------------------------------------------
     #                        PLOT DE PROJECTION AFC
     # -------------------------------------------------------------------------
@@ -2279,20 +2296,30 @@ def main(argv):
         dpi     = FIGDPI
         figpdf  = False
     #
+    
+    # TEST DE PROJ DES OBJ (100% sur toutes les classes)
+    Pobs_ = np.ones((1,nb_class),dtype=int)*100; # perfs des OBS = 100% dans toutes les classes
+    F1obs = ldef.do_afc_proj(TTperf4afc,Pobs_)
+    # Perf du cumul des modeles
+    PMAllCum = TTperf_Qm[-1,:].reshape((1,TTperf_Qm.shape[1]))
+    F1extra = ldef.do_afc_proj(TTperf4afc,PMAllCum)
+    Lblextra = 'FullMM{}'.format(Nmdlok)
+    Colorextra = [ 1.0, 0.8, 0.0, 1.]; # orange
     if AFCWITHOBS :
         # si l'AFC est faite avec les OBS aussi
-        plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+        plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
                       indnames=NoAFCindnames,
                       figdir=case_figs_dir,
                       figfile=figfile, dpi=dpi, figpdf=figpdf,
+                      xextraF1=F1extra,xextraLbl=Lblextra,xextracolor=Colorextra,
                       )
     else :
         # si les OBS ne participent pas a l'AFC mais seulement projetés
-        plot_afc_proj(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+        plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
                       indnames=NoAFCindnames,
                       figdir=case_figs_dir,
                       figfile=figfile, dpi=dpi, figpdf=figpdf,
-                      xobs=F1sU,
+                      xextraF1=F1extra,xextraLbl=Lblextra,xextracolor=Colorextra,
                       )
     #
     if STOP_BEFORE_GENERAL :
@@ -2326,9 +2353,9 @@ def main(argv):
     #.............................. GENERALISATION ............................
     if generalisation_ok :
         #
-        list_of_eqcmap = [eqcmap, cm.jet]
-        #current_eqcmap = eqcmap
-        #current_eqcmap = cm.jet
+        #list_of_eqcmap = [eqcmap, cm.jet]
+        list_of_eqcmap = eqcmap
+        #list_of_eqcmap = cm.jet
         #
         if generalisa_bestafc_clust_ok :
             generalisation_proc(sMapO, lon, lat, varnames, wvmin, wvmax, nb_class,
@@ -2467,7 +2494,7 @@ if 0:
                        SIZE_REDUCTION,fshortcode,method_cah)
     fileextIV79 = "_Clust{:d}-{:s}{:s}_{:s}".format(kclust,fprefixe,
                          SIZE_REDUCTION,fshortcode)
-    xTDmdl4CT, xTmdlname, xTmdlnamewnb, xTmdlonlynb, xTTperf, xNmdlok,\
+    xTDmdl4CT, xTmdlname, xTmdlnamewnb, xTmdlonlynb, xTTperf, xTTperf_Qm, xNmdlok,\
         xNDmdl = ctloop_model_traitement(
                     sst_obs_coded,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
                     nb_class,class_ref,classe_Dobs,NDobs,fond_C,

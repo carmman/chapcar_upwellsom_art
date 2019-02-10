@@ -334,6 +334,38 @@ def decodage(X,CODAGE,coparm=None) :
         print("decodage : unknown CODAGE (%s) ; use 'log01', 'truc01' or 'fit01'"%CODAGE);
         sys.exit(0);
     return Xb
+#
+#----------------------------------------------------------------------
+def do_afc_proj (X, Xs=None) :
+    ''' projection de Xs dans l'afc de X
+    Fontion pour faciliter la projection des donnees exterieurs a l'afc.
+    La variable X est ce qui est retourne par do_afc() comme TTperf4afc.
+    '''
+    if Xs is None :
+        Xs = X;
+    if len(Xs.shape) == 1:
+        Xs = Xs[np.newaxis,:]
+    m,p = np.shape(X);
+    N   = np.sum(X);
+    Fij = X / N;
+    fip = np.sum(Fij,axis=1);
+    fpj = np.sum(Fij,axis=0);
+    
+    sqrtfipfpj = np.sqrt(np.outer(fip,fpj)); 
+    M = Fij / sqrtfipfpj;  
+    T = np.dot(M.T,M); 
+    VAPT, VEPT = np.linalg.eig(T); 
+    U    = VEPT[:,1:p];  
+
+    Fijs = Xs / N;
+    fips = np.sum(Fijs,axis=1);
+    F1as = Fijs.T / fips;
+    F1as = F1as.T;
+    F1s  = F1as / np.sqrt(fpj);
+    F1sU = np.dot(F1s,U);
+
+    return F1sU
+#
 #----------------------------------------------------------------------
 def afaco (X, dual=True, Xs=None) :
     F2V=CAj=F1sU=None;

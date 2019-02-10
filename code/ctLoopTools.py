@@ -32,7 +32,7 @@ import UW3_triedctk as ctk
 import ctObsMdldef  as ctobs
 #
 #%=====================================================================
-def afcnuage (CP,cpa,cpb,Xcol,xobs=None,
+def afcnuage (CP,cpa,cpb,Xcol,
               K=None,xoomK=500,indname=None,
               cmap=cm.jet,holdon=False,ax=None,gridok=False,
               drawaxes=False,axescolors=None,axlinewidth=1,
@@ -1807,6 +1807,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     if NIJ==1 :
         TNIJ         = [];
     TTperf           = [];
+    TTperf_Qm        = [];
     for imodel in np.arange(Nmodels) :
         isubplot=isubplot+1;
         #
@@ -1914,7 +1915,8 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                            # leur classe, et les mals classés ont nan
             Tperfglob_Qm[imodel] = Perfglob_Qm
             Tperf_Qm = np.round([i*100 for i in Tperf_Qm]).astype(int);
-    
+            TTperf_Qm.append(Tperf_Qm); # tableau de perf cumulees
+
             plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
             plt.imshow(XC_mgeo_Qm, interpolation=None,cmap=ccmap, vmin=1,vmax=nb_class);
             hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
@@ -2065,11 +2067,12 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     Tmdlnamewnb = np.array(Tmdlnamewnb);
     Tmdlonlynb  = np.array(Tmdlonlynb);
     TTperf      = np.array(TTperf);
+    TTperf_Qm   = np.array(TTperf_Qm);
     TDmdl4CT    = np.array(TDmdl4CT);
     if NIJ == 1 :
         TNIJ    = np.array(TNIJ);
     #
-    return Tperfglob,Tperfglob_Qm,Tmdlname,Tmdlnamewnb,Tmdlonlynb,TTperf,TDmdl4CT
+    return Tperfglob,Tperfglob_Qm,Tmdlname,Tmdlnamewnb,Tmdlonlynb,TTperf,TTperf_Qm,TDmdl4CT
 #
 def do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_colors,  
                                 title="SST - Classification Indices of Completed Models",
@@ -2168,26 +2171,45 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
     Iok_   = np.where(som_>0)[0]; # Indice des modèles valides pour l'AFC
     Tp_    = Tp_[Iok_];
     Nmdlok = len(Iok_); # !!! ATTENTION !!! redéfinition du nombre de modèles valides
-    #  
-    # Tableau (ou liste) des Noms des individus (Modèles valides et Obs)
-    if AFCWITHOBS :
-        AFCindnames    = np.concatenate((Tmdlname[Iok_],['Obs']));
-        AFCindnameswnb = np.concatenate((Tmdlnamewnb[Iok_],['Obs']));
-        NoAFCindnames  = np.concatenate((Tm_[Iok_],['Obs']));
-    else : 
-        AFCindnames    = Tmdlname[Iok_];
-        AFCindnameswnb = Tmdlnamewnb[Iok_];
-        NoAFCindnames  = Tm_[Iok_];
     del som_;
+    #  
+    # Tableau (ou liste) des Noms des individus (Modèles valides) pour l'AFC
+    AFCindnames    = Tmdlname[Iok_];
+    AFCindnameswnb = Tmdlnamewnb[Iok_];
+    NoAFCindnames  = Tm_[Iok_];
     #
+    # Tableau (ou liste) des Noms des individus (Modèles valides) pour la CAH
+    CAHindnames    = Tmdlname[Iok_]; 
+    CAHindnameswnb = Tmdlnamewnb[Iok_]; 
+    NoCAHindnames  = Tm_[Iok_]; 
+    #
+    # Ajoute aux Tableaux pour AFC et CAH les Obs ... si voulu.
+    if AFCWITHOBS :
+        AFCindnames    = np.concatenate((AFCindnames,    ['Obs']));
+        AFCindnameswnb = np.concatenate((AFCindnameswnb, ['Obs']));
+        NoAFCindnames  = np.concatenate((NoAFCindnames,  ['Obs'])); 
     if CAHWITHOBS :
-        CAHindnames    = np.concatenate((Tmdlname[Iok_],['Obs'])); 
-        CAHindnameswnb = np.concatenate((Tmdlnamewnb[Iok_],['Obs'])); 
-        NoCAHindnames  = np.concatenate((Tm_[Iok_],['Obs'])); 
-    else :
-        CAHindnames    = Tmdlname[Iok_]; 
-        CAHindnameswnb = Tmdlnamewnb[Iok_]; 
-        NoCAHindnames  = Tm_[Iok_]; 
+        CAHindnames    = np.concatenate((CAHindnames,    ['Obs'])); 
+        CAHindnameswnb = np.concatenate((CAHindnameswnb, ['Obs'])); 
+        NoCAHindnames  = np.concatenate((NoCAHindnames,  ['Obs'])); 
+    #
+    #if AFCWITHOBS :
+    #    AFCindnames    = np.concatenate((Tmdlname[Iok_],['Obs']));
+    #    AFCindnameswnb = np.concatenate((Tmdlnamewnb[Iok_],['Obs']));
+    #    NoAFCindnames  = np.concatenate((Tm_[Iok_],['Obs']));
+    #else : 
+    #    AFCindnames    = Tmdlname[Iok_];
+    #    AFCindnameswnb = Tmdlnamewnb[Iok_];
+    #    NoAFCindnames  = Tm_[Iok_];
+    #
+    #if CAHWITHOBS :
+    #    CAHindnames    = np.concatenate((Tmdlname[Iok_],['Obs'])); 
+    #    CAHindnameswnb = np.concatenate((Tmdlnamewnb[Iok_],['Obs'])); 
+    #    NoCAHindnames  = np.concatenate((Tm_[Iok_],['Obs'])); 
+    #else :
+    #    CAHindnames    = Tmdlname[Iok_]; 
+    #    CAHindnameswnb = Tmdlnamewnb[Iok_]; 
+    #    NoCAHindnames  = Tm_[Iok_]; 
     Nleaves_ = len(CAHindnames);
     #
     if mdlnamewnumber_ok :
@@ -2195,13 +2217,14 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
     else :
         TmdlnameX = Tmdlname
     #
+    Pobs_ = np.ones((1,nb_class),dtype=int)*100; # perfs des OBS = 100% dans toutes les classes
+    pobs_ = np.ones(nb_class,dtype=int)*100; # perfs des OBS = 100% dans toutes les classes
+    #
     if AFCWITHOBS : # On ajoute Obs (si required)
         if NIJ==1 :
             Tp_ = np.concatenate((Tp_, Nobsc[np.newaxis,:]), axis=0).astype(int);
         else :
-            # Obs have 100% for any class par définition
-            pobs_ = (np.ones(nb_class)*100).astype(int);
-            Tp_   = np.concatenate((Tp_, pobs_[np.newaxis,:]), axis=0); # je mets les Obs A LA FIN #a
+            Tp_ = np.concatenate((Tp_, Pobs_), axis=0); # je mets les Obs A LA FIN #a
     #
     if NIJ == 3 : # On transforme les %tages en Nombre (i.e. en effectif)
         if 0 : # icicicicici
@@ -2209,15 +2232,23 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
         else : 
             Tp_ = np.round(Tp_ * Nobsc / 100).astype(int); ##$$
     #
+    TTperf4afc = Tp_;
     # _________________________
     # Faire l'AFC proprment dit
     if AFCWITHOBS :
-        VAPT, F1U, CAi, CRi, F2V, CAj, F1sU = ldef.afaco(Tp_);
+        VAPT, F1U, CAi, CRi, F2V, CAj, F1sU = ldef.afaco(TTperf4afc);
         XoU = F1U[Nmdlok,:]; # coord des Obs
     else : # Les obs en supplémentaires
-        VAPT, F1U, CAi, CRi, F2V, CAj, F1sU = ldef.afaco(Tp_, Xs=[Nobsc]);
+        #VAPT, F1U, CAi, CRi, F2V, CAj, F1sU = ldef.afaco(TTperf4afc, Xs=[Nobsc]); ## if NIJ == 1  ??
+        VAPT, F1U, CAi, CRi, F2V, CAj, F1sU = ldef.afaco(TTperf4afc, Xs=Pobs_);
         XoU = F1sU; # coord des Obs (ok j'aurais pu mettre directement en retour de fonction...)
     #
+    print("AFCWITHOBS:{} ... F1U.shape={}".format(AFCWITHOBS,F1U.shape))
+    print("Pobs_.shape={}".format(Pobs_.shape))
+    print("Pobs_={}".format(Pobs_))
+    if F1sU is not None :
+        print("F1sU.shape={}".format(F1sU.shape))
+        print("F1sU={}".format(F1sU))
     #-----------------------------------------
     # MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
     if 1 : # CAH on afc Models's coordinates (without obs !!!???)
@@ -2394,11 +2425,12 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
     #
     # FIN du if 1 : MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
     #
-    return VAPT,F1U,F1sU,F2V,CRi,CAj,CAHindnames,CAHindnameswnb,NoCAHindnames,\
+    return VAPT,F1U,F1sU,F2V,CRi,CAj,TTperf4afc,\
+           CAHindnames,CAHindnameswnb,NoCAHindnames,\
            figclustmoynum,class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames
 #
-def do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
-                           xobs=None,
+def do_plot_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+                           xextraF1=None,xextraLbl=None,xextracolor=None,
                            indnames=None,
                            title="AFC Projection",
                            AFCWITHOBS = True,
@@ -2414,7 +2446,6 @@ def do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
     #
     K=CRi; xoomK=500;  # Pour les contrib Rel (CRi)
     afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,
-             xobs=xobs,
              K=K,xoomK=xoomK,linewidths=2,
              indname=indnames,
              drawaxes=True, gridok=True,
@@ -2448,12 +2479,12 @@ def do_plot_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
     return
 #
 #
-def do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+def do_plotart_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
                     indnames=None,
                     title="AFC Projection",
                     Visu4Art=False,
                     AFCWITHOBS = True,
-                    xobs=None,
+                    xextraF1=None,xextraLbl=None,xextracolor=None,
                     figsize=(16,12),
                     top=0.93, bottom=0.05, left=0.05, right=0.95,
                     mdlmarkersize=None, obsmarkersize=None,clsmarkersize=None,
@@ -2478,15 +2509,16 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlo
     plt.subplots_adjust(top=top, bottom=bottom, left=left, right=right)
     ax = plt.subplot(111) # un seul axe
     if Visu4Art :
+        obscolor = [ 0.90, 0.90, 0.90, 1.];
+        obsmarker = 'o'
         afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,
                  indname=indnames,
-                 xobs=xobs,
                  linewidths=2.5,linewidthsobs=3,
                  ax=ax,article_style=True,
-                 marker='o',obsmarker='o',
+                 marker='o',obsmarker=obsmarker,
                  markersize=mdlmarkersize,
                  obsmarkersize=obsmarkersize,
-                 edgecolor='k',edgeobscolor='k',obscolor=[ 0.90, 0.90, 0.90, 1.],
+                 edgecolor='k',edgeobscolor='k',obscolor=obscolor,
                  edgeclasscolor='k',faceclasscolor='m',
                  horizalign='left',vertalign='center',
                  lblfontsize=lblfontsize,       lblprefix=lblprefix,
@@ -2499,6 +2531,46 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,pa,po,class_afc,nb_class,NIJ,Nmdlo
                  legendprefixlbl=legendprefixlbl,
                  legendprefixlblobs=legendprefixlblobs,
                  );
+        if not AFCWITHOBS : # Obs en supplémentaire
+            CPobs = F1sU
+            obsmarker = 'o'
+            ax.scatter(CPobs[:,pa-1],CPobs[:,po-1],s=obsmarkersize,marker=obsmarker,
+                edgecolors='k',facecolor=obscolor,linewidths=2.5)
+            Tno,Tpo = np.shape(CPobs);
+            for i in np.arange(Tno) :
+                ax.text(CPobs[i,pa-1],CPobs[i,po-1], ".Obs",
+                        position=(CPobs[i,pa-1] + xdeltapos,CPobs[i,po-1] + ydeltapos),
+                        color='k',
+                        fontsize=lblfontsize,
+                        horizontalalignment='left',
+                        verticalalignment='center')
+        if xextraF1 is not None : # Donnees extras a projeter
+            CPobs = xextraF1
+            extramarker = 'X'
+            extrafillstyle = 'full'
+            extramarkersize = obsmarkersize
+            if xextraLbl is None:
+                xextraLbl = 'Extra'
+            if xextracolor is None:
+                xextracolor = [ 0.60, 0.60, 0.60, 1.];
+            ax.scatter(CPobs[:,pa-1],CPobs[:,po-1],s=extramarkersize,marker=extramarker,
+                       edgecolors='k',facecolor=xextracolor,linewidths=2.5)
+                       #fillstyle=extrafillstyle,
+            Tno,Tpo = np.shape(CPobs);
+            for i in np.arange(Tno) :
+                ax.text(CPobs[i,pa-1],CPobs[i,po-1], xextraLbl,
+                        position=(CPobs[i,pa-1] + xdeltapos,CPobs[i,po-1] + ydeltapos),
+                        color='k',
+                        fontsize=lblfontsize,
+                        horizontalalignment='left',
+                        verticalalignment='center')
+
+            #ax.plot(F1sU[0,0],F1sU[0,1], 'o',
+            #        markersize=obsmarkersize, 
+            #        markerfacecolor=obscolor,
+            #        markeredgecolor='k',
+            #        markeredgewidth=2.5);
+
         # 3- AJOUT ou pas des colonnes (i.e. des classes)
         colnames = (np.arange(nb_class)+1).astype(str)
         afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),

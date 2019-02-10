@@ -22,11 +22,11 @@ SAVEPDF    = True;
 SAVEMAP    = True;
 #SAVEMAP    = False;
 # -----------------------------------------------------------------------------
-#REWRITEMAP = True;
-REWRITEMAP = False;
+REWRITEMAP = True;
+#REWRITEMAP = False;
 # -----------------------------------------------------------------------------
-RELOADMAP = True;
-#RELOADMAP = False;
+#RELOADMAP = True;
+RELOADMAP = False;
 # -----------------------------------------------------------------------------
 #RERUNTRAINMAP = True;
 #RERUNTRAINMAP = False;
