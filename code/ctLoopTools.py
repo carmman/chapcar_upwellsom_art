@@ -2483,42 +2483,44 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,
                     indnames=None,
                     title="AFC Projection",
                     Visu4Art=False,
-                    AFCWITHOBS = True,
-                    xextraF1=None,xextraLbl=None,xextracolor=None,
+                    AFCWITHOBS=False,
                     figsize=(16,12),
                     top=0.93, bottom=0.05, left=0.05, right=0.95,
-                    mdlmarkersize=None, obsmarkersize=None,clsmarkersize=None,
-                    lblfontsize=14,lblprefix=None,      linewidths=2.5,
-                    lblfontsizeobs=14,lblprefixobs=None,linewidthsobs=3,
-                    lblfontsizecls=14,lblprefixcls=None,linewidthscls=2.5,
-                    xdeltapos=0.02,ydeltapos=-0.002,
-                    xdeltaposobs=0.02,ydeltaposobs=-0.002,
-                    xdeltaposcls=0.01,ydeltaposcls=-0.003,
+                    xextraF1=None,
+                    xextraLbl=" Extra", xextracolor=[ 1.0, 0.0, 0.0, 1.],
+                    obsLbl=" Obs",      obscolor=[ 0.90, 0.90, 0.90, 1.],
+                    lblfontsize=14,       lblprefix=None,         mdlmarker='o',    mdlmarkersize=250,
+                    xdeltapos=0.02,       ydeltapos=-0.002,       linewidths=2.5,
+                    lblfontsizeobs=14,    lblprefixobs=None,      obsmarker='o',    obsmarkersize=320,
+                    xdeltaposobs=0.02,    ydeltaposobs=-0.002,    linewidthsobs=3,
+                    lblfontsizexextra=14, lblprefixxextra=None,   xextramarker='*', xextramarkersize=320,
+                    xdeltaposxextra=0.02, ydeltaposxextra=-0.002, linewidthsxextra=3,
+                    lblfontsizecls=14,    lblprefixcls=None,      clsmarker='s',   clsmarkersize=280,
+                    xdeltaposcls=0.01,    ydeltaposcls=-0.003,    linewidthscls=2.5,
                     legendok=False,
                     xdeltaposlgnd=0.02,ydeltaposlgnd=0.0,
                     legendXstart=-1.24,legendYstart=0.85,legendYstep=0.06,
                     legendprefixlbl="AFC Cluster",
                     legendprefixlblobs="Observations",
+                    legendprefixlblxextra="Exta data",
                     legendokcls=False,
                     legendXstartcls=-1.24,legendYstartcls=0.60,
                     legendprefixlblcls="Classes",
                     ) :
+    nclusttmp = len(np.unique(class_afc))
     # 1- NOUVELLE FIGURE POUR PROJECTIONS DE L'AFC
     fig = plt.figure(figsize=figsize);
     fignum = fig.number # numero de figure en cours ...
     plt.subplots_adjust(top=top, bottom=bottom, left=left, right=right)
     ax = plt.subplot(111) # un seul axe
     if Visu4Art :
-        obscolor = [ 0.90, 0.90, 0.90, 1.];
-        obsmarker = 'o'
         afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,
                  indname=indnames,
-                 linewidths=2.5,linewidthsobs=3,
+                 linewidths=linewidths,linewidthsobs=linewidthsobs,
                  ax=ax,article_style=True,
-                 marker='o',obsmarker=obsmarker,
-                 markersize=mdlmarkersize,
-                 obsmarkersize=obsmarkersize,
-                 edgecolor='k',edgeobscolor='k',obscolor=obscolor,
+                 marker=mdlmarker,markersize=mdlmarkersize,edgecolor='k',
+                 obsmarker=obsmarker,obsmarkersize=obsmarkersize,
+                 edgeobscolor='k',obscolor=obscolor,
                  edgeclasscolor='k',faceclasscolor='m',
                  horizalign='left',vertalign='center',
                  lblfontsize=lblfontsize,       lblprefix=lblprefix,
@@ -2532,38 +2534,84 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,
                  legendprefixlblobs=legendprefixlblobs,
                  );
         if not AFCWITHOBS : # Obs en supplémentaire
+            legendObsXstart = legendXstart
+            legendObsYstart = legendYstart - (nclusttmp + 1.2)*legendYstep
+            legendObsYstep  = legendYstep
+
             CPobs = F1sU
-            obsmarker = 'o'
-            ax.scatter(CPobs[:,pa-1],CPobs[:,po-1],s=obsmarkersize,marker=obsmarker,
-                edgecolors='k',facecolor=obscolor,linewidths=2.5)
-            Tno,Tpo = np.shape(CPobs);
-            for i in np.arange(Tno) :
-                ax.text(CPobs[i,pa-1],CPobs[i,po-1], ".Obs",
-                        position=(CPobs[i,pa-1] + xdeltapos,CPobs[i,po-1] + ydeltapos),
-                        color='k',
-                        fontsize=lblfontsize,
-                        horizontalalignment='left',
-                        verticalalignment='center')
+
+            obsnames = np.array([obsLbl],dtype='<U32')
+            afcnuage(CPobs,cpa=pa,cpb=po,Xcol=np.arange(len(CPobs)),
+                     indname=obsnames,
+                     linewidths=linewidthsobs,
+                     ax=ax,article_style=True,
+                     gridok=False,aximage=False,axtight=False,
+                     holdon=True,drawtriangref=False,
+                     faceclasscolor=obscolor,
+                     marker=obsmarker,markersize=obsmarkersize,edgecolor='k',
+                     horizalign='left',vertalign='center',
+                     lblfontsize=lblfontsizeobs,   lblprefix=lblprefixobs,
+                     xdeltapos=xdeltaposobs,       ydeltapos=ydeltaposobs,
+                     legendok=legendok,
+                     xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
+                     legendXstart=legendObsXstart,legendYstart=legendObsYstart,
+                     legendYstep=legendObsYstep,
+                     legendprefixlbl=legendprefixlblobs,
+                     );
+            #ax.scatter(CPobs[:,pa-1],CPobs[:,po-1],s=obsmarkersize,marker=obsmarker,
+            #    edgecolors='k',facecolor=obscolor,linewidths=linewidthsobs)
+            #Tno,Tpo = np.shape(CPobs);
+            #for i in np.arange(Tno) :
+            #    ax.text(CPobs[i,pa-1],CPobs[i,po-1], obsLbl,
+            #            position=(CPobs[i,pa-1] + xdeltapos,CPobs[i,po-1] + ydeltapos),
+            #            color='k',
+            #            fontsize=lblfontsize,
+            #            horizontalalignment='left',
+            #            verticalalignment='center')
         if xextraF1 is not None : # Donnees extras a projeter
-            CPobs = xextraF1
-            extramarker = 'X'
+            CPxextra = xextraF1
+            if xextramarker is None :
+                xextramarker = 'X'
             extrafillstyle = 'full'
-            extramarkersize = obsmarkersize
+            if xextramarker is None and obsmarkersize is not None:
+                xextramarkersize = obsmarkersize
             if xextraLbl is None:
-                xextraLbl = 'Extra'
-            if xextracolor is None:
-                xextracolor = [ 0.60, 0.60, 0.60, 1.];
-            ax.scatter(CPobs[:,pa-1],CPobs[:,po-1],s=extramarkersize,marker=extramarker,
-                       edgecolors='k',facecolor=xextracolor,linewidths=2.5)
-                       #fillstyle=extrafillstyle,
-            Tno,Tpo = np.shape(CPobs);
-            for i in np.arange(Tno) :
-                ax.text(CPobs[i,pa-1],CPobs[i,po-1], xextraLbl,
-                        position=(CPobs[i,pa-1] + xdeltapos,CPobs[i,po-1] + ydeltapos),
-                        color='k',
-                        fontsize=lblfontsize,
-                        horizontalalignment='left',
-                        verticalalignment='center')
+                xextraLbl = ' Extra'
+                
+            legendxextraXstart = legendXstart
+            legendxextraYstart = legendYstart - (nclusttmp + 2.2)*legendYstep
+            legendxextraYstep  = legendYstep
+
+            xextranames = np.array([xextraLbl],dtype='<U32')
+            afcnuage(CPxextra,cpa=pa,cpb=po,Xcol=np.arange(len(CPxextra)),
+                     indname=xextranames,
+                     linewidths=linewidthsxextra,
+                     ax=ax,article_style=True,
+                     gridok=False,aximage=False,axtight=False,
+                     holdon=True,drawtriangref=False,
+                     faceclasscolor=xextracolor,
+                     marker=xextramarker,markersize=xextramarkersize,edgecolor='k',
+                     horizalign='left',vertalign='center',
+                     lblfontsize=lblfontsizexextra, lblprefix=lblprefixxextra,
+                     xdeltapos=xdeltaposxextra,     ydeltapos=ydeltaposxextra,
+                     legendok=legendok,
+                     xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
+                     legendXstart=legendxextraXstart,legendYstart=legendxextraYstart,
+                     legendYstep=legendxextraYstep,
+                     legendprefixlbl=legendprefixlblxextra,
+                     );
+
+            #ax.scatter(CPobs[:,pa-1],CPobs[:,po-1],s=extramarkersize,marker=xextramarker,
+            #           edgecolors='k',facecolor=xextracolor,linewidths=linewidths)
+            #           #fillstyle=extrafillstyle,
+            #Tno,Tpo = np.shape(CPobs);
+            #for i in np.arange(Tno) :
+            #    ax.text(CPobs[i,pa-1],CPobs[i,po-1], xextraLbl,
+            #            position=(CPobs[i,pa-1] + xdeltapos,CPobs[i,po-1] + ydeltapos),
+            #            color='k',
+            #            fontsize=lblfontsize,
+            #            horizontalalignment='left',
+            #            verticalalignment='center')
 
             #ax.plot(F1sU[0,0],F1sU[0,1], 'o',
             #        markersize=obsmarkersize, 
@@ -2572,6 +2620,8 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,
             #        markeredgewidth=2.5);
 
         # 3- AJOUT ou pas des colonnes (i.e. des classes)
+        if AFCWITHOBS : # si AFCWITHOBS alors Obs deja dans legende
+            legendYstartcls -= legendYstep
         colnames = (np.arange(nb_class)+1).astype(str)
         afcnuage(F2V,cpa=pa,cpb=po,Xcol=np.arange(len(F2V)),
                  indname=colnames,
@@ -2580,7 +2630,7 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,
                  holdon=True,drawtriangref=False,
                  ax=ax,article_style=True,
                  drawaxes=True, axescolors=('k','k'),
-                 marker='s',
+                 marker=clsmarker,
                  markersize=clsmarkersize,
                  lblcolor='w',
                  lblfontsize=lblfontsizecls, lblprefix=lblprefixcls,

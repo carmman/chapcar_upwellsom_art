@@ -385,9 +385,15 @@ def ctloop_topol_map_traitement (Dobs,Parm_app=(5,5.,1.,10,1.,0.1),mapsize=[7, 3
         somtime = casetime
         #
         if SAVEMAP : # sauvegarde de la Map de SOM
-            ctloop.printwarning([ "==> Saving MAP in file :",
-                           "    {}/".format(os.path.dirname(mapPathAndFile)),
-                           "         {}".format(os.path.basename(mapPathAndFile)) ])
+            if  os.path.exists(mapPathAndFile):
+                ctloop.printwarning([ "==> Saving MAP, file exists, deleted before saving it :",
+                               "    {}/".format(os.path.dirname(mapPathAndFile)),
+                               "         {}".format(os.path.basename(mapPathAndFile)) ])
+                os.remove(mapPathAndFile)
+            else:
+                ctloop.printwarning([ "==> Saving MAP in file :",
+                               "    {}/".format(os.path.dirname(mapPathAndFile)),
+                               "         {}".format(os.path.basename(mapPathAndFile)) ])
             map_d ={ "map" : sMapO, "tseed" : tseed, "somtime" : somtime }
             map_f = open(mapPathAndFile, 'wb')
             pickle.dump(map_d, map_f)
@@ -1196,45 +1202,61 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
 def plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=None,
                   figdir=".",
                   figfile=None, dpi=None, figpdf=False,
-                  xextraF1=None,xextraLbl=None,xextracolor=None,
+                  mdlmarker='o',obsmarker='o',xextramarker='*',clsmarker='s',
+                  xextraF1=None,xextraLbl=" Extra",xextracolor=[ 1.0, 0.0, 0.0, 1.],
+                  obsLbl=" Obs",obscolor=[0.90, 0.90, 0.90, 1.],
                   ) :
     global SIZE_REDUCTION, AFCWITHOBS
     global FIGDPI, FIGEXT, Visu_UpwellArt
     #
     Nmdlafc = CRi.shape[0]
+    Nclustafc = len(np.unique(class_afc))
     dataystartend = datemdl2dateinreval(DATAMDL)
     ctloop.printwarning([ "    AFC: 2-D PROJECTION" ])
     #
     if Visu_UpwellArt :
-        lblfontsize=14;    mdlmarkersize=250;
-        lblfontsizeobs=16; obsmarkersize=320;
-        lblfontsizecls=16; clsmarkersize=280;
+        lblfontsize       = 14; mdlmarkersize    = 250;
+        lblfontsizeobs    = 16; obsmarkersize    = 250;
+        lblfontsizexextra = 16; xextramarkersize = 450;
+        lblfontsizecls    = 16; clsmarkersize    = 280;
         #
         if SIZE_REDUCTION == 'All' :
             zone_stitre = "Large"
-            figsize=(16,12)
-            top=0.93; bottom=0.05; left=0.05; right=0.95
-            xdeltapos      =0.025; ydeltapos     =-0.002; linewidths   =2.5
-            xdeltaposobs   =0.030; ydeltaposobs  =-0.003; linewidthsobs=3
-            xdeltaposcls   =0.001; ydeltaposcls  =-0.003; linewidthscls=2.5
-            xdeltaposlgnd  =0.03;  ydeltaposlgnd =-0.002
-            if Nmdlok == 47 :
-                legendXstart   = 0.975; legendYstart  =-0.53;   legendYstep  =0.058
+            figsize=(15,12)
+            top = 0.93; bottom = 0.05; left = 0.05; right = 0.95
+            xdeltapos       = 0.025; ydeltapos       =-0.002; linewidths       = 3
+            xdeltaposobs    = 0.030; ydeltaposobs    =-0.003; linewidthsobs    = 4
+            xdeltaposxextra = 0.030; ydeltaposxextra =-0.003; linewidthsxextra = 2
+            xdeltaposcls    = 0.001; ydeltaposcls    =-0.003; linewidthscls    = 3
+            xdeltaposlgnd   = 0.03;  ydeltaposlgnd   =-0.002
+            if AFCWITHOBS :
+                if Nmdlok == 47 :
+                    legendXstart = 0.935; legendYstart =-0.54; legendYstep = 0.058
+                else :
+                    legendXstart =-1.22;  legendYstart = 0.88; legendYstep = 0.06
             else :
-                legendXstart   =-1.22; legendYstart  =0.88;   legendYstep  =0.06
-            legendXstartcls=legendXstart;
-            legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
+                if Nmdlok == 47 :
+                    legendXstart =-1.02; legendYstart = 0.84; legendYstep = 0.058
+                else :
+                    legendXstart =-1.22;  legendYstart = 0.88; legendYstep = 0.06
+            legendXstartcls = legendXstart;
+            legendYstartcls = legendYstart - legendYstep * nb_clust
         elif SIZE_REDUCTION == 'sel' :
             zone_stitre = "Selected"
-            figsize=(16,12)
-            top=0.93; bottom=0.05; left=0.05; right=0.95
-            xdeltapos      =0.035; ydeltapos     =-0.002; linewidths   =2.5
-            xdeltaposobs   =0.040; ydeltaposobs  =-0.003; linewidthsobs=3
-            xdeltaposcls   =0.001; ydeltaposcls  =-0.005; linewidthscls=2.5
-            xdeltaposlgnd  =0.040; ydeltaposlgnd =-0.002
-            legendXstart   =-0.79; legendYstart  =-0.85;  legendYstep  =0.072
-            legendXstartcls=legendXstart;
-            legendYstartcls=legendYstart - legendYstep * (nb_clust + 1.2)
+            figsize=(15,12)
+            top = 0.93; bottom = 0.05; left = 0.05; right = 0.95
+            xdeltapos       = 0.035; ydeltapos       =-0.002; linewidths       = 3
+            xdeltaposobs    = 0.040; ydeltaposobs    =-0.003; linewidthsobs    = 4
+            xdeltaposxextra = 0.040; ydeltaposxextra =-0.003; linewidthsxextra = 2
+            xdeltaposcls    = 0.001; ydeltaposcls    =-0.005; linewidthscls    = 3
+            xdeltaposlgnd   = 0.040; ydeltaposlgnd   =-0.002
+            if AFCWITHOBS :
+                legendXstart    =-0.76;  legendYstart    =-0.77;  legendYstep      = 0.080
+            else :
+                legendXstart    =-0.76;  legendYstart    =-1.03;  legendYstep      = 0.080
+            legendXstartcls = legendXstart;
+            legendYstartcls = legendYstart - legendYstep * nb_clust
+                
         #
         if AFCWITHOBS :
             stitre = ("SST {:s} -on zone \"{:s}\"- A.F.C Mod+Obs -").format(fcodage,zone_stitre)
@@ -1250,21 +1272,29 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,indna
                     title=stitre,
                     Visu4Art=Visu_UpwellArt,
                     AFCWITHOBS = AFCWITHOBS,
-                    xextraF1=xextraF1,xextraLbl=xextraLbl,xextracolor=xextracolor,
+                    xextraF1=xextraF1,
+                    xextraLbl=xextraLbl,xextracolor=xextracolor,
+                    obsLbl=obsLbl, obscolor=obscolor,
                     figsize=figsize,
                     top=top, bottom=bottom, left=left, right=right,
-                    lblfontsize=lblfontsize,       mdlmarkersize=mdlmarkersize,
-                    lblfontsizeobs=lblfontsizeobs, obsmarkersize=obsmarkersize,
-                    lblfontsizecls=lblfontsizecls, clsmarkersize=clsmarkersize,
-                    xdeltapos=xdeltapos,           ydeltapos=ydeltapos,
-                    xdeltaposobs=xdeltaposobs,     ydeltaposobs=ydeltaposobs,
-                    xdeltaposcls=xdeltaposcls,     ydeltaposcls=ydeltaposcls,
-                    linewidths=linewidths, linewidthsobs=linewidthsobs, linewidthscls=linewidthscls,
+                    lblfontsize=lblfontsize,             mdlmarkersize=mdlmarkersize,
+                    xdeltapos=xdeltapos,                 ydeltapos=ydeltapos,
+                    linewidths=linewidths,               mdlmarker=mdlmarker,
+                    lblfontsizeobs=lblfontsizeobs,       obsmarkersize=obsmarkersize,
+                    xdeltaposobs=xdeltaposobs,           ydeltaposobs=ydeltaposobs,
+                    linewidthsobs=linewidthsobs,         obsmarker=obsmarker,
+                    lblfontsizexextra=lblfontsizexextra, xextramarkersize=xextramarkersize,
+                    xdeltaposxextra=xdeltaposxextra,     ydeltaposxextra=ydeltaposxextra,
+                    linewidthsxextra=linewidthsxextra,   xextramarker=xextramarker,
+                    lblfontsizecls=lblfontsizecls,       clsmarkersize=clsmarkersize,
+                    xdeltaposcls=xdeltaposcls,           ydeltaposcls=ydeltaposcls,
+                    linewidthscls=linewidthscls,         clsmarker=clsmarker,
                     legendok=True,
                     xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
                     legendXstart=legendXstart,legendYstart=legendYstart,legendYstep=legendYstep,
                     legendprefixlbl="AFC Cluster",
                     legendprefixlblobs="Observations",
+                    legendprefixlblxextra="Full Multi-Model",
                     legendokcls=True,
                     legendXstartcls=legendXstartcls,legendYstartcls=legendYstartcls,
                     legendprefixlblcls="CAH Classes",
@@ -1745,7 +1775,7 @@ def main(argv):
     verbose = False
     manualmode = True
     #
-    generalisation_ok = True
+    generalisation_ok = False
     #generalisation_ok = True
     generalisa_bestafc_clust_ok = True
     generalisa_bestcum_ok = True
@@ -1819,10 +1849,12 @@ def main(argv):
     #
     # -----------------------------------------------------------------------------
     # Repertoire principal des maps (les objets des SOM) et sous-repertoire por le cas en cours 
+    case_maps_dir = None
     if SAVEMAP :
         case_maps_dir = ctloop.do_check_and_create_dirname(MAPSDIR, subdir=case_label)
     # -------------------------------------------------------------------------
     # Repertoire principal des figures et sous-repertoire por le cas en cours 
+    case_figs_dir = None
     if SAVEFIG :
         case_figs_dir = ctloop.do_check_and_create_dirname(FIGSDIR, subdir=case_label)
     #
@@ -2302,16 +2334,20 @@ def main(argv):
     F1obs = ldef.do_afc_proj(TTperf4afc,Pobs_)
     # Perf du cumul des modeles
     PMAllCum = TTperf_Qm[-1,:].reshape((1,TTperf_Qm.shape[1]))
+    mdlmarker='o'; clsmarker='s'
     F1extra = ldef.do_afc_proj(TTperf4afc,PMAllCum)
-    Lblextra = 'FullMM{}'.format(Nmdlok)
-    Colorextra = [ 1.0, 0.8, 0.0, 1.]; # orange
+    Lblextra = "FMM{}".format(Nmdlok); xextramarker='*'; Colorextra = [ 1.0, 0.0, 0.0, 1.]; # orange
+    Lblobs="Obs"; obsmarker='D';  Colorobs = [0.80, 1.0, 0.0, 1.] # vert 
     if AFCWITHOBS :
         # si l'AFC est faite avec les OBS aussi
         plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
                       indnames=NoAFCindnames,
                       figdir=case_figs_dir,
                       figfile=figfile, dpi=dpi, figpdf=figpdf,
-                      xextraF1=F1extra,xextraLbl=Lblextra,xextracolor=Colorextra,
+                      xextraF1=F1extra,
+                      mdlmarker=mdlmarker,clsmarker=clsmarker,
+                      obsmarker=obsmarker,obsLbl=Lblobs,obscolor=Colorobs,
+                      xextramarker=xextramarker,xextraLbl=Lblextra,xextracolor=Colorextra,
                       )
     else :
         # si les OBS ne participent pas a l'AFC mais seulement projetés
@@ -2319,7 +2355,10 @@ def main(argv):
                       indnames=NoAFCindnames,
                       figdir=case_figs_dir,
                       figfile=figfile, dpi=dpi, figpdf=figpdf,
-                      xextraF1=F1extra,xextraLbl=Lblextra,xextracolor=Colorextra,
+                      xextraF1=F1extra,
+                      mdlmarker=mdlmarker,clsmarker=clsmarker,
+                      obsmarker=obsmarker,obsLbl=Lblobs,obscolor=Colorobs,
+                      xextramarker=xextramarker,xextraLbl=Lblextra,xextracolor=Colorextra,
                       )
     #
     if STOP_BEFORE_GENERAL :

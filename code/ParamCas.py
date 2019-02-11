@@ -19,8 +19,8 @@ SAVEFIG    = True;
 SAVEPDF    = True;
 #SAVEPDF    = False;
 # -----------------------------------------------------------------------------
-SAVEMAP    = True;
-#SAVEMAP    = False;
+#SAVEMAP    = True;
+SAVEMAP    = False;
 # -----------------------------------------------------------------------------
 REWRITEMAP = True;
 #REWRITEMAP = False;
@@ -318,9 +318,9 @@ TypePerf = ["MeanClassAccuracy","GlobalAccuracy"]; #,"SpearmanCorr","Index2Rand"
 #______________________________
 # AFC
 #NIJ ... DECLAREE CI-DESSUS
-AFCWITHOBS = True; #False True : afc avec ou sans les Obs ?
-#AFCWITHOBS = False; # <<<<<<<<<<<<<<  ##@@
-pa=1; po=2; # Choix du plan factoriel
+#AFCWITHOBS = True; # AFC avec ou sans les Obs ?
+AFCWITHOBS = False; # <<<<<<<<<<<<<<  ##@@
+pa=1; po=2; # Choix du plan factoriel (Axes de l'AFC utilises pour l'affichage)
 #pa=3; po=4; # Choix du plan factoriel
 #
 #______________________________
