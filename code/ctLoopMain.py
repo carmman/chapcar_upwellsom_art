@@ -21,6 +21,7 @@ import numpy as np
 import sys, getopt, os
 from   time  import time
 import matplotlib.pyplot as plt
+from   matplotlib import colors
 from   matplotlib import cm
 from   mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import pickle
@@ -33,6 +34,15 @@ import localdef     as ldef
 
 # PARAMETRAGE (#1) DU CAS
 from ParamCas import *
+
+#%%
+# Debugging: unable to see plots made with matplotlib ...
+# try this ...
+import matplotlib
+#matplotlib.use('Qt4Agg', warn=False)
+#matplotlib.use('Qt5Agg', warn=False)
+matplotlib.rcParams['figure.dpi'] = 66    # to avoid figure windows to be reduced in size because of a tiny screen
+matplotlib.rcParams['savefig.dpi'] = 180
 
 #%%
 def ctloop_init(case='None',verbose=False):
@@ -143,7 +153,22 @@ def ctloop_init(case='None',verbose=False):
         print(" *** unknown SIZE_REDUCTION <{}> ***".format(SIZE_REDUCTION))
         raise
     #--------------------------------------------------------------------------
-    pcmap = ctloop.build_pcmap(nb_class,ccmap)
+    #pcmap = ctloop.build_pcmap(nb_class,ccmap,factor=0.95)
+    pcmap = ctloop.build_pcmap(nb_class,ccmap,factor=1.0)
+    # si la colormap est 'jet' et 4 couleurs alors on la change la derniere
+    # couleur a du marron
+    if ccmap.name == 'jet' and pcmap.shape[0] == 4 :
+        print('** Changing manually the higher ({}-th) color of PCMAP palette\n   from [{}] ...', 
+              pcmap.shape[0],pcmap[3,0:3])
+        #pcmap[3,0] *= (88/127);
+        #pcmap[3,1] += pcmap[3,0]*(41/88);
+        #pcmap[3,0:3] = [x / 256. for x in [88, 41, 0]]; # marron
+        pcmap[3,0:3] = [x / 256. for x in [102, 51, 0]]; # plus proche couleur Web du marron[88, 41, 0]
+        #pcmap[3,0:3] = [x / 256. for x in [90, 58, 34]]; # chocolat
+        print('   to [{}]', pcmap[3,0:3])
+    #
+    cpcmap = colors.ListedColormap(pcmap)
+    #
     #--------------------------------------------------------------------------
     fcodage,fshortcode = ctloop.build_fcode_and_short(climato=climato, 
                                   INDSC=INDSC, TRENDLESS=TRENDLESS, WITHANO=WITHANO,
@@ -182,7 +207,7 @@ def ctloop_init(case='None',verbose=False):
     case_name_base,casetime,casetimelabel,casetimeTlabel,varnames,list_of_plot_colors,\
         tpgm0 = ctloop.initialisation(case_label_base,tseed=tseed)
     #
-    return  pcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
+    return  pcmap,cpcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
             TM_label_base, case_label_base, obs_data_path, \
             tseed, case_name_base, casetime, casetimelabel, casetimeTlabel, varnames,\
             list_of_plot_colors 
@@ -532,7 +557,7 @@ def plot_geo_classes(lon,lat,XC_ogeo,nb_class,
                      figsize=(9,6),
                      top=0.94, bottom=0.08, left=0.06, right=0.925,
                      ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
-                     cbticks_fontsize=12,cblabel_fontsize=14,
+                     cblabel='Class',cbticks_fontsize=12,cblabel_fontsize=14,
                      title_y=1.015,
                      notitle=False
                      ) :
@@ -573,7 +598,7 @@ def plot_geo_classes(lon,lat,XC_ogeo,nb_class,
     hcb = plt.colorbar(ims,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
     cax.set_yticklabels(coches);
     cax.tick_params(labelsize=cbticks_fontsize)
-    cax.set_ylabel('Class',size=cblabel_fontsize)
+    cax.set_ylabel(cblabel,size=cblabel_fontsize)
 
     #hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
     #hcb.set_ticklabels(coches);
@@ -601,9 +626,12 @@ def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
                               wspace=0.0, hspace=0.0, top=0.96, bottom=0.08, left=0.06, right=0.92,
                               linewidth=1,
                               ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
+                              lgtitle='Class',
                               lgticks_fontsize=12,lglabel_fontsize=14,
                               title_y=1.015,
                               notitle=False,
+                              errorcaps=False,
+                              capslength=3,
                               ) :
     #
     global SAVEFIG, FIGDPI, FIGEXT, FIGARTDPI, SAVEPDF, VFIGEXT, blockshow
@@ -621,9 +649,12 @@ def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
                                     linewidth=linewidth,
                                     ticks_fontsize=ticks_fontsize,labels_fontsize=labels_fontsize,
                                     title_fontsize=title_fontsize,
+                                    lgtitle=lgtitle,
                                     lgticks_fontsize=lgticks_fontsize,lglabel_fontsize=lglabel_fontsize,
                                     title_y=title_y,
                                     notitle=notitle,
+                                    errorcaps=errorcaps,
+                                    capslength=capslength,
                                     )
     if SAVEFIG : # sauvegarde de la figure
         if figfile is None :
@@ -631,6 +662,10 @@ def plot_mean_profil_by_class(sst_obs,nb_class,classe_Dobs,varnames=None,
         if dpi is None :
             dpi = FIGDPI
         figfile += "MeanByClass_{:d}Class{:s}".format(nb_class,fileext)
+        if getstd :
+            figfile += "_Errbar"
+            if errorcaps:
+                figfile += "-wCaps{}".format(capslength)
         #
         ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
     #
@@ -681,6 +716,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
                             pair_nsublc=None,
                             subtitle=None,
                             Sfiltre=None, eqcmap=cm.jet,ccmap=cm.jet,pcmap=None,
+                            cbticksz=8, cbtickszobs=8,
                             obs_data_path=".",
                             OK101=False,
                             OK102=False,
@@ -700,7 +736,10 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
     global fshortcode, fprefixe, fcodage, blockshow
     global SAVEFIG, FIGDPI, FIGEXT
     #
-    if OK105Art : OK105 = True;
+    if OK105Art :
+        OK105 = True;
+        cbticksz=12
+        cbtickszobs=14
     #
     ctloop.printwarning([ "","TRAITEMENTS DES DONNEES DES MODELES OCEANOGRAPHIQUES".center(75),""])
     print(" OK101: {}, OK102: {}, OK104: {}, OK105: {}, OK106: {}, OK107: {}, OK108: {}, OK109: {}".format(OK101, OK102, OK104, OK105, OK106, OK107, OK108, OK109))
@@ -841,7 +880,7 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
         figsize=(18,11);
         wspace=0.01; hspace=0.15; top=0.94; bottom=0.05; left=0.01; right=0.99;
     elif SIZE_REDUCTION == 'sel' :
-        figsize=(18,12);
+        figsize=(16,12);
         wspace=0.01; hspace=0.14; top=0.94; bottom=0.04; left=0.01; right=0.99;
     #
     if pair_nsublc is None :
@@ -887,12 +926,14 @@ def ctloop_model_traitement(sst_obs,Dobs,XC_Ogeo,sMapO,lon,lat,ilat,ilon,
                                 isnumobs,nb_class,class_ref,classe_Dobs,fond_C,
                                 ccmap=ccmap,pcmap=pcmap,sztitle=sztitle,ysstitre=ysstitre,
                                 ysuptitre=ysuptitre,suptitlefs=suptitlefs,
+                                cbticksz=cbticksz, cbtickszobs=cbticksz, 
                                 NIJ=NIJ,
                                 pair_nsublc=pair_nsublc,
                                 FONDTRANS=FONDTRANS,
                                 TypePerf=TypePerf,
                                 mdlnamewnumber_ok=mdlnamewnumber_ok,
                                 OK104=OK104, OK105=OK105, OK106=OK106, OK107=OK107, OK108=OK108, OK109=OK109,
+                                OK105Art=OK105Art,
                                 figsize=figsize,
                                 wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right,
                                 suptitle104=suptitle104,  suptitle105=suptitle105,
@@ -1154,7 +1195,7 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
                       ylabel="AFC inter cluster distance ({}/{})".format(method_afc,dist_afc),
                       title=stitre,
                       titlefnsize=18, ytitle=1.02, labelfnsize=12,
-                      labelrotation=90, labelsize=labelsize,
+                      labelrotation=-90, labelsize=labelsize,
                       axeshiftfactor=axeshiftfactor,
                       figsize=figsize,
                       wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right
@@ -1294,7 +1335,7 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,indna
                     legendXstart=legendXstart,legendYstart=legendYstart,legendYstep=legendYstep,
                     legendprefixlbl="AFC Cluster",
                     legendprefixlblobs="Observations",
-                    legendprefixlblxextra="Full Multi-Model",
+                    legendprefixlblxextra="Model-all",
                     legendokcls=True,
                     legendXstartcls=legendXstartcls,legendYstartcls=legendYstartcls,
                     legendprefixlblcls="CAH Classes",
@@ -1337,6 +1378,7 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
                           figfile1=None, figfile2=None, figfileext1="", figfileext2="", dpi=None, figpdf=False,
                           wvmin=None,wvmax=None,
                           eqcmap=None,
+                          ccmap="jet",
                           plotmeanmodel=True,
                           ) :
     #
@@ -1404,6 +1446,7 @@ def ctloop_generalisation(sMapO, lon, lat, TMixtMdl, TMixtMdlLabel, TDmdl4CT, Tm
                                                cbticklabelsize=16,cblabelsize=18,
                                                ytitre=1.015, nticks=nticks,
                                                visu=True,
+                                               ccmap=ccmap,
                                                );
         #
         if len(IMixtMdl) != 0 :
@@ -1826,11 +1869,11 @@ def main(argv):
     #
     #%% DECOMPRESSER / COMPRESSER la ligne suivante selon si executione MANUELLE UN A UN des bloques du MAIN ou complete avec appel externe ... 
     if manualmode :
-        #caseconfig='sel' # 'all' ou 'sel'
-        caseconfig='all' # 'all' ou 'sel'
+        caseconfig='sel' # 'all' ou 'sel'
+        #caseconfig='all' # 'all' ou 'sel'
     #
     print("Case config is '{:s}'".format(caseconfig))
-    pcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
+    pcmap,cpcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
         TM_label_base, case_label_base, obs_data_path, \
         tseed, case_name_base, casetime, casetimelabel, casetimeTlabel, varnames,\
         list_of_plot_colors  =  ctloop_init(case=caseconfig,verbose=verbose)
@@ -1988,16 +2031,27 @@ def main(argv):
             dpi     = FIGDPI
             figpdf  = False
             notitle = False
+        #
+        if Visu_UpwellArt :
+            if SIZE_REDUCTION == 'All' :
+                cb_label = 'Region cluster';
+            elif SIZE_REDUCTION == 'sel' :
+                cb_label = 'ZRegion cluster';
+            else:
+                cb_label = 'Region cluster';
+        else:
+            cb_label = 'Class';
 
         plot_geo_classes(lon,lat,XC_Ogeo,nb_class,
                          nticks=nticks,
                          title=stitre,
                          fileext=fileextbis, figdir=case_figs_dir,
                          figfile=figfile, dpi=dpi, figpdf=figpdf,
-                         ccmap=ccmap,
+                         ccmap=cpcmap,
                          figsize=figsize,
                          top=top, bottom=bottom, left=left, right=right,
                          ticks_fontsize=14,labels_fontsize=14,title_fontsize=18,
+                         cblabel=cb_label,
                          cbticks_fontsize=16,cblabel_fontsize=18,
                          title_y=1.015,
                          notitle=notitle,
@@ -2017,10 +2071,23 @@ def main(argv):
         if Visu_UpwellArt :
             if SIZE_REDUCTION == 'All' :
                 nFigArt = 2;
+                lgtitle = 'Region-\n cluster'
+                lglabel_fontsize = 16
+                errorcaps  = True
+                capslength = 3
             elif SIZE_REDUCTION == 'sel' :
                 nFigArt = 6;
+                lgtitle = 'ZRg-clst'
+                lgtitle = 'ZRegion-\n cluster'
+                lglabel_fontsize = 16
+                errorcaps  = True
+                capslength = 3
             else:
                 nFigArt = 99;
+                lgtitle = 'Region-\n cluster'
+                lglabel_fontsize = 16
+                errorcaps  = True
+                capslength = 3
             FigArtId = 'b';
             figfile = "FigArt{:02d}{:s}_".format(nFigArt,FigArtId);
             dpi     = FIGARTDPI
@@ -2032,7 +2099,11 @@ def main(argv):
             dpi     = FIGDPI
             figpdf  = False
             notitle = False
-
+            lgtitle = 'Class'
+            lglabel_fontsize=16
+            errorcaps  = False
+            capslength = 3
+        #
         plot_mean_profil_by_class(sst_obs_coded,nb_class,classe_Dobs,varnames=varnames,
                                   title=stitre,
                                   fileext=fileextbis, figdir=case_figs_dir,
@@ -2043,9 +2114,12 @@ def main(argv):
                                   top=top, bottom=bottom, left=left, right=right,
                                   linewidth=2.5,
                                   ticks_fontsize=14,labels_fontsize=14,title_fontsize=18,
-                                  lgticks_fontsize=14,lglabel_fontsize=16,
+                                  lgtitle=lgtitle,
+                                  lgticks_fontsize=14,lglabel_fontsize=lglabel_fontsize,
                                   title_y=1.015,
                                   notitle=notitle,
+                                  errorcaps=errorcaps,
+                                  capslength=capslength,
                                   )
     #
     #%% -----------------------------------------------------------------------
@@ -2106,7 +2180,7 @@ def main(argv):
                     data_period_ident=DATAMDL,
                     varnames=varnames, figdir=case_figs_dir,
                     commonfileext=fileextIV, commonfileext79=fileextIV79,
-                    eqcmap=eqcmap, ccmap=ccmap,pcmap=pcmap,
+                    eqcmap=eqcmap, ccmap=cpcmap,pcmap=pcmap,
                     obs_data_path=obs_data_path,
                     OK101=OK101,
                     OK102=OK102,
@@ -2191,13 +2265,14 @@ def main(argv):
         clustfigsize=(13,6)
     elif SIZE_REDUCTION == 'sel' :
         clustfigsublc=(2,4)
-        clustfigsize=(13,6)
+        clustfigsize=(15,7)
     else:
         clustfigsublc=(2,3)
         clustfigsize=(10,5)
     #
-    plotmodgen = True
     plotobs = True
+    plotmodall = True
+    plotbestmodXZinRZ = True
     #
     VAPT, F1U, F1sU, F2V, CRi, CAj, TTperf4afc,\
         CAHindnames, CAHindnameswnb, NoCAHindnames,\
@@ -2209,18 +2284,30 @@ def main(argv):
                            TTperf, Nmdlok, Lobs, Cobs, NDmdl, Nobsc, data_label_base,
                            AFC_Visu_Classif_Mdl_Clust=AFC_Visu_Classif_Mdl_Clust,
                            AFC_Visu_Clust_Mdl_Moy_4CT=AFC_Visu_Clust_Mdl_Moy_4CT,
-                           ccmap=ccmap,
+                           sztitle=6,
+                           ccmap=cpcmap,
                            figdir=case_figs_dir,
                            figfile=figfile, dpi=dpi, figpdf=figpdf,
                            clustfigsublc=clustfigsublc, clustfigsize=clustfigsize,
                            notitle=notitle,
                            )
-    
-    if plotmodgen : # Obs --------
+        
+    if plotmodall : # Model-all --------
         Nmdlafc = Tmdlname.shape[0]
         dataystartend = datemdl2dateinreval(DATAMDL)
 
-        TMixtMdlLabel = 'Mod Cum.'
+        if Visu_UpwellArt :
+            #TMixtMdlLabel = '47multi-model'
+            if SIZE_REDUCTION == 'All' :
+                TMixtMdlLabel = 'Model-all'
+            elif SIZE_REDUCTION == 'sel' :
+                TMixtMdlLabel = 'ZModel-all'
+            else:
+                TMixtMdlLabel = 'Model-all'
+            titlefnsz = 14
+        else:
+            TMixtMdlLabel = 'Mod Cum.'
+            titlefnsz = 12
         #print("misttitlelabel AVANT> {}".format(misttitlelabel))
         #mistfilelabel = misttitlelabel.replace(' ','').replace(':','-').replace('(','_').replace(')','')
         #print("mistfilelabel APRES>  {}".format(mistfilelabel))
@@ -2236,11 +2323,12 @@ def main(argv):
                                                TypePerf=TypePerf,
                                                label=TMixtMdlLabel, shorttitle=True,
                                                fignum=fignum,ax=ax,
-                                               title_fontsize=12, ytitre=1.00, nticks=nticks,
+                                               title_fontsize=titlefnsz, ytitre=1.00, nticks=nticks,
                                                tickfontsize=10,
-                                               cbticklabelsize=10,cblabelsize=8,
+                                               cbticklabelsize=12,cblabelsize=12,
                                                show_xylabels=False,
-                                               visu=True);
+                                               visu=True,
+                                               ccmap=cpcmap);
 
     if plotobs : # Obs --------
         nbsubl,nbsubc=clustfigsublc; isubplot = nbsubl * nbsubc
@@ -2254,8 +2342,17 @@ def main(argv):
         plt.figure(figclustmoynum);
         ax = plt.subplot(nbsubl,nbsubc,isubplot);
         ax.imshow(fond_C, interpolation=None,cmap=cm.gray,vmin=0,vmax=1)
-        ims = ax.imshow(XC_Ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
-        ax.set_title("Obs, %d classes "%(nb_class),fontsize=12);
+        ims = ax.imshow(XC_Ogeo, interpolation=None,cmap=cpcmap,vmin=1,vmax=nb_class);
+        if Visu_UpwellArt :
+            if SIZE_REDUCTION == 'All' :
+                cluster_tlabel = 'region-clusters';
+            elif SIZE_REDUCTION == 'sel' :
+                cluster_tlabel = 'ZRegion-clusters';
+            else:
+                cluster_tlabel = 'region-clusters';
+            ax.set_title("Obs, %d %s"%(nb_class,cluster_tlabel),fontsize=14);
+        else:
+            ax.set_title("Obs, %d classes "%(nb_class),fontsize=12);
         if 0 :
             plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
             plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
@@ -2270,8 +2367,18 @@ def main(argv):
         else :
             hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
-        hcb.ax.tick_params(labelsize=10)
-        hcb.set_label('Class',size=10)
+        hcb.ax.tick_params(labelsize=12)
+        if Visu_UpwellArt :
+            if SIZE_REDUCTION == 'All' :
+                cluster_label = 'Region cluster';
+            elif SIZE_REDUCTION == 'sel' :
+                cluster_label = 'ZRegion cluster';
+            else:
+                cluster_label = 'Region cluster';
+
+            hcb.set_label(cluster_label,size=12)
+        else:
+            hcb.set_label('Class',size=10)
         #grid(); # for easier check
 
     #print("--CAHindnames: {}".format(CAHindnames))
@@ -2293,6 +2400,54 @@ def main(argv):
                     nb_class,fprefixe,fshortcode,dataystartend,Nmdlafc)
         #
         ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,figpdf=figpdf)
+    #
+    # Adds the results for best model in eXtended Zone, for comparison
+    if plotbestmodXZinRZ and SIZE_REDUCTION == 'sel' : # plot in Petite-zone the Best model BigZone --------
+        XZBestModName =  'CMCC-CM'
+        iBMXZ = np.where(XZBestModName == Tmdlname)[0]
+        BMXZTmdlname = Tmdlname[iBMXZ]
+        BMXZTDmdl4CT = TDmdl4CT[iBMXZ,:]
+
+        if Visu_UpwellArt :
+            #TMixtMdlLabel = '47multi-model'
+            TMixtMdlLabel = 'Best-mod.ext.reg.'
+            titlefnsz = 14
+        else:
+            TMixtMdlLabel = 'Mod Cum.'
+            titlefnsz = 12
+        #print("misttitlelabel AVANT> {}".format(misttitlelabel))
+        #mistfilelabel = misttitlelabel.replace(' ','').replace(':','-').replace('(','_').replace(')','')
+        #print("mistfilelabel APRES>  {}".format(mistfilelabel))
+        #
+        nbsubl,nbsubc=clustfigsublc; isubplot = nbsubl * nbsubc - 2
+        plt.figure(figclustmoynum);
+        ax = plt.subplot(nbsubl,nbsubc,isubplot);
+        print("\n{:d}-model(s)' generalization: {} ".format(len(BMXZTmdlname),BMXZTmdlname))
+        MdlMoy, IMixtMdl, MGPerfglob, XMgeo, \
+            Tperf = ctloop.mixtgeneralisation (sMapO, BMXZTmdlname, BMXZTmdlname, BMXZTDmdl4CT, 
+                                               class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
+                                               lon=lon, lat=lat,
+                                               TypePerf=TypePerf,
+                                               label=TMixtMdlLabel, shorttitle=True,
+                                               fignum=fignum,ax=ax,
+                                               title_fontsize=titlefnsz, ytitre=1.00, nticks=nticks,
+                                               tickfontsize=10,
+                                               cbticklabelsize=12,cblabelsize=12,
+                                               show_xylabels=False,
+                                               visu=True,
+                                               ccmap=cpcmap);
+        #
+        if SAVEFIG : # sauvegarde de la figure
+            plt.figure(figclustmoynum)
+            #if figfile is None :
+            #    figfile = "Fig_"
+            #if dpi is None :
+            #    dpi = FIGDPI
+            #figfile += "AFCClustersPerf-{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:s}_{:d}-mod_andBMXZ".format(nb_clust,
+            #            nb_class,fprefixe,fshortcode,dataystartend,Nmdlafc)
+            #
+            figfile += "_andBMXZ"
+            ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,figpdf=figpdf)
     #
     #
     #%%
@@ -2336,7 +2491,8 @@ def main(argv):
     PMAllCum = TTperf_Qm[-1,:].reshape((1,TTperf_Qm.shape[1]))
     mdlmarker='o'; clsmarker='s'
     F1extra = ldef.do_afc_proj(TTperf4afc,PMAllCum)
-    Lblextra = "FMM{}".format(Nmdlok); xextramarker='*'; Colorextra = [ 1.0, 0.0, 0.0, 1.]; # orange
+    #Lblextra = "FMM{}".format(Nmdlok); xextramarker='*'; Colorextra = [ 1.0, 0.0, 0.0, 1.]; # orange
+    Lblextra = "Model-all"; xextramarker='*'; Colorextra = [ 1.0, 0.0, 0.0, 1.]; # orange
     Lblobs="Obs"; obsmarker='D';  Colorobs = [0.80, 1.0, 0.0, 1.] # vert 
     if AFCWITHOBS :
         # si l'AFC est faite avec les OBS aussi

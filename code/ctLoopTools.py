@@ -605,16 +605,17 @@ def clearall():
         print(var)
         del globals()[var]
 #
-def build_pcmap(nb_class,ccmap=None,factor=0.95,N=320) :
+def build_pcmap(nb_class,ccmap=None,factor=0.95,N=255) :
     if ccmap is None :
         ccmap = cm.jet
-    pcmap = ccmap(np.arange(0,N,round(N/nb_class))); #ok?
+    #pcmap = ccmap(np.arange(0,N,round(N/nb_class))); #ok?
+    pcmap = ccmap(np.linspace(0,N,nb_class,dtype='int16'));
     pcmap *= factor # fonce les legerement tous les couleurs ...
     # Cas particuliers:
     # si ccmap = jet et si nb_class = 4 ALORS
-    #     fonce la couleur de la troisieme classe car elle est trop claire
+    #    fonce legerement la couleur jaune de la troisieme classe car elle est trop claire
     if ccmap.name == 'jet' and nb_class == 4:
-        pcmap[2] *= 0.9
+        pcmap[2] *= 0.95
     #
     return pcmap
 #
@@ -681,6 +682,7 @@ def initialisation(case_label_base,tseed=0):
     elif 0: # Francais
         import locale
         loc0 = locale.getlocale(locale.LC_ALL)
+        print('--locale.LC_ALL(Francais): {}'.format(loc0))
         locale.setlocale(locale.LC_ALL,'fr_FR.ISO8859-1')
         #locale.setlocale(locale.LC_ALL,'fr_FR.UTF-8')
         # retourne les noms des mois en Francais (en trois lettres) et en Majuscules
@@ -689,10 +691,12 @@ def initialisation(case_label_base,tseed=0):
     elif 1: # Anglais
         import locale
         loc0 = locale.getlocale(locale.LC_ALL)
+        print('--locale.LC_ALL(Anglais): {}'.format(loc0))
         locale.setlocale(locale.LC_ALL,'en_US.UTF-8')
         # retourne les noms des mois en Anglais (en trois lettres) et en Majuscules
         varnames = [ datetime(2000, m+1, 1, 0, 0).strftime("%b").upper() for m in np.arange(12) ]
         locale.setlocale(locale.LC_ALL, loc0); # restore saved locale
+    print('--varnames ... {}'.format(varnames))
     #
     #######################################################################
     #
@@ -1141,9 +1145,12 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
                              wspace=0.0, hspace=0.0, top=0.96, bottom=0.08, left=0.06, right=0.92,
                              linewidth=1,
                              ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
+                             lgtitle='Class',
                              lgticks_fontsize=12,lglabel_fontsize=14,
                              title_y=1.015,
                              notitle=False,
+                             errorcaps=False,
+                             capslength=3
                              ):
     from matplotlib.font_manager import FontProperties
     #
@@ -1172,8 +1179,13 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
     x = np.arange(nx)
     for i in np.arange(nb_class) :
         if getstd : # plot Moyenne st EcartType en barres
-            plt.errorbar(x,TmoymensclassObs[:,i],yerr=TecamensclassObs[:,i],fmt='.-',
-                         color=pcmap[i],linewidth=linewidth);
+            if errorcaps:
+                plt.errorbar(x,TmoymensclassObs[:,i],yerr=TecamensclassObs[:,i],fmt='.-',
+                             color=pcmap[i], linewidth=linewidth, zorder=i, 
+                             capsize=capslength, capthick=linewidth);
+            else:
+                plt.errorbar(x,TmoymensclassObs[:,i],yerr=TecamensclassObs[:,i],fmt='.-',
+                             color=pcmap[i],linewidth=linewidth, zorder=i);
         else : # plot  uniquement la Moyenne
             plt.plot(x,TmoymensclassObs[:,i],'.-',color=pcmap[i],linewidth=linewidth);
     plt.grid(axis='y')
@@ -1190,7 +1202,7 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
     fontP = FontProperties()
     fontP.set_size(lglabel_fontsize)
     legax=plt.legend(np.arange(nb_class)+1,loc=2,fontsize=lgticks_fontsize);
-    legax.set_title('Class',prop=fontP)
+    legax.set_title(lgtitle,prop=fontP)
     plt.axhline(color='k',linewidth=1)
     if not notitle :
         plt.title(title,fontsize=title_fontsize,y=title_y); #,fontweigth='bold');
@@ -1692,6 +1704,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                           MCUM,Lobs,Cobs,NDobs,NDmdl,
                           isnumobs,nb_class,class_ref,classe_Dobs,fond_C,
                           ccmap='jet',pcmap=None,sztitle=10,ysstitre=0.98,
+                          cbticksz=8, cbtickszobs=8, 
                           ysuptitre=14,suptitlefs=0.98,
                           NIJ=0,
                           FONDTRANS="Obs",
@@ -1701,6 +1714,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                           figsize=(7.5,12),
                           wspace=0.01, hspace=0.05, top=0.95, bottom=0.04, left=0.15, right=0.86,
                           OK104=False, OK105=False, OK106=False, OK107=False, OK108=False, OK109=False,
+                          OK105Art=False,
                           suptitle104='fig104',
                           suptitle105='fig105',
                           suptitle106='fig106',
@@ -1870,7 +1884,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
             plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob,'%'),fontsize=sztitle,y=ysstitre); 
             hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
             hcb.set_ticklabels(Tperf);
-            hcb.ax.tick_params(labelsize=8)
+            hcb.ax.tick_params(labelsize=cbticksz)
             #
         if OK105 : # Classification (pour les modèles les Perf par classe sont en colorbar)
             plt.figure(105); plt.subplot(nbsubl,nbsubc,isubplot);
@@ -1878,7 +1892,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
             plt.imshow(XC_mgeo, interpolation=None,cmap=ccmap, vmin=1,vmax=nb_class);
             hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
             hcb.set_ticklabels(Tperf);
-            hcb.ax.tick_params(labelsize=8);
+            hcb.ax.tick_params(labelsize=cbticksz);
             plt.axis('off');
             #grid(); # for easier check
             plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob,'%'),fontsize=sztitle,y=ysstitre);
@@ -1921,7 +1935,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
             plt.imshow(XC_mgeo_Qm, interpolation=None,cmap=ccmap, vmin=1,vmax=nb_class);
             hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
             hcb.set_ticklabels(Tperf_Qm);
-            hcb.ax.tick_params(labelsize=8);
+            hcb.ax.tick_params(labelsize=cbticksz);
             plt.axis('off');
             #grid(); # for easier check
             plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob_Qm,'%'),fontsize=sztitle,y=ysstitre);
@@ -1952,7 +1966,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
         plt.imshow(XC_ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
         hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
-        hcb.ax.tick_params(labelsize=8)
+        hcb.ax.tick_params(labelsize=cbtickszobs)
         plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle,y=ysstitre);
         if 0 :
             plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
@@ -1968,8 +1982,11 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
         plt.imshow(XC_ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
         hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
-        hcb.ax.tick_params(labelsize=8)
-        plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle,y=ysstitre);
+        hcb.ax.tick_params(labelsize=cbtickszobs)
+        if OK105Art :
+            plt.title("Obs, %d region-clusters "%(nb_class),fontsize=sztitle+2,y=ysstitre);
+        else:
+            plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle,y=ysstitre);
         if 0 :
             plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
             plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
@@ -2033,7 +2050,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
         plt.imshow(XC_ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
         hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
-        hcb.ax.tick_params(labelsize=8)
+        hcb.ax.tick_params(labelsize=cbtickszobs)
         plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle,y=ysstitre);
         if 0 :
             plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
@@ -2383,10 +2400,19 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
                                                      LObs,CObs,isnumObs,TypePerf[0],
                                                      ccmap=ccmap,
                                                      ax = ax,
-                                                     cblabel="performance [%]",cblabelsize=8,
-                                                     cbticklabelsize=10,nticks=nticks);
-                    plt.title("Cluster %d (%d mod.), mean perf=%.0f%c"%(ii+1,len(iclust),
-                                               100*Perfglob_,'%'),fontsize=12);
+                                                     cblabel="performance [%]",cblabelsize=12,
+                                                     cbticklabelsize=12,nticks=nticks);
+                    if SIZE_REDUCTION == 'All' :
+                        tmpsubtitle = "Model-group"
+                    elif SIZE_REDUCTION == 'sel' :
+                        tmpsubtitle = "ZModel-group"
+                    else:
+                        tmpsubtitle = "Model-group"
+                    #plt.title("Cluster %d (%d mod.), mean perf=%.0f%c"%(ii+1,len(iclust),
+                    #plt.title("Model-group %d (%d mod.), mean perf=%.0f%c"%(ii+1,len(iclust),
+                    #                           100*Perfglob_,'%'),fontsize=12);
+                    plt.title("{:s} {:d} ({:.0f}%)".format(tmpsubtitle,ii+1,100*Perfglob_),
+                              fontsize=14);
                 #
                 if MultiLevel :
                     if Perfglob_ > bestglob_ :
@@ -2814,6 +2840,7 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
                         class_ref, classe_Dobs, nb_class, Lobs, Cobs, isnumobs,
                         lon=None, lat=None,
                         TypePerf = ["MeanClassAccuracy"],
+                        ccmap="jet",
                         label=None, cblabel=None, fignum=None, ax=None,
                         nticks=1,
                         ytitre=0.98, title_fontsize=14,labels_fontsize=12,
@@ -2926,6 +2953,7 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
                                                   classe_Dobs,nb_class,LObs,CObs,
                                                   isnumObs,TypePerf[0],
                                                   cblabel="performance [%]",
+                                                  ccmap=ccmap,
                                                   ax=ax,nticks=nticks,tickfontsize=tickfontsize,
                                                   cbticklabelsize=cbticklabelsize,
                                                   cblabelsize=cblabelsize,
@@ -2941,10 +2969,11 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
                 titre = "MdlMoy ({} models: {})".format(len(Tmdlname[IMixtMdl]),Tmdlname[IMixtMdl])
         else :
             if shorttitle:
-                titre = "{} ({} mod.)".format(label,len(Tmdlname[IMixtMdl]))
+                titre = "{}".format(label)
             else:
                 titre = "{} ({} models)".format(label,len(Tmdlname[IMixtMdl]))
-        titre += ", mean perf={:.0f}%".format(100*Perfglob_)
+        #titre += ", mean perf={:.0f}%".format(100*Perfglob_)
+        titre += " ({:.0f}%)".format(100*Perfglob_)
         #
         plt.title(titre,fontsize=title_fontsize,y=ytitre);
     #tls.klavier();

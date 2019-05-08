@@ -1,0 +1,10 @@
+# #######################################
+# Repertoires a exclure des soumissions:
+Datas
+Docs
+figs
+FigArt
+maps
+docs_python
+trieddoc
+
