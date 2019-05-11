@@ -309,6 +309,8 @@ eqcmap = cm.get_cmap('RdYlBu_r')  # Palette RdYlBu inversée
 #eqcmap = cm.RdYlGn
 #eqcmap = cm.Spectral
 #eqcmap = cm.BrBG
+grcmap = cm.gray
+bggray = 0.66; #  background grey (in a scale from 0 to 1)
 #______________________________
 # Calcul de la performance globale
 #kperf = 1; # 1     : # Les bien classés / effectif total sans distinction de classe

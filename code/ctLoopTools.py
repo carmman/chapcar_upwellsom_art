@@ -387,6 +387,7 @@ def afcnuage (CP,cpa,cpb,Xcol,
 #----------------------------------------------------------------------
 def Dgeoclassif(sMap,Data,lon,lat,class_ref,classe_Dobs,nb_class,L,C,isnum,MajorPerf,
                 ccmap="jet", visu=True,
+                bgmap='gray',bgval=0.5,
                 tickfontsize=10,
                 cblabel=None,cblabelsize=10,cbticklabelsize=8,
                 old=False,
@@ -409,7 +410,9 @@ def Dgeoclassif(sMap,Data,lon,lat,class_ref,classe_Dobs,nb_class,L,C,isnum,Major
     bounds = np.arange(nb_class+1)+1; # pour bounds faut une frontière de plus [1, 2, 3, 4, 5, 6, 7]
     #
     bmus_   = ctk.mbmus (sMap,Data); 
-    classe_ = class_ref[bmus_].reshape(len(bmus_));   
+    classe_ = class_ref[bmus_].reshape(len(bmus_));
+    fond_C = np.ones(len(classe_Dobs))
+    fond_C = ctobs.dto2d(fond_C,L,C,isnum,missval=bgval)
     X_Mgeo_ = ctobs.dto2d(classe_,L,C,isnum); # Classification géographique
     #plt.figure(); géré par l'appelant car ce peut être une fig déjà définie
     #et en subplot ... ou pas ...
@@ -419,6 +422,7 @@ def Dgeoclassif(sMap,Data,lon,lat,class_ref,classe_Dobs,nb_class,L,C,isnum,Major
     if visu :
         if ax is None :
             ax = plt.gca() # current axes
+        ax.imshow(fond_C, interpolation=None,cmap=bgmap,vmin=0,vmax=1)
         ims = ax.imshow(X_Mgeo_, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
         Tperf_ = np.round([iperf*100 for iperf in Tperf_]).astype(int); #print(Tperf_)   
         # colorbar
@@ -1144,19 +1148,24 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
                              figsize=(12,6),
                              wspace=0.0, hspace=0.0, top=0.96, bottom=0.08, left=0.06, right=0.92,
                              linewidth=1,
-                             ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,
+                             ticks_fontsize=10,labels_fontsize=12,title_fontsize=16,ylabel_fontsize=None,
                              lgtitle='Class',
                              lgticks_fontsize=12,lglabel_fontsize=14,
                              title_y=1.015,
                              notitle=False,
                              errorcaps=False,
-                             capslength=3
+                             capslength=3,
+                             plot_back_black=False,
+                             back_black_color=[0.25, 0.25, 0.25, 1],
+                             back_black_diffsize=0.75,
                              ):
     from matplotlib.font_manager import FontProperties
     #
     if isnumobs is None :
         isnumobs = np.where(~np.isnan(sst_obs[0].reshape(np.prod(np.shape(sst_obs)[1:]))))[0];
     #
+    if ylabel_fontsize is None:
+        ylabel_fontsize = labels_fontsize
     if pcmap is None :
         tmpcmap = cm.jet;       # Accent, Set1, Set1_r, gist_ncar; jet, ...
         # pour avoir des couleurs à peu près equivalente pour les plots
@@ -1177,35 +1186,79 @@ def plot_mean_curve_by_class(sst_obs,nb_class,classe_Dobs,isnumobs=None,varnames
     #plt.plot(TmoymensclassObs); plt.axis('tight');
     nx = TmoymensclassObs.shape[0]
     x = np.arange(nx)
+    ax= plt.gca()
+    regionlabels = [np.str(n) for n in np.arange(nb_class)+1]
     for i in np.arange(nb_class) :
         if getstd : # plot Moyenne st EcartType en barres
             if errorcaps:
-                plt.errorbar(x,TmoymensclassObs[:,i],yerr=TecamensclassObs[:,i],fmt='.-',
-                             color=pcmap[i], linewidth=linewidth, zorder=i, 
-                             capsize=capslength, capthick=linewidth);
+                if plot_back_black:
+                    # trace les barres d'erreur en couleurs de fond
+                    ax.errorbar(x,TmoymensclassObs[:,i],yerr=TecamensclassObs[:,i],fmt='.-',
+                                color=back_black_color, linewidth=linewidth+back_black_diffsize, zorder=i, 
+                                capsize=capslength, capthick=linewidth+back_black_diffsize,
+                            label=regionlabels[i]);
+                # trace les barres d'erreur principale
+                ax.errorbar(x,TmoymensclassObs[:,i],yerr=TecamensclassObs[:,i],fmt='.-',
+                            color=pcmap[i], linewidth=linewidth, zorder=i, 
+                            capsize=capslength, capthick=linewidth,
+                            label=regionlabels[i]);
             else:
-                plt.errorbar(x,TmoymensclassObs[:,i],yerr=TecamensclassObs[:,i],fmt='.-',
-                             color=pcmap[i],linewidth=linewidth, zorder=i);
+                if plot_back_black:
+                    # trace les barres d'erreur en couleurs de fond
+                    ax.errorbar(x,TmoymensclassObs[:,i],yerr=TecamensclassObs[:,i],fmt='.-',
+                                color=back_black_color,linewidth=linewidth+back_black_diffsize,zorder=i,
+                            label=regionlabels[i]);
+                # trace les barres d'erreur principale
+                ax.errorbar(x,TmoymensclassObs[:,i],yerr=TecamensclassObs[:,i],fmt='.-',
+                            color=pcmap[i],linewidth=linewidth, zorder=i,
+                            label=regionlabels[i]);
         else : # plot  uniquement la Moyenne
-            plt.plot(x,TmoymensclassObs[:,i],'.-',color=pcmap[i],linewidth=linewidth);
-    plt.grid(axis='y')
-    plt.axis('tight');
+            if plot_back_black:
+                # trace la moyenne en couleurs de fond
+                ax.plot(x,TmoymensclassObs[:,i],'.-',color=back_black_color,linewidth=linewidth,
+                        label=regionlabels[i]);
+                # trace la moyenne principale
+            ax.plot(x,TmoymensclassObs[:,i],'.-',color=pcmap[i],linewidth=linewidth,
+                    label=regionlabels[i]);
     #
-    if varnames is not None :
-        plt.xticks(np.arange(len(varnames)),varnames,fontsize=ticks_fontsize)
-    else:
-        plt.xticks(plt.xticks()[0],fontsize=ticks_fontsize)
-    plt.yticks(plt.yticks()[0],fontsize=ticks_fontsize)
+    ax.grid(axis='y')
+    ax.axis('tight');
     #
-    plt.ylabel('Mean SST Anomaly [°C]', fontsize=labels_fontsize);
-    plt.xlabel('Month', fontsize=labels_fontsize);
     fontP = FontProperties()
     fontP.set_size(lglabel_fontsize)
-    legax=plt.legend(np.arange(nb_class)+1,loc=2,fontsize=lgticks_fontsize);
-    legax.set_title(lgtitle,prop=fontP)
-    plt.axhline(color='k',linewidth=1)
+    #
+    handles, labels = ax.get_legend_handles_labels()
+    if plot_back_black:
+        # premiere legende (en couleurs de fond)
+        H1 = [handles[i] for i in np.arange(0,2*nb_class,2)]
+        L1 = [labels[i] for i in np.arange(0,2*nb_class,2)]
+        legaxFond=ax.legend(H1, L1,loc=2,fontsize=lgticks_fontsize);
+        legaxFond.set_title(lgtitle,prop=fontP)
+        # dexieme legende (SUPERPOSEE a la precedente)
+        H0 = [handles[i] for i in np.arange(1,2*nb_class,2)]
+        L0 = [labels[i] for i in np.arange(1,2*nb_class,2)]
+        legax = ax.legend(H0, L0, loc=2,fontsize=lgticks_fontsize,framealpha=0); # transparente
+        legax.set_title(lgtitle,prop=fontP)
+        ax.add_artist(legaxFond)
+    else:
+        legax = ax.legend(handles, labels, loc=2,fontsize=lgticks_fontsize);
+        legax.set_title(lgtitle,prop=fontP)
+    #
+    if varnames is not None :
+        ax.set_xticks(np.arange(len(varnames)))
+        ax.set_xticklabels(varnames,fontsize=ticks_fontsize)
+    else:
+        ax.set_xticks(ax.get_xticks())
+        ax.set_xticklabels(ax.get_xticks(),fontsize=ticks_fontsize)
+    ax.set_yticks(ax.get_yticks())
+    ax.set_yticklabels(ax.get_yticks(),fontsize=ticks_fontsize)
+    #
+    ax.set_ylabel('Mean SST Anomaly [°C]', fontsize=ylabel_fontsize);
+    ax.set_xlabel('Month', fontsize=labels_fontsize);
+    # trace axe des abscises
+    ax.axhline(color='k',linewidth=1)
     if not notitle :
-        plt.title(title,fontsize=title_fontsize,y=title_y); #,fontweigth='bold');
+        ax.set_title(title,fontsize=title_fontsize,y=title_y); #,fontweigth='bold');
     #plt.show(); sys.exit(0)
 #
 
@@ -1703,7 +1756,9 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                           min_moymensclass,max_moymensclass,
                           MCUM,Lobs,Cobs,NDobs,NDmdl,
                           isnumobs,nb_class,class_ref,classe_Dobs,fond_C,
-                          ccmap='jet',pcmap=None,sztitle=10,ysstitre=0.98,
+                          ccmap='jet',pcmap=None,
+                          bgmap='gray',bgval=0.5,
+                          sztitle=10,ysstitre=0.98,
                           cbticksz=8, cbtickszobs=8, 
                           ysuptitre=14,suptitlefs=0.98,
                           NIJ=0,
@@ -1722,6 +1777,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                           suptitle108='fig108',
                           suptitle109='fig109',
                           ):
+
     #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
     #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
     #           DEUXIEME BOUCLE SUR LES MODELES START HERE
@@ -1873,7 +1929,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
                    # par classe sont en colorbar)
             plt.figure(104); plt.subplot(nbsubl,nbsubc,isubplot);
             X_ = ctobs.dto2d(classe_DD,Lobs,Cobs,isnumobs); #X_= classgeo(sst_obs, classe_DD);
-            plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
+            plt.imshow(fond_C, interpolation=None, cmap=bgmap,vmin=0,vmax=1)
             if FONDTRANS == "Obs" :
                 plt.imshow(XC_ogeo, interpolation=None, cmap=ccmap, alpha=0.2,vmin=1,vmax=nb_class);
             elif FONDTRANS == "Mdl" :
@@ -1888,7 +1944,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
             #
         if OK105 : # Classification (pour les modèles les Perf par classe sont en colorbar)
             plt.figure(105); plt.subplot(nbsubl,nbsubc,isubplot);
-            plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
+            plt.imshow(fond_C, interpolation=None, cmap=bgmap,vmin=0,vmax=1)
             plt.imshow(XC_mgeo, interpolation=None,cmap=ccmap, vmin=1,vmax=nb_class);
             hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
             hcb.set_ticklabels(Tperf);
@@ -1931,7 +1987,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
             Tperf_Qm = np.round([i*100 for i in Tperf_Qm]).astype(int);
             TTperf_Qm.append(Tperf_Qm); # tableau de perf cumulees
 
-            plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
+            plt.imshow(fond_C, interpolation=None, cmap=bgmap,vmin=0,vmax=1)
             plt.imshow(XC_mgeo_Qm, interpolation=None,cmap=ccmap, vmin=1,vmax=nb_class);
             hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
             hcb.set_ticklabels(Tperf_Qm);
@@ -1962,7 +2018,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     #isubplot = isubplot + 1; # Michel (ou pas ?)
     if OK104 : # Obs for 104
         plt.figure(104); plt.subplot(nbsubl,nbsubc,isubplot);
-        plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
+        plt.imshow(fond_C, interpolation=None, cmap=bgmap,vmin=0,vmax=1)
         plt.imshow(XC_ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
         hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
@@ -1978,7 +2034,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     #
     if OK105 : # Obs for 105
         plt.figure(105); plt.subplot(nbsubl,nbsubc,isubplot);
-        plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
+        plt.imshow(fond_C, interpolation=None, cmap=bgmap,vmin=0,vmax=1)
         plt.imshow(XC_ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
         hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
@@ -2046,7 +2102,7 @@ def do_models_second_loop(sst_obs,Dobs,lon,lat,sMapO,XC_ogeo,TDmdl4CT,
     #
     if MCUM>0 and OK108 : # idem OK105, but ...
         plt.figure(108); plt.subplot(nbsubl,nbsubc,isubplot);
-        plt.imshow(fond_C, interpolation=None, cmap=cm.gray,vmin=0,vmax=1)
+        plt.imshow(fond_C, interpolation=None, cmap=bgmap,vmin=0,vmax=1)
         plt.imshow(XC_ogeo, interpolation=None,cmap=ccmap,vmin=1,vmax=nb_class);
         hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
@@ -2142,7 +2198,9 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
       NBCOORDAFC4CAH, nb_clust,
       isnumobs, isnanobs, nb_class, class_ref, classe_Dobs,
       afc_method='ward', afc_metric='euclidean',
-      ccmap='jet', sztitle=10, ysstitre=0.98,
+      ccmap='jet',
+      bgmap='gray',bgval=0.5,
+      sztitle=10, ysstitre=0.98,
       AFC_Visu_Classif_Mdl_Clust  = [], AFC_Visu_Clust_Mdl_Moy_4CT  = [],
       TypePerf = ["MeanClassAccuracy"],
       AFCWITHOBS = True, CAHWITHOBS = True,
@@ -2391,6 +2449,7 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
                                                      classe_Dobs,nb_class,
                                                      LObs,CObs,isnumObs,TypePerf[0],
                                                      ccmap=ccmap,
+                                                     bgmap=bgmap,bgval=bgval,
                                                      visu=False,nticks=nticks);
                 else : # 1 seul niveau de découpe, on fait la figure
                     plt.figure(figclustmoynum)
@@ -2399,6 +2458,7 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
                                                      classe_Dobs,nb_class,
                                                      LObs,CObs,isnumObs,TypePerf[0],
                                                      ccmap=ccmap,
+                                                     bgmap=bgmap,bgval=bgval,
                                                      ax = ax,
                                                      cblabel="performance [%]",cblabelsize=12,
                                                      cbticklabelsize=12,nticks=nticks);
@@ -2841,6 +2901,7 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
                         lon=None, lat=None,
                         TypePerf = ["MeanClassAccuracy"],
                         ccmap="jet",
+                        bgmap='gray',bgval=0.5,
                         label=None, cblabel=None, fignum=None, ax=None,
                         nticks=1,
                         ytitre=0.98, title_fontsize=14,labels_fontsize=12,
@@ -2954,6 +3015,7 @@ def mixtgeneralisation (sMapO, TMixtMdl, Tmdlname, TDmdl4CT,
                                                   isnumObs,TypePerf[0],
                                                   cblabel="performance [%]",
                                                   ccmap=ccmap,
+                                                  bgmap=bgmap,bgval=bgval,
                                                   ax=ax,nticks=nticks,tickfontsize=tickfontsize,
                                                   cbticklabelsize=cbticklabelsize,
                                                   cblabelsize=cblabelsize,
