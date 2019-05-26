@@ -1897,8 +1897,8 @@ def main(argv):
     #
     #%% DECOMPRESSER / COMPRESSER la ligne suivante selon si executione MANUELLE UN A UN des bloques du MAIN ou complete avec appel externe ... 
     if manualmode :
-        #caseconfig='sel' # 'all' ou 'sel'
-        caseconfig='all' # 'all' ou 'sel'
+        caseconfig='sel' # 'all' ou 'sel'
+        #caseconfig='all' # 'all' ou 'sel'
     #
     print("Case config is '{:s}'".format(caseconfig))
     pcmap,cpcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
@@ -2288,6 +2288,7 @@ def main(argv):
     # -------------------------------------------------------------------------
     # Figure 3 pour Article : Performances selon les clusters de l'AFC
     # -------------------------------------------------------------------------
+    savedata = True
     if Visu_UpwellArt :
         if SIZE_REDUCTION == 'All' :
             nFigArt = 5;
@@ -2338,7 +2339,20 @@ def main(argv):
                            clustfigsublc=clustfigsublc, clustfigsize=clustfigsize,
                            notitle=notitle,
                            )
-        
+    #
+    if savedata:
+        import scipy.io as sio
+        dataystartend = datemdl2dateinreval(DATAMDL)
+        datafile = "Data_AFC2DProj-{:d}-{:d}_{:d}Clust-{:d}Classes_{:s}{:s}Clim-{:s}_{:d}-mod".format(
+                pa,po,nb_clust,nb_class,fprefixe,fshortcode,dataystartend,Nmdlok)
+        print('-- savinf AFC data in file {}.mat...'.format(datafile))
+        sio.savemat(case_figs_dir+os.sep+datafile+'.mat',
+                    {'perf':TTperf4afc, 'VAPT':VAPT, 'F1U':F1U, 
+                     'F1sU':F1sU, 'F2V':F2V, 'CRi':CRi, 'CAj':CAj,
+                     'mdlname':AFCindnames, 'mdlnb':NoAFCindnames})
+#                    {'VAPT':VAPT}, {'F1U':F1U}, {'F1sU':F1sU}, 
+#                    {'F2V':F2V}, {'CRi':CRi}, {'CAj':CAj})
+    #        
     if plotmodall : # Model-all --------
         Nmdlafc = Tmdlname.shape[0]
         dataystartend = datemdl2dateinreval(DATAMDL)
@@ -2378,7 +2392,7 @@ def main(argv):
                                                ccmap=cpcmap,
                                                bgmap=grcmap, bgval=bggray,
                                                );
-# 
+    #
     if plotobs : # Obs --------
         nbsubl,nbsubc=clustfigsublc; isubplot = nbsubl * nbsubc
         bounds = np.arange(nb_class+1)+1;
