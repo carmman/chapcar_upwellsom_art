@@ -2153,6 +2153,9 @@ def do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_col
                                 fcodage="",
                                 figsize=(12,6),
                                 top=0.93, bottom=0.15, left=0.05, right=0.98,
+                                xticklabels_rot=45,
+                                xticklabels_ha='left',
+                                xticklabels_va='baseline',
                                 ) :
     ##
     ##---------------------------------------------------------------------
@@ -2183,8 +2186,10 @@ def do_models_after_second_loop(Tperfglob,Tperfglob_Qm,Tmdlname,list_of_plot_col
     else :
         plt.axis("tight");
     plt.grid(axis='both')
-    plt.xticks(np.arange(Nmodels),Tmdlname, fontsize=8, rotation=45,
-               horizontalalignment='right', verticalalignment='baseline');
+    plt.xticks(np.arange(Nmodels),Tmdlname, fontsize=8, 
+               rotation=xticklabels_rot,
+               horizontalalignment=xticklabels_ha,
+               verticalalignment=xticklabels_va);
     plt.ylabel('performance by Model [%]')
     plt.legend(local_legend_labels,numpoints=1,loc=3)
     plt.title(title);
