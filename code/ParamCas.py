@@ -117,7 +117,7 @@ if 0 : # conditions Code Charles: GRANDE ZONE
     NIJ            = 2;
     nb_clust       = 4; # Nombre de cluster
     #nb_clust       = 6; # Nombre de cluster
-    NBCOORDAFC4CAH = nb_class - 1 - 1; # n premières coordonnées de l'afc à
+    NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
     #NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
     #NBCOORDAFC4CAH = nb_class; # n premières coordonnées de l'afc à
                     # utiliser pour faire la CAH (limité à nb_class-1).
@@ -320,8 +320,8 @@ TypePerf = ["MeanClassAccuracy","GlobalAccuracy"]; #,"SpearmanCorr","Index2Rand"
 #______________________________
 # AFC
 #NIJ ... DECLAREE CI-DESSUS
-#AFCWITHOBS = True; # AFC avec ou sans les Obs ?
-AFCWITHOBS = False; # <<<<<<<<<<<<<<  ##@@
+AFCWITHOBS = True; # AFC avec ou sans les Obs ?
+#AFCWITHOBS = False; # <<<<<<<<<<<<<<  ##@@
 pa=1; po=2; # Choix du plan factoriel (Axes de l'AFC utilises pour l'affichage)
 #pa=3; po=4; # Choix du plan factoriel
 #

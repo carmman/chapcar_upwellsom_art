@@ -14,6 +14,14 @@ Exemple d'appel depuis python:
               wdir='/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code',
               args="--case=sel -v")         
 
+ou bien en mode debug:
+      debugfile('/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code/ctLoopMain.py',
+                wdir='/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code',
+                args="--case=All -v")
+      
+      debugfile('/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code/ctLoopMain.py',
+                wdir='/Users/carlos/Labo/NN_divers/DeepLearning/Projets/Projet_Upwelling/Charles/PourCarlos2_pour_Article/code',
+                args="--case=sel -v")
 @author: carlos
 """
     
@@ -1074,7 +1082,8 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
     VAPT,F1U,F1sU,F2V,CRi,CAj,TTperf4afc,\
         CAHindnames,CAHindnameswnb,NoCAHindnames,\
         figclustmoynum,class_afc,AFCindnames,AFCindnameswnb,\
-        NoAFCindnames = ctloop.do_afc(NIJ,
+        NoAFCindnames, \
+        allclusrPerfG, allclustTperf = ctloop.do_afc(NIJ,
                           sMapO, TDmdl4CT, lon, lat,
                           Tmdlname, Tmdlnamewnb, Tmdlonlynb, TTperf,
                           Nmdlok, Lobs, Cobs, NDmdl, Nobsc,
@@ -1233,7 +1242,7 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
             if AFCWITHOBS :
                 figfile += "ObsInAFC_"
             else:
-                figfile += "+ObsOutAFC_"
+                figfile += "ObsOutAFC_"
             figfile += "{:s}Clim-{:s}_{:s}".format(fshortcode,dataystartend,data_label_base)
             #
             ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT)
@@ -1268,7 +1277,7 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
             if AFCWITHOBS :
                 figfile += "ObsInAFC_"
             else:
-                figfile += "+ObsOutAFC_"
+                figfile += "ObsOutAFC_"
             figfile += "{:s}Clim-{:s}".format(fshortcode,dataystartend)
             # sauvegarde en format FIGFMT (normalement BITMAP (png,jpg)) et
             # eventuellement en PDF, si SAVEPDF active. 
@@ -1276,7 +1285,8 @@ def ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT, Tmdlname, Tmdlnamewnb, Tmdlonl
     #
     return VAPT,F1U,F1sU,F2V,CRi,CAj,TTperf4afc,\
            CAHindnames,CAHindnameswnb,NoCAHindnames,\
-           class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames,figclustmoynum
+           class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames,figclustmoynum,\
+           allclusrPerfG, allclustTperf
 #
 #%%
 def plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,indnames=None,
@@ -1285,6 +1295,7 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,indna
                   mdlmarker='o',obsmarker='o',xextramarker='*',clsmarker='s',
                   xextraF1=None,xextraLbl=" Extra",xextracolor=[ 1.0, 0.0, 0.0, 1.],
                   obsLbl=" Obs",obscolor=[0.90, 0.90, 0.90, 1.],
+                  xtracumbygrF1=None,xtracumbygrmarker=None,
                   ) :
     global SIZE_REDUCTION, AFCWITHOBS
     global FIGDPI, FIGEXT, Visu_UpwellArt
@@ -1337,7 +1348,16 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,indna
                 legendXstart    =-0.76;  legendYstart    =-1.03;  legendYstep      = 0.080
             legendXstartcls = legendXstart;
             legendYstartcls = legendYstart - legendYstep * nb_clust
-                
+        #
+        #if res_for_afc_clust:
+        #    for ii in np.arange(nb_clust) :
+        #        iclust  = np.where(class_afc==ii+1)[0];
+        #            Perfglob_, _, _, Tperf_ = Dgeoclassif(sMapO,CmdlMoy,lon,lat,class_ref,
+        #                                             classe_Dobs,nb_class,
+        #                                             LObs,CObs,isnumObs,TypePerf[0],
+        #                                             bgval=bgval,
+        #                                             visu=False);
+
         #
         if AFCWITHOBS :
             stitre = ("SST {:s} -on zone \"{:s}\"- A.F.C Models+Obs -").format(fcodage,zone_stitre)
@@ -1370,6 +1390,7 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,indna
                     lblfontsizecls=lblfontsizecls,       clsmarkersize=clsmarkersize,
                     xdeltaposcls=xdeltaposcls,           ydeltaposcls=ydeltaposcls,
                     linewidthscls=linewidthscls,         clsmarker=clsmarker,
+                    xtracumbygrF1=xtracumbygrF1,         xtracumbygrmarker=xtracumbygrmarker,
                     legendok=True,
                     xdeltaposlgnd=xdeltaposlgnd,ydeltaposlgnd=ydeltaposlgnd,
                     legendXstart=legendXstart,legendYstart=legendYstart,legendYstep=legendYstep,
@@ -1404,7 +1425,9 @@ def plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,indna
         if AFCWITHOBS :
             figfile += "ObsInAFC_"
         else:
-            figfile += "+ObsOutAFC_"
+            figfile += "ObsOutAFC_"
+        if xtracumbygrF1 is not None:
+            figfile += "wGroupProj_"
         figfile += "{:s}Clim-{:s}_{:d}-mod".format(fshortcode,dataystartend,Nmdlok)
         #
         ctloop.do_save_figure(figfile,dpi=dpi,path=figdir,ext=FIGEXT,figpdf=figpdf)
@@ -1919,8 +1942,8 @@ def main(argv):
     #
     #%% DECOMPRESSER / COMPRESSER la ligne suivante selon si executione MANUELLE UN A UN des bloques du MAIN ou complete avec appel externe ... 
     if manualmode :
-        #caseconfig='sel' # 'all' ou 'sel'
-        caseconfig='all' # 'all' ou 'sel'
+        caseconfig='sel' # 'all' ou 'sel'
+        #caseconfig='all' # 'all' ou 'sel'
     #
     print("Case config is '{:s}'".format(caseconfig))
     pcmap,cpcmap,AFC_Visu_Classif_Mdl_Clust, AFC_Visu_Clust_Mdl_Moy_4CT,\
@@ -2318,6 +2341,8 @@ def main(argv):
     #
     # -------------------------------------------------------------------------
     # Figure 3 pour Article : Performances selon les clusters de l'AFC
+    # Figure du dendrogramme 
+    # Figure de l'inercie
     # -------------------------------------------------------------------------
     savedata = True
     if Visu_UpwellArt :
@@ -2355,7 +2380,8 @@ def main(argv):
     VAPT, F1U, F1sU, F2V, CRi, CAj, TTperf4afc,\
         CAHindnames, CAHindnameswnb, NoCAHindnames,\
         class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames,\
-        figclustmoynum = ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT,
+        figclustmoynum, \
+        allclusrPerfG, allclustTperf = ctloop_compute_afc(sMapO, lon, lat, TDmdl4CT,
                            Tmdlname, Tmdlnamewnb, Tmdlonlynb,
                            nb_class, nb_clust, isnumobs, isnanobs, class_ref, classe_Dobs,
                            fond_C, XC_Ogeo,
@@ -2381,7 +2407,7 @@ def main(argv):
         if AFCWITHOBS :
             datafile += "ObsInAFC_"
         else:
-            datafile += "+ObsOutAFC_"
+            datafile += "ObsOutAFC_"
         datafile += "{:s}Clim-{:s}_{:d}-mod".format(fshortcode,dataystartend,Nmdlafc)
         print('-- savinf AFC data in file {}.mat...'.format(datafile))
         if F1sU is not None :
@@ -2508,12 +2534,14 @@ def main(argv):
         if AFCWITHOBS :
             figfile += "ObsInAFC_"
         else:
-            figfile += "+ObsOutAFC_"
+            figfile += "ObsOutAFC_"
         figfile += "{:s}Clim-{:s}_{:d}-mod".format(fshortcode,dataystartend,Nmdlafc)
         #
         ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,figpdf=figpdf)
     #
-    # Adds the results for best model in eXtended Zone, for comparison
+    #%%
+    # ONY FOR REDUCED ZONE:
+    #   Adds the results for best model in eXtended Zone, for comparison
     if plotbestmodXZinRZ and SIZE_REDUCTION == 'sel' : # plot in Petite-zone the Best model BigZone --------
         XZBestModName =  'CMCC-CM'
         iBMXZ = np.where(XZBestModName == Tmdlname)[0]
@@ -2596,6 +2624,7 @@ def main(argv):
         dpi     = FIGDPI
         figpdf  = False
     #
+    res_for_afc_clust = True
     
     # TEST DE PROJ DES OBJ (100% sur toutes les classes)
     Pobs_ = np.ones((1,nb_class),dtype=int)*100; # perfs des OBS = 100% dans toutes les classes
@@ -2607,28 +2636,46 @@ def main(argv):
     #Lblextra = "FMM{}".format(Nmdlok); xextramarker='*'; Colorextra = [ 1.0, 0.0, 0.0, 1.]; # orange
     Lblextra = "Model-all"; xextramarker='*'; Colorextra = [ 1.0, 0.0, 0.0, 1.]; # orange
     Lblobs="Obs"; obsmarker='D';  Colorobs = [0.80, 1.0, 0.0, 1.] # vert 
-    if AFCWITHOBS :
-        # si l'AFC est faite avec les OBS aussi
-        plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
-                      indnames=NoAFCindnames,
-                      figdir=case_figs_dir,
-                      figfile=figfile, dpi=dpi, figpdf=figpdf,
-                      xextraF1=F1extra,
-                      mdlmarker=mdlmarker,clsmarker=clsmarker,
-                      obsmarker=obsmarker,obsLbl=Lblobs,obscolor=Colorobs,
-                      xextramarker=xextramarker,xextraLbl=Lblextra,xextracolor=Colorextra,
-                      )
-    else :
-        # si les OBS ne participent pas a l'AFC mais seulement projetés
-        plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
-                      indnames=NoAFCindnames,
-                      figdir=case_figs_dir,
-                      figfile=figfile, dpi=dpi, figpdf=figpdf,
-                      xextraF1=F1extra,
-                      mdlmarker=mdlmarker,clsmarker=clsmarker,
-                      obsmarker=obsmarker,obsLbl=Lblobs,obscolor=Colorobs,
-                      xextramarker=xextramarker,xextraLbl=Lblextra,xextracolor=Colorextra,
-                      )
+    #if AFCWITHOBS :
+    #    # si l'AFC est faite avec les OBS aussi
+    #    plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+    #                  indnames=NoAFCindnames,
+    #                  figdir=case_figs_dir,
+    #                  figfile=figfile, dpi=dpi, figpdf=figpdf,
+    #                  xextraF1=F1extra,
+    #                  mdlmarker=mdlmarker,clsmarker=clsmarker,
+    #                  obsmarker=obsmarker,obsLbl=Lblobs,obscolor=Colorobs,
+    #                  xextramarker=xextramarker,xextraLbl=Lblextra,xextracolor=Colorextra,
+    #                  )
+    #else :
+    #    # si les OBS ne participent pas a l'AFC mais seulement projetés
+    #    plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+    #                  indnames=NoAFCindnames,
+    #                  figdir=case_figs_dir,
+    #                  figfile=figfile, dpi=dpi, figpdf=figpdf,
+    #                  xextraF1=F1extra,
+    #                  mdlmarker=mdlmarker,clsmarker=clsmarker,
+    #                  obsmarker=obsmarker,obsLbl=Lblobs,obscolor=Colorobs,
+    #                  xextramarker=xextramarker,xextraLbl=Lblextra,xextracolor=Colorextra,
+    #                  )
+    #
+    if res_for_afc_clust and len(allclusrPerfG) > 0:
+        # allclusrPerfG, allclustTperf
+        FGrCumExtra = ldef.do_afc_proj(TTperf4afc,allclustTperf)
+        xtracumbygrmarker = '*'
+    else:
+        FGrCumExtra = None
+        xtracumbygrmarker = None
+    #
+    plot_afc_proj(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
+                  indnames=NoAFCindnames,
+                  figdir=case_figs_dir,
+                  figfile=figfile, dpi=dpi, figpdf=figpdf,
+                  xextraF1=F1extra,
+                  mdlmarker=mdlmarker,clsmarker=clsmarker,
+                  obsmarker=obsmarker,obsLbl=Lblobs,obscolor=Colorobs,
+                  xextramarker=xextramarker,xextraLbl=Lblextra,xextracolor=Colorextra,
+                  xtracumbygrF1=FGrCumExtra,xtracumbygrmarker=xtracumbygrmarker)
     #
     if STOP_BEFORE_GENERAL :
         plt.show(); sys.exit(0)
@@ -2747,7 +2794,7 @@ def main(argv):
             if AFCWITHOBS :
                 figfile += "ObsInAFC_"
             else:
-                figfile += "+ObsOutAFC_"
+                figfile += "ObsOutAFC_"
             figfile += "{:s}Clim-{:s}".format(fshortcode,datemdl2dateinreval(DATAMDL))
             #
             ctloop.do_save_figure(figfile,dpi=dpi,path=case_figs_dir,ext=FIGEXT,figpdf=figpdf)

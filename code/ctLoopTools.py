@@ -43,7 +43,7 @@ def afcnuage (CP,cpa,cpb,Xcol,
               lblcolorobs=None,lblbgcolorobs=None,lblfontsizeobs=8,lblprefixobs=None,
               marker='o',obsmarker='o',linewidths=1,linewidthsobs=1,
               markersize=None,obsmarkersize=None,
-              edgecolor=None,
+              facecolor=None,edgecolor=None,
               edgeobscolor='k',obscolor='k',edgeclasscolor='k',faceclasscolor='m',
               article_style=False,
               xdeltapos=0.0,ydeltapos=0.0,
@@ -89,7 +89,13 @@ def afcnuage (CP,cpa,cpb,Xcol,
         my_norm = plt.Normalize()
         my_normed_data = my_norm(Xcol)
         ec_colors = cmap(my_normed_data) # a Nx4 array of rgba value
-        if edgecolor is None :
+        if facecolor is None :
+            face_ec_colors = ec_colors
+        else:
+            face_ec_colors = facecolor
+        if edgecolor is None and facecolor is not None :
+            edge_ec_colors = 'k'
+        elif edgecolor is None :
             edge_ec_colors = ec_colors
         else:
             edge_ec_colors = edgecolor
@@ -116,7 +122,7 @@ def afcnuage (CP,cpa,cpb,Xcol,
                 omsize = obsmarkersize
                 
             ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=msize,marker=marker,
-                            edgecolors=edge_ec_colors,facecolor=ec_colors,linewidths=linewidths)
+                            edgecolors=edge_ec_colors,facecolor=face_ec_colors,linewidths=linewidths)
             if legendok :
                 varsforlegend = msize,marker,edge_ec_colors,cmap,linewidths
             #
@@ -153,8 +159,19 @@ def afcnuage (CP,cpa,cpb,Xcol,
                     msize = K*xoomK
             else:
                 msize = markersize
+            if facecolor is None :
+                face_as_colors = faceclasscolor
+            else:
+                face_as_colors = facecolor
+            if edgecolor is None and facecolor is not None :
+                edge_as_colors = 'k'
+            elif edgecolor is None :
+                edge_as_colors = edgeclasscolor
+            else:
+                edge_as_colors = edgecolor
+            #
             ax.scatter(CP[:,cpa-1],CP[:,cpb-1],s=msize,marker=marker,linewidths=linewidths,
-                       edgecolors=edgeclasscolor,facecolor=faceclasscolor)
+                       edgecolors=edge_as_colors,facecolor=face_as_colors)
             if legendok :
                 varsforlegendcls = msize,marker,edgeclasscolor,faceclasscolor,linewidths
         else :
@@ -2301,6 +2318,7 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
     pobs_ = np.ones(nb_class,dtype=int)*100; # perfs des OBS = 100% dans toutes les classes
     #
     if AFCWITHOBS : # On ajoute Obs (si required)
+        print("** do_afc: ajoute les OBS au tableau pour l'AFC **\n")
         if NIJ==1 :
             Tp_ = np.concatenate((Tp_, Nobsc[np.newaxis,:]), axis=0).astype(int);
         else :
@@ -2381,6 +2399,12 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
             bestglob_ = 0.0;
             bestloc_  = []; # meilleure perf localement (i.e pour un niveau de coupe)
             ninbest_  = []; # nombre de modèle concernés par bestloc_
+            allclusrPerfG = [];
+            allclustTperf = [];
+        else:
+            allclusrPerfG  = np.zeros((nb_clust,1)); # perf globale pour chaque cluster
+            allclustTperf = np.zeros((nb_clust,nb_class)); # Tperf pour chaque cluster
+
         for nb_clust in Loop_nb_clust :
             best_ = 0.0;
             class_afc = fcluster(Z_,nb_clust,'maxclust'); 
@@ -2459,14 +2483,19 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
                 else : # 1 seul niveau de découpe, on fait la figure
                     plt.figure(figclustmoynum)
                     ax = plt.subplot(subl_,subc_,ii+1);
-                    Perfglob_, _, _, _ = Dgeoclassif(sMapO,CmdlMoy,lon,lat,class_ref,
-                                                     classe_Dobs,nb_class,
-                                                     LObs,CObs,isnumObs,TypePerf[0],
-                                                     ccmap=ccmap,
-                                                     bgmap=bgmap,bgval=bgval,
-                                                     ax = ax,
-                                                     cblabel="performance [%]",cblabelsize=12,
-                                                     cbticklabelsize=12,nticks=nticks);
+                    #Perfglob_, _, _, _ = Dgeoclassif(sMapO,CmdlMoy,lon,lat,class_ref,
+                    Perfglob_, X_Mgeo_, classe_DD_, \
+                        Tperf_ = Dgeoclassif(sMapO,CmdlMoy,lon,lat,class_ref,
+                                             classe_Dobs,nb_class,
+                                             LObs,CObs,isnumObs,TypePerf[0],
+                                             ccmap=ccmap,
+                                             bgmap=bgmap,bgval=bgval,
+                                             ax = ax,
+                                             cblabel="performance [%]",cblabelsize=12,
+                                             cbticklabelsize=12,nticks=nticks);
+                    allclusrPerfG[ii] = Perfglob_
+                    allclustTperf[ii,:] = Tperf_
+                    
                     if SIZE_REDUCTION == 'All' :
                         tmpsubtitle = "Model-group"
                     elif SIZE_REDUCTION == 'sel' :
@@ -2518,7 +2547,8 @@ def do_afc(NIJ, sMapO, TDmdl4CT, lon, lat,
     #
     return VAPT,F1U,F1sU,F2V,CRi,CAj,TTperf4afc,\
            CAHindnames,CAHindnameswnb,NoCAHindnames,\
-           figclustmoynum,class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames
+           figclustmoynum,class_afc,AFCindnames,AFCindnameswnb,NoAFCindnames,\
+           allclusrPerfG, allclustTperf
 #
 def do_plot_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,Nmdlok,
                            xextraF1=None,xextraLbl=None,xextracolor=None,
@@ -2577,20 +2607,22 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,
                     AFCWITHOBS=False,
                     figsize=(16,12),
                     top=0.93, bottom=0.05, left=0.05, right=0.95,
+                    cmap=cm.jet,
                     xextraF1=None,
-                    xextraLbl=" Extra", xextracolor=[ 1.0, 0.0, 0.0, 1.],
-                    obsLbl=" Obs",      obscolor=[ 0.90, 0.90, 0.90, 1.],
-                    lblfontsize=14,       lblprefix=None,         mdlmarker='o',    mdlmarkersize=250,
+                    xextraLbl=" Extra",   xextracolor=[ 1.0, 0.0, 0.0, 1.],
+                    obsLbl=" Obs",        obscolor=[ 0.90, 0.90, 0.90, 1.],
+                    lblfontsize=14,       lblprefix=None,         mdlmarker='o',      mdlmarkersize=250,
                     xdeltapos=0.02,       ydeltapos=-0.002,       linewidths=2.5,
-                    lblfontsizeobs=14,    lblprefixobs=None,      obsmarker='o',    obsmarkersize=320,
+                    lblfontsizeobs=14,    lblprefixobs=None,      obsmarker='o',      obsmarkersize=320,
                     xdeltaposobs=0.02,    ydeltaposobs=-0.002,    linewidthsobs=3,
-                    lblfontsizexextra=14, lblprefixxextra=None,   xextramarker='*', xextramarkersize=320,
+                    lblfontsizexextra=14, lblprefixxextra=None,   xextramarker='*',   xextramarkersize=320,
                     xdeltaposxextra=0.02, ydeltaposxextra=-0.002, linewidthsxextra=3,
-                    lblfontsizecls=14,    lblprefixcls=None,      clsmarker='s',   clsmarkersize=280,
+                    lblfontsizecls=14,    lblprefixcls=None,      clsmarker='s',      clsmarkersize=280,
                     xdeltaposcls=0.01,    ydeltaposcls=-0.003,    linewidthscls=2.5,
+                    xtracumbygrF1=None,   xtracumbygrmarker=None, xtracumbygrmarkersize=280, linewidthsxtracumbygr=1.5,
                     legendok=False,
-                    xdeltaposlgnd=0.02,ydeltaposlgnd=0.0,
-                    legendXstart=-1.24,legendYstart=0.85,legendYstep=0.06,
+                    xdeltaposlgnd=0.02,   ydeltaposlgnd=0.0,
+                    legendXstart=-1.24,   legendYstart=0.85,      legendYstep=0.06,
                     legendprefixlbl="AFC Cluster",
                     legendprefixlblobs="Observations",
                     legendprefixlblxextra="Exta data",
@@ -2604,12 +2636,29 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,
     fignum = fig.number # numero de figure en cours ...
     plt.subplots_adjust(top=top, bottom=bottom, left=left, right=right)
     ax = plt.subplot(111) # un seul axe
+    #
+
     if Visu4Art :
-        afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,
+        Xcol = class_afc
+        # Palette des groups 
+        my_norm = plt.Normalize()
+        my_normed_data = my_norm(Xcol)
+        mod_ec_colors = cmap(my_normed_data) # a Nx4 array of rgba value
+        #print(mod_ec_colors)
+        #
+        if xtracumbygrF1 is not None:
+            for iCol in np.arange(len(Xcol)):
+                kCol = Xcol[iCol]-1;
+                ax.plot([xtracumbygrF1[kCol,pa-1], F1U[iCol,pa-1]],
+                        [xtracumbygrF1[kCol,po-1], F1U[iCol,po-1]],
+                        color='black',linestyle='dotted',linewidth=1)
+        #
+        afcnuage(F1U,cpa=pa,cpb=po,Xcol=Xcol,
                  indname=indnames,
                  linewidths=linewidths,linewidthsobs=linewidthsobs,
                  ax=ax,article_style=True,
-                 marker=mdlmarker,markersize=mdlmarkersize,edgecolor='k',
+                 marker=mdlmarker,markersize=mdlmarkersize,
+                 facecolor=mod_ec_colors, edgecolor='k',
                  obsmarker=obsmarker,obsmarkersize=obsmarkersize,
                  edgeobscolor='k',obscolor=obscolor,
                  edgeclasscolor='k',faceclasscolor='m',
@@ -2624,6 +2673,23 @@ def do_plotart_afc_projection(F1U,F2V,CRi,CAj,F1sU,pa,po,class_afc,nb_class,NIJ,
                  legendprefixlbl=legendprefixlbl,
                  legendprefixlblobs=legendprefixlblobs,
                  );
+        # for Cumul by Groups
+        if xtracumbygrF1 is not None:
+            Xcol = 1 + np.arange(xtracumbygrF1.shape[0])
+            # Palette des groups 
+            my_norm = plt.Normalize()
+            my_normed_data = my_norm(Xcol)
+            goup_ec_colors = cmap(my_normed_data) # a Nx4 array of rgba value
+            #print(goup_ec_colors)
+            #       
+            afcnuage(xtracumbygrF1,cpa=pa,cpb=po,Xcol=Xcol,
+                     ax=ax, article_style=True, holdon=True,
+                     marker=xtracumbygrmarker,
+                     markersize=xtracumbygrmarkersize,
+                     facecolor=goup_ec_colors, edgecolor=[1.0,0.5,0.5,1.],
+                     linewidths=linewidthsxtracumbygr
+                     );
+                     
         if not AFCWITHOBS : # Obs en supplémentaire
             legendObsXstart = legendXstart
             legendObsYstart = legendYstart - (nclusttmp + 1.2)*legendYstep
